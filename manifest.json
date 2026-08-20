@@ -1,0 +1,22 @@
+{
+
+  "background_color": "#ffffff",
+
+  "dir": "ltr",
+
+  "display": "standalone",
+
+  "name": "La Casa del Pan app",
+
+  "orientation": "any",
+
+  "scope": "https://ezequielcalabresi-stack.github.io/pana/",
+
+  "short_name": "Panaderia",
+
+  "start_url": "https://ezequielcalabresi-stack.github.io/pana/",
+
+  "theme_color": "#ffffff"
+
+} 
+
