@@ -9,5 +9,17 @@
   "short_name": "Panaderia",
   "start_url": "https://ezequielcalabresi-stack.github.io/pana/",
   "theme_color": "#ffffff",
-  "id": "/pana/"
+  "id": "/pana/",
+  "icons": [
+    {
+      "src": "https://www.pwabuilder.com/assets/icons/icon_192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://www.pwabuilder.com/assets/icons/icon_512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
 }
