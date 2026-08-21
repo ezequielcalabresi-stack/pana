@@ -2310,18 +2310,49 @@
       renderizarUsuariosSelect();
     }
 
-   function imprimirReporteProduccion() {
+  // FUNCIÓN DE IMPRESIÓN DE PRODUCCIÓN CORREGIDA
+    function imprimirReporteProduccion() {
       const fechaClave = fechaActual; 
       const partesFecha = fechaActual.split('-');
       const fecha = partesFecha.length === 3 ? `${partesFecha[2]}/${partesFecha[1]}/${partesFecha[0]}` : fechaActual;
 
-      const productosContainer = document.getElementById('totales-panificados');
-      const productosHTML = productosContainer ? productosContainer.innerHTML : '';
+      // Recopilamos directamente los datos consolidados del día para imprimirlos de forma segura
+      const pedidosHoy = dbRepartos[fechaActual] || [];
+      const consolidados = {};
+
+      pedidosHoy.forEach(p => {
+        if (!consolidados[p.producto]) {
+          consolidados[p.producto] = 0;
+        }
+        consolidados[p.producto] += p.unidades;
+      });
+
+      let productosHTML = '';
+      if (Object.keys(consolidados).length === 0) {
+        productosHTML = '<p style="color: #6b7280; font-style: italic;">No hay pedidos cargados para la fecha seleccionada.</p>';
+      } else {
+        Object.entries(consolidados).forEach(([prodNombre, cantUnidades]) => {
+          const config = dbPanificados[prodNombre] || { unidPorPaq: 1 };
+          const paquetes = (cantUnidades / config.unidPorPaq).toFixed(1).replace('.0', '');
+          productosHTML += `
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background-color: #fef3c7; border: 1px solid #fde68a; border-radius: 8px; margin-bottom: 8px;">
+              <div>
+                <h4 style="font-weight: bold; color: #78350f; font-size: 16px; margin: 0;">${prodNombre}</h4>
+                <p style="font-size: 12px; color: #92400e; margin: 2px 0 0 0;">${config.unidPorPaq} un. por paquete</p>
+              </div>
+              <div style="text-align: right;">
+                <span style="font-size: 18px; font-weight: 800; color: #78350f;">${cantUnidades} un.</span>
+                <span style="display: block; font-size: 12px; font-weight: 600; color: #b45309;">(${paquetes} paq.)</span>
+              </div>
+            </div>
+          `;
+        });
+      }
       
       const notasArray = dbNotasMostrador[fechaClave] || [];
       let notasHTML = '';
       if (notasArray.length > 0) {
-        notasHTML = '<ul style="list-style-type: disc; padding-left: 20px; margin: 0; color: #374151; font-size: 13pt;">' + 
+        notasHTML = '<ul style="list-style-type: disc; padding-left: 24px; margin: 0; color: #374151; font-size: 15px; font-weight: bold;">' + 
           notasArray.map(nota => `<li style="margin-bottom: 6px;">${nota}</li>`).join('') + 
           '</ul>';
       } else {
@@ -2336,43 +2367,25 @@
           <meta charset="UTF-8">
           <title>Reporte Producción - ${fecha}</title>
           <style>
-            body { font-family: sans-serif; padding: 20px; color: #111827; }
-            h2 { font-size: 16pt; margin-bottom: 4px; color: #111827; }
-            p { font-size: 11pt; color: #4b5563; margin-bottom: 15px; }
-            .box-principal { border: 2px solid #d1d5db; padding: 15px; border-radius: 10px; margin-bottom: 20px; background: #fff; }
-            
-            /* Forzamos que cada tarjeta de producto vaya vertical una debajo de otra */
-            .card-vertical { 
-              border: 1px solid #e5e7eb; 
-              padding: 12px 15px; 
-              border-radius: 8px; 
-              background-color: #fef3c7; 
-              display: flex; 
-              justify-content: space-between; 
-              align-items: center; 
-              margin-bottom: 10px; 
-              page-break-inside: avoid; 
+            body { font-family: sans-serif; padding: 20px; color: #1f2937; background: white; }
+            .card-box { border: 2px solid #fbbf24; border-radius: 12px; padding: 20px; margin-bottom: 20px; background: white; }
+            .sec-box { border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; background: white; }
+            h2, h3 { margin-top: 0; color: #111827; }
+            @media print {
+              body { background: white !important; }
             }
-            .card-vertical h4 { margin: 0; font-size: 13pt; color: #78350f; font-weight: bold; }
-            .card-vertical span { font-size: 14pt; font-weight: bold; color: #78350f; }
-
-            .section-box { border: 1px solid #d1d5db; padding: 15px; border-radius: 10px; background: #fff; page-break-inside: avoid; }
-            .section-box h3 { margin-top: 0; font-size: 14pt; color: #111827; margin-bottom: 10px; }
           </style>
         </head>
         <body>
-          <div class="box-principal">
+          <div class="card-box">
             <h2>📋 Producción Consolidada (Unidades a Elaborar)</h2>
-            <p><strong>Fecha de Producción:</strong> ${fecha}</p>
-            <div style="display: flex; flex-direction: column;">
-              ${productosHTML
-                .replace(/grid grid-cols-1 md:grid-cols-2 gap-3/g, '')
-                .replace(/class="p-3 bg-amber-50 rounded-lg border border-amber-200 flex justify-between items-center"/g, 'class="card-vertical"')
-                .replace(/class="text-xl md:text-2xl font-extrabold text-amber-900"/g, 'style="font-size: 14pt; font-weight: bold; color: #78350f;"')}
+            <p style="font-size: 14px; font-weight: 600; color: #4b5563; margin-bottom: 15px;">Producción para el día: ${fecha}</p>
+            <div>
+              ${productosHTML}
             </div>
           </div>
 
-          <div class="section-box">
+          <div class="sec-box">
             <h3>🏪 Pedidos Especiales y Mostrador</h3>
             ${notasHTML}
           </div>
