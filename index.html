@@ -951,16 +951,15 @@ function cambiarUsuarioActivo() {
       });
     }
 // --- CONFIGURACIÓN DE RECETAS Y DESCUENTO DE STOCK ---
-    window.RECETAS = {
-      "Pebete": [
-        { insumoId: "STK-1", cantidadPorUnidad: 0.05 }, // Ejemplo: 50g por unidad
-        { insumoId: "STK-2", cantidadPorUnidad: 0.01 }
-      ],
-      "Hamburguesas x 5 (c/u)": [
-        { insumoId: "STK-1", cantidadPorUnidad: 0.06 }
-      ]
-    };
-
+window.RECETAS = {
+  "Pebete": [
+    { insumoId: "STK-1", cantidadPorUnidad: 0.05 },
+    { insumoId: "STK-2", cantidadPorUnidad: 0.01 }
+  ],
+  "Hamburguesas x 5 (c/u)": [
+    { insumoId: "STK-1", cantidadPorUnidad: 0.06 }
+  ]
+};
     function descontarMateriaPrimaPorPedido(nombreProducto, unidadesElaboradas) {
       const ingredientes = window.RECETAS[nombreProducto];
       if (!ingredientes || ingredientes.length === 0) return;
