@@ -2235,28 +2235,38 @@
       }
     }
 
-    // 7. CATALOGO DESPACHO Y PRODUCTOS PANIFICADOS
+    // 7. CATALOGO DESPACHO Y PRODUCTOS PANIFICADOS (CORREGIDO PARA FIREBASE)
     function agregarNuevoPanificado() {
-      const nombre = document.getElementById('nuevo-panificado-nombre').value.trim();
-      const unid = parseInt(document.getElementById('nuevo-panificado-unidades').value);
-      const menor = parseFloat(document.getElementById('nuevo-panificado-menor').value);
-      const mayor = parseFloat(document.getElementById('nuevo-panificado-mayor').value);
+      const nombreInput = document.getElementById('nuevo-panificado-nombre');
+      const unidInput = document.getElementById('nuevo-panificado-unidades');
+      const menorInput = document.getElementById('nuevo-panificado-menor');
+      const mayorInput = document.getElementById('nuevo-panificado-mayor');
+
+      const nombre = nombreInput.value.trim();
+      const unid = parseInt(unidInput.value);
+      const menor = parseFloat(menorInput.value);
+      const mayor = parseFloat(mayorInput.value);
 
       if (!nombre || isNaN(unid) || isNaN(menor) || isNaN(mayor)) {
-        alert("Complete todos los campos con valores válidos.");
+        alert("Por favor complete todos los campos de panificados (Nombre, Unidades, Precio Minorista y Precio Mayorista).");
         return;
       }
 
+      // Guardar en el objeto local
       dbPanificados[nombre] = { unidPorPaq: unid, menor, mayor };
+      
+      // Sincronizar directamente con Firebase y localStorage asegurando persistencia
       guardarDB('db_panificados', dbPanificados);
 
-      document.getElementById('nuevo-panificado-nombre').value = '';
-      document.getElementById('nuevo-panificado-unidades').value = '';
-      document.getElementById('nuevo-panificado-menor').value = '';
-      document.getElementById('nuevo-panificado-mayor').value = '';
+      // Limpiar inputs
+      nombreInput.value = '';
+      unidInput.value = '';
+      menorInput.value = '';
+      mayorInput.value = '';
 
       renderizarTablaPanificados();
       cargarSelectorPanificadosReparto();
+      alert(`¡Panificado "${nombre}" guardado con éxito!`);
     }
 
     function renderizarTablaPanificados() {
