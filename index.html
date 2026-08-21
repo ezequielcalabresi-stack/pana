@@ -2308,7 +2308,7 @@
       renderizarUsuariosSelect();
     }
 
-    function imprimirReporteProduccion() {
+   function imprimirReporteProduccion() {
       const fechaClave = fechaActual; 
       const partesFecha = fechaActual.split('-');
       const fecha = partesFecha.length === 3 ? `${partesFecha[2]}/${partesFecha[1]}/${partesFecha[0]}` : fechaActual;
@@ -2316,10 +2316,10 @@
       const productosContainer = document.getElementById('totales-panificados');
       const productosHTML = productosContainer ? productosContainer.innerHTML : '';
       
-      const notasArray = dbNotasMostrador[fechaClave] || dbNotasMostrador[fecha] || [];
+      const notasArray = dbNotasMostrador[fechaClave] || [];
       let notasHTML = '';
       if (notasArray.length > 0) {
-        notasHTML = '<ul style="list-style-type: disc; padding-left: 24px; margin: 0; color: #374151; font-size: 15px; font-weight: bold;">' + 
+        notasHTML = '<ul style="list-style-type: disc; padding-left: 20px; margin: 0; color: #374151; font-size: 13pt;">' + 
           notasArray.map(nota => `<li style="margin-bottom: 6px;">${nota}</li>`).join('') + 
           '</ul>';
       } else {
@@ -2333,50 +2333,54 @@
         <head>
           <meta charset="UTF-8">
           <title>Reporte Producción - ${fecha}</title>
-          <script src="https://cdn.tailwindcss.com"><\/script>
           <style>
-            .text-xs.text-amber-800,
-            .text-xs.text-amber-900,
-            span.text-xs {
-              display: none !important;
+            body { font-family: sans-serif; padding: 20px; color: #111827; }
+            h2 { font-size: 16pt; margin-bottom: 4px; color: #111827; }
+            p { font-size: 11pt; color: #4b5563; margin-bottom: 15px; }
+            .box-principal { border: 2px solid #d1d5db; padding: 15px; border-radius: 10px; margin-bottom: 20px; background: #fff; }
+            
+            /* Forzamos que cada tarjeta de producto vaya vertical una debajo de otra */
+            .card-vertical { 
+              border: 1px solid #e5e7eb; 
+              padding: 12px 15px; 
+              border-radius: 8px; 
+              background-color: #fef3c7; 
+              display: flex; 
+              justify-content: space-between; 
+              align-items: center; 
+              margin-bottom: 10px; 
+              page-break-inside: avoid; 
             }
+            .card-vertical h4 { margin: 0; font-size: 13pt; color: #78350f; font-weight: bold; }
+            .card-vertical span { font-size: 14pt; font-weight: bold; color: #78350f; }
 
-            @media print {
-              body { background: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-              .panel-carga-pedido, button { display: none !important; }
-            }
+            .section-box { border: 1px solid #d1d5db; padding: 15px; border-radius: 10px; background: #fff; page-break-inside: avoid; }
+            .section-box h3 { margin-top: 0; font-size: 14pt; color: #111827; margin-bottom: 10px; }
           </style>
         </head>
-        <body class="bg-white p-6 text-gray-800 font-sans">
-          
-          <div class="border-2 border-amber-400 rounded-2xl p-6 mb-6 shadow-sm bg-white">
-            <div class="flex justify-between items-center mb-1">
-              <h2 class="text-xl font-bold text-gray-900 flex items-center gap-2">
-                📋 Producción Consolidada (Unidades a Elaborar)
-              </h2>
-            </div>
-            <p class="text-sm font-semibold text-gray-700 mb-4">Producción para el día: ${fecha}</p>
-
-            <div class="space-y-3">
-              ${productosHTML}
+        <body>
+          <div class="box-principal">
+            <h2>📋 Producción Consolidada (Unidades a Elaborar)</h2>
+            <p><strong>Fecha de Producción:</strong> ${fecha}</p>
+            <div style="display: flex; flex-direction: column;">
+              ${productosHTML
+                .replace(/grid grid-cols-1 md:grid-cols-2 gap-3/g, '')
+                .replace(/class="p-3 bg-amber-50 rounded-lg border border-amber-200 flex justify-between items-center"/g, 'class="card-vertical"')
+                .replace(/class="text-xl md:text-2xl font-extrabold text-amber-900"/g, 'style="font-size: 14pt; font-weight: bold; color: #78350f;"')}
             </div>
           </div>
 
-          <div class="border border-gray-200 rounded-2xl p-6 shadow-sm bg-white">
-            <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2 mb-4">
-              🏪 Pedidos Especiales y Mostrador
-            </h3>
+          <div class="section-box">
+            <h3>🏪 Pedidos Especiales y Mostrador</h3>
             ${notasHTML}
           </div>
 
           <script>
             window.onload = function() {
-              const botones = document.querySelectorAll('button');
-              botones.forEach(btn => btn.style.display = 'none');
               setTimeout(() => {
                 window.print();
                 window.close();
-              }, 300);
+              }, 400);
             };
           <\/script>
         </body>
