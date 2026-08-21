@@ -1,544 +1,955 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+<link rel="manifest" href="manifest.json">
+<!-- SDK e Integración Completa con Firebase Realtime Database -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getDatabase, ref, set, update, remove, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+  const firebaseConfig = {
+    databaseURL: "https://panaderia-sync-281a5-default-rtdb.firebaseio.com"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  window.db = db;
+
+  // Escuchar la base de datos completa en tiempo real
+  onValue(ref(db, 'sistema_panaderia'), (snapshot) => {
+    const data = snapshot.val() || {};
+    
+    window.usuarios = data.usuarios || window.LISTA_USUARIOS_BASE;
+    window.panificadosReparto = data.panificadosReparto || window.LISTA_PANIFICADOS_REPARTO_BASE;
+    window.productos = data.productos || window.LISTA_PRODUCTOS_BASE;
+    window.clientes = data.clientes || {};
+    window.proveedores = data.proveedores || {};
+    window.insumosStock = data.insumosStock || {};
+    window.facturasProveedores = data.facturasProveedores || {};
+    window.pagosProveedores = data.pagosProveedores || {};
+    window.pedidosReparto = data.pedidosReparto || {};
+    window.pagosClientes = data.pagosClientes || {};
+    window.notasMostrador = data.notasMostrador || {};
+
+    // Actualizar interfaz ante cambios remotos
+    if (typeof window.cargarComboUsuariosHeader === 'function') window.cargarComboUsuariosHeader();
+    if (typeof window.cargarComboProductosReparto === 'function') window.cargarComboProductosReparto();
+    if (typeof window.cargarComboClientes === 'function') window.cargarComboClientes();
+    if (typeof window.renderizarTodo === 'function') window.renderizarTodo();
+    if (typeof window.aplicarPermisosRol === 'function') window.aplicarPermisosRol();
+  });
+
+  // Funciones de sincronización por ID con Firebase Realtime Database
+  window.guardarRegistroFB = function(nodo, id, datos) {
+    return set(ref(db, `sistema_panaderia/${nodo}/${id}`), datos);
+  };
+
+  window.eliminarRegistroFB = function(nodo, id) {
+    return remove(ref(db, `sistema_panaderia/${nodo}/${id}`));
+  };
+
+  window.guardarDatosStorage = function() {
+    update(ref(db, 'sistema_panaderia'), {
+      usuarios: window.usuarios || {},
+      panificadosReparto: window.panificadosReparto || {},
+      productos: window.productos || {},
+      clientes: window.clientes || {},
+      proveedores: window.proveedores || {},
+      insumosStock: window.insumosStock || {},
+      facturasProveedores: window.facturasProveedores || {},
+      pagosProveedores: window.pagosProveedores || {},
+      pedidosReparto: window.pedidosReparto || {},
+      pagosClientes: window.pagosClientes || {},
+      notasMostrador: window.notasMostrador || {}
+    });
+  };
+</script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>La Casa del Pan & La Espiga de Oro - Sistema Integrado</title>
-  
-  <!-- Manifest y Tema PWA -->
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#b85b00">
-
-  <!-- Tailwind CSS CDN -->
+  <title>Gestión Panaderías - La Casa del Pan & La Espiga de Oro</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  
-  <!-- FontAwesome CDN para Iconos -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
-  <!-- Google Fonts: Inter -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-
   <style>
-    body { font-family: 'Inter', sans-serif; }
-    .no-select { user-select: none; }
-    @media print {
-      body * { visibility: hidden; }
-      #printable-area, #printable-area * { visibility: visible; }
-      #printable-area { position: absolute; left: 0; top: 0; width: 100%; }
-      .no-print { display: none !important; }
-    }
+    .tab-active { background-color: #d97706; color: white; border-bottom: 3px solid #b45309; }
+    .tab-inactive { background-color: #f3f4f6; color: #4b5563; }
   </style>
-
-  <!-- SDKs de Firebase Modular (v9+) -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
-
-    // Configuración de Firebase
-    const firebaseConfig = {
-      databaseURL: "https://pana-a6fe7-default-rtdb.firebaseio.com/"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-
-    // Guardar en la base de datos
-    window.guardarRegistroFB = function(nodo, id, data) {
-      set(ref(db, `${nodo}/${id}`), data)
-        .catch(err => console.error(`Error al guardar en ${nodo}:`, err));
-    };
-
-    // Eliminar de la base de datos
-    window.eliminarRegistroFB = function(nodo, id) {
-      remove(ref(db, `${nodo}/${id}`))
-        .catch(err => console.error(`Error al eliminar en ${nodo}:`, err));
-    };
-
-    // Escuchadores en Tiempo Real
-    const nodos = [
-      'pedidosReparto', 'clientesReparto', 'cajasLocales', 'despachoVentas',
-      'proveedores', 'facturasProveedores', 'insumosStock', 'produccionCuadra',
-      'panificadosReparto'
-    ];
-
-    nodos.forEach(nodo => {
-      onValue(ref(db, nodo), (snapshot) => {
-        const val = snapshot.val();
-        if (nodo === 'pedidosReparto') window.pedidosReparto = val ? Object.values(val) : [];
-        if (nodo === 'clientesReparto') window.clientesReparto = val ? Object.values(val) : [];
-        if (nodo === 'cajasLocales') window.cajasLocales = val ? Object.values(val) : [];
-        if (nodo === 'despachoVentas') window.despachoVentas = val ? Object.values(val) : [];
-        if (nodo === 'proveedores') window.proveedores = val ? Object.values(val) : [];
-        if (nodo === 'facturasProveedores') window.facturasProveedores = val ? Object.values(val) : [];
-        if (nodo === 'insumosStock') {
-          window.insumosStock = val || {};
-        }
-        if (nodo === 'produccionCuadra') window.produccionCuadra = val ? Object.values(val) : [];
-        if (nodo === 'panificadosReparto') {
-          window.panificadosReparto = val || {};
-        }
-        
-        if (typeof window.renderizarTodo === 'function') {
-          window.renderizarTodo();
-        }
-      });
-    });
-  </script>
 </head>
-<body class="bg-gray-100 text-gray-800 min-h-screen flex flex-col">
+<body class="bg-gray-100 font-sans min-h-screen">
 
-  <!-- CABECERA SUPERIOR Y USUARIO -->
-  <header class="bg-amber-900 text-white shadow-md no-print">
-    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-4">
-      <div>
-        <h1 class="text-2xl font-black tracking-wide flex items-center gap-2">
-          <i class="fa-solid fa-bread-slice text-amber-400"></i>
-          La Casa del Pan & La Espiga de Oro
-        </h1>
-        <p class="text-xs text-amber-200">Sistema Integrado de Producción, Logística, Proveedores, Stock y Precios</p>
+  <!-- ENCABEZADO Y FECHA OPERATIVA CON SELECTOR DE USUARIOS -->
+  <header class="bg-amber-800 text-white p-4 shadow-lg flex flex-col md:flex-row justify-between items-center gap-2">
+    <div>
+      <h1 class="text-xl font-bold md:text-2xl">La Casa del Pan & La Espiga de Oro</h1>
+      <p class="text-xs text-amber-200 md:text-sm">Sistema Integrado de Producción, Logística, Proveedores, Stock y Precios</p>
+    </div>
+    <div class="flex flex-wrap items-center gap-2">
+      <!-- Selector de Usuario Activo -->
+      <div class="flex items-center gap-1 bg-amber-950 p-2 rounded-lg border border-amber-700">
+        <label class="text-xs font-semibold text-amber-100">👤 Usuario:</label>
+        <select id="select-usuario-activo" onchange="cambiarUsuarioActivo()" class="bg-white text-gray-800 text-xs p-1 rounded font-bold">
+        </select>
+        <span id="badge-rol-activo" class="text-[10px] bg-amber-600 text-white px-2 py-0.5 rounded-full font-bold ml-1"></span>
       </div>
 
-      <div class="flex items-center gap-3">
-        <div class="bg-amber-950 px-3 py-1.5 rounded-lg border border-amber-700/50 flex items-center gap-2 text-sm">
-          <i class="fa-solid fa-user-gear text-amber-400"></i>
-          <span class="text-xs font-semibold uppercase text-amber-300">Usuario:</span>
-          <select id="select-usuario" onchange="cambiarUsuario()" class="bg-amber-900 text-white font-bold rounded px-2 py-0.5 outline-none focus:ring-1 focus:ring-amber-400">
-            <option value="">-- Seleccionar --</option>
-            <option value="Administrador">Administrador</option>
-            <option value="Cuadra">Panadero / Cuadra</option>
-            <option value="Despacho">Atención / Despacho</option>
-            <option value="Reparto">Logística / Reparto</option>
-          </select>
-        </div>
-
-        <div class="bg-amber-950 px-3 py-1.5 rounded-lg border border-amber-700/50 flex items-center gap-2 text-sm">
-          <i class="fa-regular fa-calendar-days text-amber-400"></i>
-          <span class="text-xs font-semibold uppercase text-amber-300">Fecha Operativa:</span>
-          <input type="date" id="fecha-operativa" onchange="cambiarFechaOperativa()" class="bg-amber-900 text-white font-bold rounded px-2 py-0.5 outline-none focus:ring-1 focus:ring-amber-400">
-        </div>
+      <!-- Fecha Operativa -->
+      <div class="flex items-center gap-2 bg-amber-900 p-2 rounded-lg border border-amber-700">
+        <label class="text-xs font-semibold text-amber-100">Fecha Operativa:</label>
+        <input type="date" id="fecha-operativa" onchange="cambiarFechaOperativa()" class="bg-white text-gray-800 text-sm p-1 rounded font-bold">
       </div>
     </div>
   </header>
 
   <!-- NAVEGACIÓN PRINCIPAL -->
-  <nav class="bg-amber-800 text-amber-100 shadow no-print">
-    <div class="max-w-7xl mx-auto px-4 flex overflow-x-auto gap-1 py-1">
-      <button onclick="cambiarPestana('reparto')" id="tab-reparto" class="px-4 py-2 rounded-t-lg font-bold text-sm flex items-center gap-2 hover:bg-amber-700 transition">
-        <i class="fa-solid fa-truck font-normal"></i> Reparto y Cobros
-      </button>
-      <button onclick="cambiarPestana('cuadra')" id="tab-cuadra" class="px-4 py-2 rounded-t-lg font-bold text-sm flex items-center gap-2 hover:bg-amber-700 transition">
-        <i class="fa-solid fa-fire font-normal"></i> Cuadra
-      </button>
-      <button onclick="cambiarPestana('clientes')" id="tab-clientes" class="px-4 py-2 rounded-t-lg font-bold text-sm flex items-center gap-2 hover:bg-amber-700 transition">
-        <i class="fa-solid fa-users font-normal"></i> Clientes / Cta. Cte.
-      </button>
-      <button onclick="cambiarPestana('proveedores')" id="tab-proveedores" class="px-4 py-2 rounded-t-lg font-bold text-sm flex items-center gap-2 hover:bg-amber-700 transition">
-        <i class="fa-solid fa-file-invoice-dollar font-normal"></i> Proveedores / Facturas
-      </button>
-      <button onclick="cambiarPestana('stock')" id="tab-stock" class="px-4 py-2 rounded-t-lg font-bold text-sm flex items-center gap-2 hover:bg-amber-700 transition">
-        <i class="fa-solid fa-boxes-stacked font-normal"></i> Control de Stock
-      </button>
-      <button onclick="cambiarPestana('cajas')" id="tab-cajas" class="px-4 py-2 rounded-t-lg font-bold text-sm flex items-center gap-2 hover:bg-amber-700 transition">
-        <i class="fa-solid fa-cash-register font-normal"></i> Cajas
-      </button>
-      <button onclick="cambiarPestana('catalogo')" id="tab-catalogo" class="px-4 py-2 rounded-t-lg font-bold text-sm flex items-center gap-2 hover:bg-amber-700 transition">
-        <i class="fa-solid fa-gear font-normal"></i> Catálogo Despacho
-      </button>
-      <button onclick="cambiarPestana('catalogo-reparto')" id="tab-catalogo-reparto" class="px-4 py-2 rounded-t-lg font-bold text-sm flex items-center gap-2 hover:bg-amber-700 transition">
-        <i class="fa-solid fa-sliders font-normal"></i> Config. Reparto
-      </button>
-    </div>
+  <nav class="flex border-b border-gray-300 bg-white sticky top-0 z-10 text-xs md:text-sm font-semibold overflow-x-auto">
+    <button onclick="verPestaña('reparto')" id="btn-reparto" class="flex-1 py-3 px-2 text-center tab-active whitespace-nowrap">🚚 Reparto y Cobros</button>
+    <button onclick="verPestaña('cuadra')" id="btn-cuadra" class="flex-1 py-3 px-2 text-center tab-inactive whitespace-nowrap">👨‍🍳 Cuadra</button>
+    <button onclick="verPestaña('clientes')" id="btn-clientes" class="flex-1 py-3 px-2 text-center tab-inactive whitespace-nowrap">👥 Clientes / Cta. Cte.</button>
+    <button onclick="verPestaña('proveedores')" id="btn-proveedores" class="flex-1 py-3 px-2 text-center tab-inactive whitespace-nowrap">🏭 Proveedores / Facturas</button>
+    <button onclick="verPestaña('stock')" id="btn-stock" class="flex-1 py-3 px-2 text-center tab-inactive whitespace-nowrap">📦 Control de Stock</button>
+    <button onclick="verPestaña('caja')" id="btn-caja" class="flex-1 py-3 px-2 text-center tab-inactive whitespace-nowrap">💰 Cajas</button>
+    <button onclick="verPestaña('precios')" id="btn-precios" class="flex-1 py-3 px-2 text-center tab-inactive whitespace-nowrap">⚙️ Catálogo Despacho</button>
+    <button onclick="verPestaña('usuarios')" id="btn-usuarios" class="flex-1 py-3 px-2 text-center tab-inactive whitespace-nowrap">🔐 Usuarios y Roles</button>
   </nav>
 
-  <!-- CONTENEDOR PRINCIPAL DE MÓDULOS -->
-  <main class="max-w-7xl mx-auto px-4 py-6 flex-grow w-full">
+  <main class="p-3 max-w-5xl mx-auto space-y-4">
 
-    <!-- MÓDULO 1: REPARTO Y COBROS -->
-    <section id="sec-reparto" class="space-y-6">
-      <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
-        <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-          <i class="fa-solid fa-cart-plus text-amber-600"></i> Cargar Pedido de Reparto (Por Unidades)
-        </h2>
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <select id="rep-cliente" class="p-2 border border-gray-300 rounded-lg text-sm outline-none focus:border-amber-500">
-            <option value="">-- Seleccionar Cliente --</option>
-          </select>
-
-          <select id="rep-producto" class="p-2 border border-gray-300 rounded-lg text-sm outline-none focus:border-amber-500">
-            <option value="">-- Seleccionar Panificado --</option>
-          </select>
-
-          <input type="number" id="rep-cantidad" placeholder="Cantidad de Unidades" class="p-2 border border-gray-300 rounded-lg text-sm outline-none focus:border-amber-500">
-
-          <button onclick="agregarPedidoReparto()" class="bg-amber-600 hover:bg-amber-700 text-white font-bold py-2 px-4 rounded-lg shadow transition">
-            Cargar Pedido
-          </button>
+    <!-- 1. MÓDULO REPARTO Y LOGÍSTICA (PRODUCTOS PANIFICADOS DE REPARTO) -->
+    <section id="sec-reparto" class="space-y-4">
+      <div class="bg-white p-4 rounded-xl shadow border">
+        <h2 class="text-base font-bold text-gray-800 mb-2">Cargar Pedido de Reparto (Por Unidades)</h2>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
+          <select id="rep-cliente" class="border p-2 rounded w-full text-sm font-medium text-gray-800"><option value="">-- Seleccionar Cliente --</option></select>
+          <select id="rep-producto" class="border p-2 rounded w-full text-sm font-bold text-amber-900"></select>
+          <input type="number" id="rep-cantidad" placeholder="Cantidad de Unidades" step="1" min="1" class="border p-2 rounded w-full text-sm">
+          <button onclick="agregarPedidoReparto()" class="bg-amber-700 text-white font-bold px-4 py-2 rounded text-sm hover:bg-amber-800 w-full">Cargar Pedido</button>
         </div>
       </div>
 
-      <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
-        <div class="flex justify-between items-center mb-4">
-          <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2">
-            <i class="fa-solid fa-clipboard-list text-amber-600"></i> Planilla Diaria de Reparto
-          </h2>
-          <button onclick="window.print()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold py-1 px-3 rounded border border-gray-300 no-print">
-            <i class="fa-solid fa-print"></i> Imprimir
-          </button>
+      <div class="bg-white p-4 rounded-xl shadow border">
+        <div class="flex justify-between items-center mb-2">
+          <h2 class="text-base font-bold text-gray-800">Planilla Diaria de Reparto</h2>
+          <div class="flex items-center gap-2">
+            <span id="label-fecha-reparto" class="text-xs bg-amber-100 text-amber-900 px-2 py-1 rounded font-bold"></span>
+            <button onclick="window.print()" class="text-xs bg-gray-200 p-1 px-2 rounded font-semibold hover:bg-gray-300">🖨️ Imprimir</button>
+          </div>
         </div>
-
-        <div id="printable-area" class="overflow-x-auto">
-          <table class="w-full text-left text-sm">
-            <thead class="bg-amber-100 text-amber-900 border-b">
-              <tr>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs md:text-sm">
+            <thead>
+              <tr class="bg-amber-100 text-amber-900 border-b">
                 <th class="p-2">Cliente</th>
                 <th class="p-2">Producto Panificado</th>
                 <th class="p-2">Unidades / Paquetes</th>
                 <th class="p-2">P. x Unid.</th>
                 <th class="p-2">Monto</th>
                 <th class="p-2">Estado / Medio Pago</th>
-                <th class="p-2 text-right no-print">Registrar Pago</th>
+                <th class="p-2 text-center">Registrar Pago</th>
               </tr>
             </thead>
-            <tbody id="tabla-pedidos-reparto">
-              <!-- Carga dinámica -->
-            </tbody>
+            <tbody id="tabla-reparto"></tbody>
           </table>
         </div>
-
-        <div class="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg flex flex-wrap justify-between gap-4 font-bold text-sm text-amber-900">
-          <div>Total Reparto: <span id="tot-rep-monto" class="text-amber-700">$0</span></div>
-          <div>Cobrado Efectivo Reparto: <span id="tot-rep-efectivo" class="text-green-600">$0</span></div>
+        <div class="mt-3 grid grid-cols-1 md:grid-cols-3 gap-2 text-xs md:text-sm font-bold bg-amber-50 p-3 rounded-lg border border-amber-200">
+          <div>Total Reparto: <span id="tot-rep-monto" class="text-amber-900">$0</span></div>
+          <div>Cobrado Efectivo Reparto: <span id="tot-rep-efectivo" class="text-green-700">$0</span></div>
           <div>Pendiente Cta. Cte.: <span id="tot-rep-ctacte" class="text-red-600">$0</span></div>
         </div>
       </div>
     </section>
 
-    <!-- MÓDULO 2: CUADRA DE PRODUCCIÓN -->
-    <section id="sec-cuadra" class="space-y-6 hidden">
-      <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
-        <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-          <i class="fa-solid fa-fire-burner text-amber-600"></i> Registrar Elaboración de Panadería
-        </h2>
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <input type="text" id="cua-producto" placeholder="Producto elaborado (ej: Harina 0000)" class="p-2 border border-gray-300 rounded-lg text-sm">
-          <input type="number" id="cua-cantidad" placeholder="Cantidad elaborada (kg o docenas)" class="p-2 border border-gray-300 rounded-lg text-sm">
-          <input type="text" id="cua-responsable" placeholder="Panadero a cargo" class="p-2 border border-gray-300 rounded-lg text-sm">
-          <button onclick="agregarProduccionCuadra()" class="bg-amber-600 hover:bg-amber-700 text-white font-bold py-2 px-4 rounded-lg shadow">
-            Registrar Elaboración
-          </button>
+    <!-- 2. MÓDULO PRODUCCIÓN / CUADRA -->
+    <section id="sec-cuadra" class="hidden space-y-4">
+      <div class="bg-white p-4 rounded-xl shadow border border-amber-500">
+        <div class="flex justify-between items-center mb-3">
+          <div>
+            <h2 class="text-lg font-bold text-gray-800">📋 Producción Consolidada (Unidades a Elaborar)</h2>
+            <p id="label-fecha-cuadra" class="text-xs text-gray-500 font-semibold"></p>
+          </div>
+          <button onclick="window.print()" class="text-xs bg-gray-200 p-2 rounded font-semibold hover:bg-gray-300">🖨️ Imprimir Producción</button>
         </div>
+        <div id="totales-panificados" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
       </div>
 
-      <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
-        <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-          <i class="fa-solid fa-list-check text-amber-600"></i> Registro de Producción Diaria
-        </h2>
-        <table class="w-full text-left text-sm">
-          <thead class="bg-gray-100 text-gray-700 border-b">
-            <tr>
-              <th class="p-2">Hora</th>
-              <th class="p-2">Producto</th>
-              <th class="p-2">Cantidad</th>
-              <th class="p-2">Panadero</th>
-              <th class="p-2 text-right">Acción</th>
-            </tr>
-          </thead>
-          <tbody id="tabla-produccion-cuadra">
-            <!-- Carga dinámica -->
-          </tbody>
-        </table>
+      <div class="bg-white p-4 rounded-xl shadow border">
+        <h2 class="text-base font-bold text-gray-800 mb-2">🏪 Pedidos Especiales y Mostrador</h2>
+        <div class="flex gap-2 mb-3">
+          <input type="text" id="nota-mostrador" placeholder="Ej: 2 Frolas membrillo, 3 docenas medialunas" class="border p-2 rounded w-full text-sm">
+          <button onclick="agregarNotaMostrador()" class="bg-amber-700 text-white font-bold px-4 rounded text-sm">Añadir</button>
+        </div>
+        <ul id="lista-notas-mostrador" class="list-disc pl-5 text-sm space-y-1 text-gray-700"></ul>
       </div>
     </section>
 
-    <!-- MÓDULO 3: CLIENTES Y CUENTA CORRIENTE -->
-    <section id="sec-clientes" class="space-y-6 hidden">
-      <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
-        <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-          <i class="fa-solid fa-user-plus text-amber-600"></i> Alta de Cliente de Reparto
-        </h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <input type="text" id="cli-nombre" placeholder="Nombre Fantasía / Nombre" class="p-2 border border-gray-300 rounded-lg text-sm">
-          <input type="text" id="cli-direccion" placeholder="Dirección / Localidad" class="p-2 border border-gray-300 rounded-lg text-sm">
-          <button onclick="agregarClienteReparto()" class="bg-amber-600 hover:bg-amber-700 text-white font-bold py-2 px-4 rounded-lg shadow">
-            Guardar Cliente
-          </button>
+    <!-- 3. MÓDULO CLIENTES Y CUENTA CORRIENTE -->
+    <section id="sec-clientes" class="hidden space-y-4">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-white p-4 rounded-xl shadow border md:col-span-1">
+          <h2 class="text-base font-bold text-gray-800 mb-3">Alta de Cliente</h2>
+          <div class="space-y-2 mb-3">
+            <input type="text" id="cli-nombre" placeholder="Nombre / Razón Social" class="border p-2 rounded w-full text-sm">
+            <input type="text" id="cli-cuit" placeholder="CUIT / DNI" class="border p-2 rounded w-full text-sm">
+            <input type="text" id="cli-direccion" placeholder="Dirección" class="border p-2 rounded w-full text-sm">
+            <input type="text" id="cli-telefono" placeholder="Teléfono / WhatsApp" class="border p-2 rounded w-full text-sm">
+          </div>
+          <button onclick="guardarCliente()" class="bg-amber-700 text-white font-bold px-4 py-2 rounded text-sm hover:bg-amber-800 w-full">Registrar Cliente</button>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl shadow border md:col-span-2">
+          <h2 class="text-base font-bold text-gray-800 mb-2">Saldos Consolidados en Cta. Cte.</h2>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs md:text-sm">
+              <thead>
+                <tr class="bg-gray-100 border-b">
+                  <th class="p-2">Cliente</th>
+                  <th class="p-2">Contacto</th>
+                  <th class="p-2">Saldo Deuda</th>
+                  <th class="p-2 text-center">Acción</th>
+                </tr>
+              </thead>
+              <tbody id="tabla-clientes"></tbody>
+            </table>
+          </div>
         </div>
       </div>
 
-      <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
-        <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-          <i class="fa-solid fa-address-book text-amber-600"></i> Clientes y Saldos de Cuenta Corriente
-        </h2>
-        <table class="w-full text-left text-sm">
-          <thead class="bg-gray-100 text-gray-700 border-b">
-            <tr>
-              <th class="p-2">Cliente</th>
-              <th class="p-2">Dirección</th>
-              <th class="p-2">Saldo Cta. Cte. Pendiente</th>
-              <th class="p-2 text-right">Acciones</th>
-            </tr>
-          </thead>
-          <tbody id="tabla-clientes-reparto">
-            <!-- Carga dinámica -->
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- MÓDULO 4: PROVEEDORES Y FACTURAS -->
-    <section id="sec-proveedores" class="space-y-6 hidden">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
-          <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-            <i class="fa-solid fa-truck-field text-amber-600"></i> Alta de Proveedor
-          </h2>
-          <div class="space-y-3">
-            <input type="text" id="pro-nombre" placeholder="Nombre / Razón Social" class="w-full p-2 border border-gray-300 rounded-lg text-sm">
-            <input type="text" id="pro-rubro" placeholder="Rubro (ej: Harinas, Margarinas)" class="w-full p-2 border border-gray-300 rounded-lg text-sm">
-            <button onclick="agregarProveedor()" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-2 rounded-lg shadow">
-              Registrar Proveedor
-            </button>
+      <div id="módulo-historial-cliente" class="bg-white p-4 rounded-xl shadow border border-amber-500 space-y-4 hidden">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 border-b pb-2">
+          <div>
+            <h2 id="historial-nombre-cliente" class="text-lg font-bold text-amber-900"></h2>
+            <p id="historial-contacto-cliente" class="text-xs text-gray-600"></p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="cerrarHistorialCliente()" class="bg-gray-300 text-gray-800 text-xs px-3 py-2 rounded font-bold">✕ Cerrar</button>
           </div>
         </div>
 
-        <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
-          <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-            <i class="fa-solid fa-file-invoice text-amber-600"></i> Registrar Compra / Factura
-          </h2>
-          <div class="space-y-3">
-            <select id="fac-proveedor" class="w-full p-2 border border-gray-300 rounded-lg text-sm">
-              <option value="">-- Seleccionar Proveedor --</option>
+        <div class="bg-amber-50 p-3 rounded-lg border border-amber-200">
+          <h3 class="text-xs font-bold text-amber-900 mb-2">💵 Registrar Entrega / Pago de Cliente</h3>
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
+            <input type="date" id="pago-fecha" class="border p-2 rounded text-xs bg-white">
+            <input type="number" id="pago-monto" placeholder="Monto abonado ($)" class="border p-2 rounded text-xs bg-white">
+            <select id="pago-medio" class="border p-2 rounded text-xs bg-white">
+              <option value="Efectivo">Efectivo</option>
+              <option value="Transferencia">Transferencia</option>
+              <option value="Mercado Pago">Mercado Pago</option>
+              <option value="Cheque">Cheque</option>
             </select>
-            <input type="text" id="fac-numero" placeholder="N° de Comprobante / Factura" class="w-full p-2 border border-gray-300 rounded-lg text-sm">
-            <input type="number" id="fac-monto" placeholder="Monto Total $" class="w-full p-2 border border-gray-300 rounded-lg text-sm">
-            <button onclick="agregarFacturaProveedor()" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-2 rounded-lg shadow">
-              Cargar Compra
-            </button>
+            <button onclick="registrarPagoCliente()" class="bg-green-700 text-white font-bold px-3 py-2 rounded text-xs hover:bg-green-800">Cargar Pago</button>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs md:text-sm">
+            <thead>
+              <tr class="bg-amber-100 border-b text-amber-900 font-bold">
+                <th class="p-2">Fecha</th>
+                <th class="p-2">Concepto / Detalle</th>
+                <th class="p-2 text-right">Débito</th>
+                <th class="p-2 text-right">Crédito</th>
+                <th class="p-2 text-right">Saldo Acumulado</th>
+              </tr>
+            </thead>
+            <tbody id="tabla-historial-cliente"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. MÓDULO PROVEEDORES Y FACTURACIÓN -->
+    <section id="sec-proveedores" class="hidden space-y-4">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-white p-4 rounded-xl shadow border md:col-span-1">
+          <h2 class="text-base font-bold text-gray-800 mb-3">Alta de Proveedor</h2>
+          <div class="space-y-2 mb-3">
+            <input type="text" id="prov-nombre" placeholder="Razón Social / Proveedor" class="border p-2 rounded w-full text-sm">
+            <input type="text" id="prov-cuit" placeholder="CUIT" class="border p-2 rounded w-full text-sm">
+            <input type="text" id="prov-telefono" placeholder="Teléfono" class="border p-2 rounded w-full text-sm">
+            <input type="text" id="prov-rubro" placeholder="Rubro (Harinas, Grasas, Insumos)" class="border p-2 rounded w-full text-sm">
+          </div>
+          <button onclick="guardarProveedor()" class="bg-amber-700 text-white font-bold px-4 py-2 rounded text-sm hover:bg-amber-800 w-full">Registrar Proveedor</button>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl shadow border md:col-span-2">
+          <h2 class="text-base font-bold text-gray-800 mb-2">Cta. Cte. con Proveedores</h2>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs md:text-sm">
+              <thead>
+                <tr class="bg-gray-100 border-b">
+                  <th class="p-2">Proveedor</th>
+                  <th class="p-2">Rubro / Tel</th>
+                  <th class="p-2">Saldo Deuda</th>
+                  <th class="p-2 text-center">Acción</th>
+                </tr>
+              </thead>
+              <tbody id="tabla-proveedores"></tbody>
+            </table>
           </div>
         </div>
       </div>
 
-      <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
-        <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-          <i class="fa-solid fa-receipt text-amber-600"></i> Historial de Compras e Insumos Cargados
-        </h2>
-        <table class="w-full text-left text-sm">
-          <thead class="bg-gray-100 text-gray-700 border-b">
-            <tr>
-              <th class="p-2">Fecha</th>
-              <th class="p-2">Proveedor</th>
-              <th class="p-2">N° Comprobante</th>
-              <th class="p-2">Monto Total</th>
-              <th class="p-2 text-right">Acciones</th>
-            </tr>
-          </thead>
-          <tbody id="tabla-facturas-proveedores">
-            <!-- Carga dinámica -->
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- MÓDULO 5: CONTROL DE STOCK -->
-    <section id="sec-stock" class="space-y-6 hidden">
-      <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
-        <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-          <i class="fa-solid fa-box-open text-amber-600"></i> Agregar / Modificar Insumo
-        </h2>
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <input type="text" id="stk-nombre" placeholder="Nombre Insumo (ej: Harina 0000)" class="p-2 border border-gray-300 rounded-lg text-sm">
-          <input type="number" id="stk-cantidad" placeholder="Cantidad Stock Actual" class="p-2 border border-gray-300 rounded-lg text-sm">
-          <input type="text" id="stk-unidad" placeholder="Unidad (kg, bolsas, litros)" class="p-2 border border-gray-300 rounded-lg text-sm">
-          <button onclick="agregarInsumoStock()" class="bg-amber-600 hover:bg-amber-700 text-white font-bold py-2 px-4 rounded-lg shadow">
-            Guardar Insumo
-          </button>
+      <div id="módulo-historial-proveedor" class="bg-white p-4 rounded-xl shadow border border-amber-500 space-y-4 hidden">
+        <div class="flex justify-between items-center border-b pb-2">
+          <h2 id="historial-nombre-proveedor" class="text-lg font-bold text-amber-900"></h2>
+          <button onclick="cerrarHistorialProveedor()" class="bg-gray-300 text-gray-800 text-xs px-3 py-2 rounded font-bold">✕ Cerrar</button>
         </div>
-      </div>
 
-      <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
-        <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-          <i class="fa-solid fa-warehouse text-amber-600"></i> Inventario de Materias Primas e Insumos
-        </h2>
-        <table class="w-full text-left text-sm">
-          <thead class="bg-gray-100 text-gray-700 border-b">
-            <tr>
-              <th class="p-2">Código ID</th>
-              <th class="p-2">Insumo</th>
-              <th class="p-2">Stock Disponible</th>
-              <th class="p-2">Unidad</th>
-              <th class="p-2 text-right">Acción</th>
-            </tr>
-          </thead>
-          <tbody id="tabla-insumos-stock">
-            <!-- Carga dinámica -->
-          </tbody>
-        </table>
-      </div>
-    </section>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="bg-amber-50 p-3 rounded-lg border border-amber-200 space-y-2">
+            <h3 class="text-xs font-bold text-amber-900">🧾 Cargar Factura de Compra</h3>
+            <div class="grid grid-cols-2 gap-2">
+              <input type="date" id="fact-fecha" class="border p-2 rounded text-xs bg-white">
+              <input type="text" id="fact-nro" placeholder="N° Factura (Ej: F-0001-123)" class="border p-2 rounded text-xs bg-white">
+            </div>
+            <div class="grid grid-cols-3 gap-1">
+              <select id="fact-insumo" class="border p-2 rounded text-xs bg-white col-span-1"></select>
+              <input type="number" id="fact-cant" placeholder="Cant." class="border p-2 rounded text-xs bg-white">
+              <input type="number" id="fact-precio" placeholder="Precio Un." class="border p-2 rounded text-xs bg-white">
+            </div>
+            <button onclick="cargarFacturaProveedor()" class="bg-amber-800 text-white font-bold px-3 py-2 rounded text-xs hover:bg-amber-900 w-full">Ingresar Factura y Actualizar Stock</button>
+          </div>
 
-    <!-- MÓDULO 6: CAJAS Y ARQUEOS -->
-    <section id="sec-cajas" class="space-y-6 hidden">
-      <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
-        <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-          <i class="fa-solid fa-cash-register text-amber-600"></i> Cierre y Arqueo de Caja Diario
-        </h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <select id="caj-local" class="p-2 border border-gray-300 rounded-lg text-sm">
-            <option value="Casa Central">La Casa del Pan (Central)</option>
-            <option value="Espiga de Oro">La Espiga de Oro</option>
-          </select>
-          <input type="number" id="caj-monto" placeholder="Monto Efectivo en Caja $" class="p-2 border border-gray-300 rounded-lg text-sm">
-          <button onclick="registrarCajaLocal()" class="bg-amber-600 hover:bg-amber-700 text-white font-bold py-2 px-4 rounded-lg shadow">
-            Registrar Cierre
-          </button>
+          <div class="bg-green-50 p-3 rounded-lg border border-green-200 space-y-2">
+            <h3 class="text-xs font-bold text-green-900">💸 Registrar Pago a Proveedor</h3>
+            <div class="grid grid-cols-2 gap-2">
+              <input type="date" id="pago-prov-fecha" class="border p-2 rounded text-xs bg-white">
+              <input type="number" id="pago-prov-monto" placeholder="Monto Abonado ($)" class="border p-2 rounded text-xs bg-white">
+            </div>
+            <select id="pago-prov-medio" class="border p-2 rounded text-xs bg-white w-full">
+              <option value="Efectivo">Efectivo</option>
+              <option value="Transferencia">Transferencia</option>
+              <option value="Cheque">Cheque</option>
+            </select>
+            <button onclick="registrarPagoProveedor()" class="bg-green-700 text-white font-bold px-3 py-2 rounded text-xs hover:bg-green-800 w-full">Registrar Pago</button>
+          </div>
         </div>
-      </div>
 
-      <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
-        <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-          <i class="fa-solid fa-vault text-amber-600"></i> Registros de Cajas
-        </h2>
-        <table class="w-full text-left text-sm">
-          <thead class="bg-gray-100 text-gray-700 border-b">
-            <tr>
-              <th class="p-2">Fecha</th>
-              <th class="p-2">Sucursal / Local</th>
-              <th class="p-2">Monto Declarado</th>
-              <th class="p-2 text-right">Acción</th>
-            </tr>
-          </thead>
-          <tbody id="tabla-cajas-locales">
-            <!-- Carga dinámica -->
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- MÓDULO 7: CATÁLOGO DESPACHO -->
-    <section id="sec-catalogo" class="space-y-6 hidden">
-      <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
-        <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-          <i class="fa-solid fa-store text-amber-600"></i> Precios y Productos Venta Mostrador
-        </h2>
-        <p class="text-sm text-gray-600 mb-4">Sección para consulta y actualización rápida de precios para las vendedoras de mostrador.</p>
-        <div id="contenedor-catalogo" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-          <!-- Carga dinámica de precios de mostrador -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs md:text-sm">
+            <thead>
+              <tr class="bg-amber-100 border-b text-amber-900 font-bold">
+                <th class="p-2">Fecha</th>
+                <th class="p-2">Detalle / N° Factura</th>
+                <th class="p-2 text-right">Facturado (Deuda)</th>
+                <th class="p-2 text-right">Pagado</th>
+                <th class="p-2 text-right">Saldo Deuda Acumulado</th>
+              </tr>
+            </thead>
+            <tbody id="tabla-historial-proveedor"></tbody>
+          </table>
         </div>
       </div>
     </section>
 
-    <!-- MÓDULO 8: CONFIGURACIÓN REPARTO -->
-    <section id="sec-catalogo-reparto" class="space-y-6 hidden">
-      <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
-        <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-          <i class="fa-solid fa-gears text-amber-600"></i> Precios y Presentaciones de Reparto
-        </h2>
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-          <input type="text" id="cfg-rep-nombre" placeholder="Nombre Panificado (ej: Pebete)" class="p-2 border border-gray-300 rounded-lg text-sm">
-          <input type="number" id="cfg-rep-unidades" placeholder="Unid. por Paquete" class="p-2 border border-gray-300 rounded-lg text-sm">
-          <input type="number" id="cfg-rep-menor" placeholder="Precio x Unid. (Menor)" class="p-2 border border-gray-300 rounded-lg text-sm">
-          <input type="number" id="cfg-rep-mayor" placeholder="Precio x Unid. (Mayor)" class="p-2 border border-gray-300 rounded-lg text-sm">
+    <!-- 5. MÓDULO CONTROL DE STOCK E INSUMOS -->
+    <section id="sec-stock" class="hidden space-y-4">
+      <div class="bg-white p-4 rounded-xl shadow border">
+        <h2 class="text-base font-bold text-gray-800 mb-3">➕ Alta / Configuración de Insumo o Materia Prima</h2>
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-2 mb-2">
+          <input type="text" id="ins-nombre" placeholder="Nombre (Ej: Harina 0000 50kg)" class="border p-2 rounded text-sm md:col-span-2">
+          <input type="number" id="ins-stock" placeholder="Stock Inicial" class="border p-2 rounded text-sm">
+          <input type="number" id="ins-minimo" placeholder="Stock Mínimo Alerta" class="border p-2 rounded text-sm">
+          <input type="text" id="ins-unidad" placeholder="Unidad (Kg, Bolsas, Unid)" class="border p-2 rounded text-sm">
         </div>
-        <button onclick="guardarConfigReparto()" class="bg-amber-600 hover:bg-amber-700 text-white font-bold py-2 px-4 rounded-lg shadow">
-          Guardar Panificado
-        </button>
+        <button onclick="guardarInsumo()" class="bg-amber-700 text-white font-bold px-4 py-2 rounded text-sm hover:bg-amber-800 w-full">Guardar Insumo</button>
       </div>
 
-      <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
-        <h2 class="text-lg font-bold text-gray-800 mb-4">Panificados de Reparto Registrados</h2>
-        <table class="w-full text-left text-sm">
-          <thead class="bg-gray-100 text-gray-700 border-b">
-            <tr>
-              <th class="p-2">Panificado</th>
-              <th class="p-2">Unid. x Paquete</th>
-              <th class="p-2">Precio x Unid. (Menor a 2 Paq)</th>
-              <th class="p-2">Precio x Unid. (Mayor o igual a 2 Paq)</th>
-              <th class="p-2 text-right">Acción</th>
-            </tr>
-          </thead>
-          <tbody id="tabla-config-reparto">
-            <!-- Carga dinámica -->
-          </tbody>
-        </table>
+      <div class="bg-white p-4 rounded-xl shadow border">
+        <h2 class="text-base font-bold text-gray-800 mb-2">📦 Monitor de Stock e Insumos</h2>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs md:text-sm">
+            <thead>
+              <tr class="bg-gray-100 border-b">
+                <th class="p-2">Insumo</th>
+                <th class="p-2">Stock Actual</th>
+                <th class="p-2">Stock Mínimo</th>
+                <th class="p-2 text-center">Estado Alerta</th>
+              </tr>
+            </thead>
+            <tbody id="tabla-stock-insumos"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. MÓDULO CAJAS INDEPENDIENTES Y CIERRE DIARIO -->
+    <section id="sec-caja" class="hidden space-y-4">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-white p-4 rounded-xl shadow border border-amber-300">
+          <h2 class="text-base font-bold text-amber-900 mb-2">🚚 Caja Reparto / Logística</h2>
+          <div class="space-y-2 text-xs md:text-sm">
+            <div class="flex justify-between"><span>Efectivo Cobrado:</span> <span id="caja-rep-efectivo" class="font-bold text-green-700">$0</span></div>
+            <div class="flex justify-between"><span>Transferencias:</span> <span id="caja-rep-transf" class="font-bold text-blue-700">$0</span></div>
+            <div class="flex justify-between border-t pt-1 font-bold"><span>Total Reparto:</span> <span id="caja-rep-total" class="text-amber-900">$0</span></div>
+          </div>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl shadow border">
+          <h2 class="text-base font-bold text-gray-800 mb-2">🏪 La Casa del Pan (Alem)</h2>
+          <div class="space-y-2 text-xs">
+            <div><label class="block text-gray-600">Efectivo Mostrador</label><input type="number" id="caja-alem-efectivo" value="0" class="border p-1 rounded w-full"></div>
+            <div><label class="block text-gray-600">Digital / Posnet</label><input type="number" id="caja-alem-digital" value="0" class="border p-1 rounded w-full"></div>
+          </div>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl shadow border">
+          <h2 class="text-base font-bold text-gray-800 mb-2">🏪 La Espiga de Oro</h2>
+          <div class="space-y-2 text-xs">
+            <div><label class="block text-gray-600">Efectivo Mostrador</label><input type="number" id="caja-espiga-efectivo" value="0" class="border p-1 rounded w-full"></div>
+            <div><label class="block text-gray-600">Digital / Posnet</label><input type="number" id="caja-espiga-digital" value="0" class="border p-1 rounded w-full"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-amber-900 text-white p-4 rounded-xl shadow flex justify-between items-center">
+        <div>
+          <h3 class="font-bold text-base">Cierre Operativo Diario</h3>
+          <p class="text-xs text-amber-200">Guarda el estado completo de hoy y deja el sistema listo para el siguiente día.</p>
+        </div>
+        <button onclick="guardarYReiniciarDia()" class="bg-green-600 hover:bg-green-700 text-white font-bold px-4 py-2 rounded text-sm shadow">💾 Guardar Cierre Diario</button>
+      </div>
+    </section>
+
+    <!-- 7. MÓDULO GESTIÓN DE CATÁLOGO DESPACHO Y PRODUCTOS PANIFICADOS -->
+    <section id="sec-precios" class="hidden space-y-6">
+      
+      <!-- SUB-SECCIÓN: PRODUCTOS PANIFICADOS (REPARTO Y CUADRA) -->
+      <div class="bg-amber-50 p-4 rounded-xl shadow border border-amber-300 space-y-4">
+        <h2 class="text-base font-bold text-amber-900">🍞 Productos Panificados (Unidades x Paquete y Precios)</h2>
+        
+        <div class="bg-white p-3 rounded-lg border border-amber-200 space-y-2">
+          <h3 class="text-xs font-bold text-gray-700">➕ Agregar Nuevo Panificado</h3>
+          <div class="grid grid-cols-1 md:grid-cols-5 gap-2">
+            <input type="text" id="nuevo-panificado-nombre" placeholder="Nombre (Ej: Pebete)" class="border p-2 rounded text-xs md:col-span-1">
+            <input type="number" id="nuevo-panificado-unidades" placeholder="Unidades x Paq (Ej: 24)" class="border p-2 rounded text-xs">
+            <input type="number" id="nuevo-panificado-menor" placeholder="Precio x Unid (1 Paq) ($)" class="border p-2 rounded text-xs">
+            <input type="number" id="nuevo-panificado-mayor" placeholder="Precio x Unid (2+ Paq) ($)" class="border p-2 rounded text-xs">
+            <button onclick="agregarNuevoPanificado()" class="bg-amber-800 text-white font-bold px-3 py-2 rounded text-xs hover:bg-amber-900">Guardar Panificado</button>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto bg-white rounded-lg border">
+          <table class="w-full text-left text-xs md:text-sm">
+            <thead>
+              <tr class="bg-amber-100 text-amber-950 border-b">
+                <th class="p-2">Panificado</th>
+                <th class="p-2">Unid. x Paquete</th>
+                <th class="p-2">Precio Minorista x Unid</th>
+                <th class="p-2">Precio Mayorista x Unid</th>
+                <th class="p-2 text-center">Acción</th>
+              </tr>
+            </thead>
+            <tbody id="tabla-panificados-precios"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SUB-SECCIÓN: CATÁLOGO DESPACHO (GENERAL) -->
+      <div class="bg-white p-4 rounded-xl shadow border space-y-4">
+        <h2 class="text-base font-bold text-gray-800">📋 Catálogo Despacho (Mostrador y Re-Venta)</h2>
+
+        <div class="p-3 bg-gray-50 rounded-lg border space-y-2">
+          <h3 class="text-xs font-bold text-gray-700">➕ Añadir Producto a Catálogo Despacho</h3>
+          <div class="grid grid-cols-1 md:grid-cols-5 gap-2">
+            <input type="text" id="nuevo-prod-nombre" placeholder="Nombre Producto" class="border p-2 rounded text-xs md:col-span-2">
+            <input type="number" id="nuevo-prod-mostrador" placeholder="Precio Mostrador ($)" class="border p-2 rounded text-xs">
+            <input type="number" id="nuevo-prod-reparto" placeholder="Precio Reparto ($)" class="border p-2 rounded text-xs">
+            <input type="number" id="nuevo-prod-unOcuarto" placeholder="Unidad o 1/4 ($)" class="border p-2 rounded text-xs">
+          </div>
+          <button onclick="agregarNuevoProducto()" class="bg-amber-700 text-white font-bold px-4 py-2 rounded text-xs hover:bg-amber-800 w-full">Guardar Producto en Catálogo Despacho</button>
+        </div>
+
+        <div>
+          <div class="flex justify-between items-center mb-3">
+            <h3 class="text-xs font-bold text-gray-600">Listado Catálogo Despacho</h3>
+            <input type="text" id="buscar-producto" onkeyup="filtrarTablaPrecios()" placeholder="🔍 Buscar producto..." class="border rounded p-1 text-xs w-48">
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs md:text-sm" id="tabla-catalogo-main">
+              <thead>
+                <tr class="bg-amber-100 text-amber-950 border-b">
+                  <th class="p-2">Producto / Nombre</th>
+                  <th class="p-2">Precio Mostrador ($)</th>
+                  <th class="p-2">Re-Venta / Reparto ($)</th>
+                  <th class="p-2">Unidad o 1/4 ($)</th>
+                  <th class="p-2 text-center">Acción</th>
+                </tr>
+              </thead>
+              <tbody id="tabla-catalogo-precios"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 8. MÓDULO ROLES Y USUARIOS DEL SISTEMA -->
+    <section id="sec-usuarios" class="hidden space-y-4">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-white p-4 rounded-xl shadow border md:col-span-1 space-y-3">
+          <h2 class="text-base font-bold text-gray-800 border-b pb-2">➕ Registrar Usuario</h2>
+          <div>
+            <label class="text-xs font-semibold text-gray-600 block mb-1">Nombre Completo / Usuario</label>
+            <input type="text" id="usr-nombre" placeholder="Ej: Marcos Lipera" class="border p-2 rounded w-full text-sm">
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-gray-600 block mb-1">Asignar Rol</label>
+            <select id="usr-rol" class="border p-2 rounded w-full text-sm font-medium bg-white">
+              <option value="admin">Administrador / Dueño (Acceso Total)</option>
+              <option value="mostrador">Encargado Mostrador / Caja</option>
+              <option value="repartidor">Repartidor / Logística</option>
+              <option value="produccion">Personal de Producción / Cuadra</option>
+            </select>
+          </div>
+          <button onclick="guardarUsuario()" class="bg-amber-700 text-white font-bold px-4 py-2 rounded text-sm hover:bg-amber-800 w-full shadow">Crear Usuario</button>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl shadow border md:col-span-2">
+          <h2 class="text-base font-bold text-gray-800 mb-3 border-b pb-2">🔐 Usuarios Registrados y Permisos</h2>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs md:text-sm">
+              <thead>
+                <tr class="bg-amber-100 text-amber-900 border-b">
+                  <th class="p-2">Usuario</th>
+                  <th class="p-2">Rol Asignado</th>
+                  <th class="p-2">Secciones Autorizadas</th>
+                  <th class="p-2 text-center">Acción</th>
+                </tr>
+              </thead>
+              <tbody id="tabla-usuarios"></tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </section>
 
   </main>
 
-  <!-- LÓGICA Y SCRIPTS DE CONTROL -->
   <script>
-    // Variables de Estado
-    let usuarioActual = '';
+    // Generador auxiliar de IDs Únicos
+    function generarID(prefijo = 'ID') {
+      return `${prefijo}-${Date.now().toString(36)}-${Math.random().toString(36).substr(2, 5)}`;
+    }
+
     let fechaActual = new Date().toISOString().split('T')[0];
 
-    // Al cargar la pantalla inicializar la fecha
-    document.addEventListener('DOMContentLoaded', () => {
-      document.getElementById('fecha-operativa').value = fechaActual;
-      // Inicializar stock base si está vacío
-      if (!window.insumosStock) window.insumosStock = {};
-      if (!window.panificadosReparto) window.panificadosReparto = {};
-    });
+    // DEFINICIÓN DE PERMISOS POR ROL
+    const PERMISOS_ROLES = {
+      admin: {
+        nombre: "Administrador",
+        pestanas: ['reparto', 'cuadra', 'clientes', 'proveedores', 'stock', 'caja', 'precios', 'usuarios']
+      },
+      mostrador: {
+        nombre: "Encargado Mostrador",
+        pestanas: ['reparto', 'cuadra', 'clientes', 'stock', 'caja']
+      },
+      repartidor: {
+        nombre: "Repartidor",
+        pestanas: ['reparto', 'cuadra', 'clientes']
+      },
+      produccion: {
+        nombre: "Producción / Cuadra",
+        pestanas: ['cuadra', 'stock']
+      }
+    };
+
+    window.LISTA_USUARIOS_BASE = {
+      "USR-1": { id: "USR-1", nombre: "Administrador General", rol: "admin", pin: "1234" },
+      "USR-2": { id: "USR-2", nombre: "Maira (Mostrador)", rol: "mostrador", pin: "1234" },
+      "USR-3": { id: "USR-3", nombre: "Chofer Reparto", rol: "repartidor", pin: "1234" },
+      "USR-4": { id: "USR-4", nombre: "Maestro Panadero", rol: "produccion", pin: "1234" }
+    };
+
+    window.LISTA_PANIFICADOS_REPARTO_BASE = {
+      "Hamburguesas x 5 (c/u)": { unidPorPaq: 5, menor: 600, mayor: 500 },
+      "Hamburguesas x 4 (c/u)": { unidPorPaq: 12, menor: 600, mayor: 500 },
+      "Hamburguesas x 3 (c/u)": { unidPorPaq: 6, menor: 850, mayor: 750 },
+      "Pebete": { unidPorPaq: 24, menor: 550, mayor: 500 },
+      "Pebete Largo": { unidPorPaq: 20, menor: 650, mayor: 550 },
+      "Super - Pebete": { unidPorPaq: 20, menor: 650, mayor: 550 },
+      "Media Luna grande": { unidPorPaq: 12, menor: 1500, mayor: 1500 }
+    };
+
+    window.LISTA_PRODUCTOS_BASE = {
+      "Pan (Kgs)": { mostrador: 2800, reparto: 2200, unOcuarto: 0 },
+      "Facturas (Docena)": { mostrador: 12000, reparto: 9300, unOcuarto: 1000 },
+      "Pasteles (Docena)": { mostrador: 14000, reparto: 10800, unOcuarto: 1200 },
+      "Pan Rallado (bolsa x 1 Kgs)": { mostrador: 2800, reparto: 1800, unOcuarto: 1400 },
+      "Pan de salvado": { mostrador: 3500, reparto: 2700, unOcuarto: 0 },
+      "Pan Integral": { mostrador: 4500, reparto: 3500, unOcuarto: 0 },
+      "Alfajor Grande": { mostrador: 13000, reparto: 10000, unOcuarto: 0 },
+      "Alfajor Havanna Grande": { mostrador: 13000, reparto: 10000, unOcuarto: 0 },
+      "Alfajor Marqués - Maicena (C/U)": { mostrador: 2500, reparto: 1950, unOcuarto: 0 },
+      "Alfajorcitos (Unidad)": { mostrador: 1300, reparto: 1000, unOcuarto: 0 },
+      "Bizcochito de grasa (Kgs)": { mostrador: 16500, reparto: 12700, unOcuarto: 4200 },
+      "Bizcochuelo (x Kgs)": { mostrador: 12650, reparto: 9800, unOcuarto: 0 },
+      "Budin clásico (vainilla / chocolate)": { mostrador: 5000, reparto: 3900, unOcuarto: 0 },
+      "Budin Chips / Frutas": { mostrador: 7000, reparto: 5400, unOcuarto: 0 },
+      "Cañoncitos DDL": { mostrador: 1500, reparto: 1200, unOcuarto: 0 },
+      "Chipá (Kgs)": { mostrador: 16500, reparto: 12700, unOcuarto: 4200 },
+      "Chips (Kgs)": { mostrador: 7700, reparto: 6000, unOcuarto: 0 },
+      "Copitos (Unidad)": { mostrador: 1500, reparto: 1200, unOcuarto: 0 },
+      "Cremona (Unidad)": { mostrador: 2800, reparto: 2200, unOcuarto: 0 },
+      "Cuadradito Coco (x Kgs)": { mostrador: 14000, reparto: 10800, unOcuarto: 3500 },
+      "Cuadradito Mil Hojas (x Kgs)": { mostrador: 11200, reparto: 8700, unOcuarto: 2800 },
+      "Cuadraditos Frola (x Kgs)": { mostrador: 8800, reparto: 6800, unOcuarto: 2200 },
+      "Cuadraditos de Ricota (x Kgs)": { mostrador: 14400, reparto: 11100, unOcuarto: 3600 },
+      "Escones / Polvorones": { mostrador: 13200, reparto: 10200, unOcuarto: 3300 },
+      "Figazza (Kgs)": { mostrador: 7700, reparto: 6000, unOcuarto: 0 },
+      "Havannet Chica (Unidad)": { mostrador: 2800, reparto: 2200, unOcuarto: 0 },
+      "Havannet Grande (Unidad)": { mostrador: 12000, reparto: 9300, unOcuarto: 0 },
+      "Grisinis": { mostrador: 2000, reparto: 1600, unOcuarto: 0 },
+      "Libritos / Cuernitos (Kgs)": { mostrador: 15000, reparto: 11600, unOcuarto: 3800 },
+      "Marineras COMUNES (250 grs) con o sin Sal": { mostrador: 2500, reparto: 1950, unOcuarto: 0 },
+      "Marineras Ovilladas (250 grs) con o sin Sal": { mostrador: 2800, reparto: 2200, unOcuarto: 0 },
+      "Masas Finas (Kgs)": { mostrador: 32000, reparto: 24700, unOcuarto: 8000 },
+      "Masas Secas (Kgs)": { mostrador: 32000, reparto: 24700, unOcuarto: 8000 },
+      "Masitas Pepitas DDL/ Membrillo (Kgs)": { mostrador: 13200, reparto: 10200, unOcuarto: 3300 },
+      "Masitas Pepitas Frutos Rojos (Kgs)": { mostrador: 14400, reparto: 11100, unOcuarto: 3600 },
+      "Masitas Pepitas bañadas en Chocolate (Kgs)": { mostrador: 14400, reparto: 11100, unOcuarto: 3600 },
+      "Masitas Secas Surtidas (Kgs)": { mostrador: 13200, reparto: 10200, unOcuarto: 3300 },
+      "Medialuna grande (Unidad)": { mostrador: 2000, reparto: 1600, unOcuarto: 0 },
+      "Palitos materos (Kgs)": { mostrador: 13200, reparto: 10200, unOcuarto: 3300 },
+      "Palmeras Grandes - Palmerones - (Kgs)": { mostrador: 13200, reparto: 10200, unOcuarto: 0 },
+      "Palmeritas (Kgs)": { mostrador: 13200, reparto: 10200, unOcuarto: 3300 },
+      "Pan de Viena - Bebete (Docena)": { mostrador: 8400, reparto: 6500, unOcuarto: 700 },
+      "Pan Dulce 600 Grs": { mostrador: 10000, reparto: 7700, unOcuarto: 0 },
+      "Pan Dulce Especial (Frutos Secos/ chips)": { mostrador: 12000, reparto: 9300, unOcuarto: 0 },
+      "Panetón": { mostrador: 14000, reparto: 10800, unOcuarto: 0 },
+      "Pan p Hamburguesas": { mostrador: 8400, reparto: 6500, unOcuarto: 700 },
+      "Pan p Panchos (bolsita x 6)": { mostrador: 3600, reparto: 2800, unOcuarto: 600 },
+      "Pasta-Frola Grande (Unidad)": { mostrador: 9000, reparto: 7000, unOcuarto: 0 },
+      "Pionono (x Kilo)": { mostrador: 14000, reparto: 10800, unOcuarto: 0 },
+      "Pizzetas (Unidad)": { mostrador: 800, reparto: 700, unOcuarto: 0 },
+      "Pre-pizzas (Unidad)": { mostrador: 2200, reparto: 1700, unOcuarto: 0 },
+      "Roscas de Reyes": { mostrador: 8800, reparto: 6800, unOcuarto: 0 },
+      "Saborizados de Milán/ Queso (Kgs)": { mostrador: 16600, reparto: 12800, unOcuarto: 4200 },
+      "Talitas 200 grs": { mostrador: 2400, reparto: 1900, unOcuarto: 0 },
+      "Tortita de Chicharrón (Kgs)": { mostrador: 16600, reparto: 12800, unOcuarto: 4200 },
+      "Torta de Coco": { mostrador: 14500, reparto: 11200, unOcuarto: 0 },
+      "Torta María": { mostrador: 12000, reparto: 9300, unOcuarto: 0 },
+      "Torta Mil Hojas (Unidad)": { mostrador: 12000, reparto: 9300, unOcuarto: 0 },
+      "Torta Princesa (Unidad)": { mostrador: 12000, reparto: 9300, unOcuarto: 0 },
+      "Torta Ricota": { mostrador: 16000, reparto: 12400, unOcuarto: 0 },
+      "Tortas / Postres (Kgs)": { mostrador: 32000, reparto: 24700, unOcuarto: 8000 },
+      "Tostadas (bolsas 250 gramos)": { mostrador: 1800, reparto: 1400, unOcuarto: 0 }
+    };
+
+    window.usuarios = window.LISTA_USUARIOS_BASE;
+    let idUsuarioActivo = "USR-1";
+
+    window.panificadosReparto = window.LISTA_PANIFICADOS_REPARTO_BASE;
+    window.productos = window.LISTA_PRODUCTOS_BASE;
+    window.clientes = {
+      "CLI-1": { id: "CLI-1", nombre: "Daxa", cuit: "30-71123456-8", direccion: "Chivilcoy", telefono: "2346551111" },
+      "CLI-2": { id: "CLI-2", nombre: "Mc Guru", cuit: "30-71987654-2", direccion: "Chivilcoy", telefono: "2346552222" }
+    };
+    window.proveedores = {
+      "PROV-1": { id: "PROV-1", nombre: "Molinos Cañuelas", cuit: "30-50011223-4", telefono: "011-44556677", rubro: "Harinas" }
+    };
+    window.insumosStock = {
+      "STK-1": { id: "STK-1", nombre: "Harina 0000 50kg", stock: 20, min: 5, unidad: "Bolsas" },
+      "STK-2": { id: "STK-2", nombre: "Grasa Vacuna 10kg", stock: 3, min: 5, unidad: "Cajas" }
+    };
+
+    window.facturasProveedores = {};
+    window.pagosProveedores = {};
+    window.pedidosReparto = {};
+    window.pagosClientes = {};
+    window.notasMostrador = {};
+
+    let clienteSeleccionadoFicha = null;
+    let proveedorSeleccionadoFicha = null;
+
+    document.getElementById('fecha-operativa').value = fechaActual;
+    document.getElementById('pago-fecha').value = fechaActual;
 
     function cambiarFechaOperativa() {
-      fechaActual = document.getElementById('fecha-operativa').value || new Date().toISOString().split('T')[0];
+      fechaActual = document.getElementById('fecha-operativa').value;
       renderizarTodo();
     }
 
-    function cambiarUsuario() {
-      usuarioActual = document.getElementById('select-usuario').value;
-      renderizarTodo();
-    }
-
-    function cambiarPestana(pestana) {
-      const secciones = ['reparto', 'cuadra', 'clientes', 'proveedores', 'stock', 'cajas', 'catalogo', 'catalogo-reparto'];
-      secciones.forEach(sec => {
-        const elSec = document.getElementById(`sec-${sec}`);
-        const elTab = document.getElementById(`tab-${sec}`);
-        if (elSec) elSec.classList.add('hidden');
-        if (elTab) {
-          elTab.classList.remove('bg-amber-900', 'text-white');
-          elTab.classList.add('hover:bg-amber-700');
-        }
+    function verPestaña(tab) {
+      ['reparto', 'cuadra', 'clientes', 'proveedores', 'stock', 'caja', 'precios', 'usuarios'].forEach(t => {
+        const sec = document.getElementById(`sec-${t}`);
+        const btn = document.getElementById(`btn-${t}`);
+        if (sec) sec.classList.add('hidden');
+        if (btn) btn.className = 'flex-1 py-3 px-2 text-center tab-inactive whitespace-nowrap';
       });
 
-      const secActiva = document.getElementById(`sec-${pestana}`);
-      const tabActivo = document.getElementById(`tab-${pestana}`);
+      const secActiva = document.getElementById(`sec-${tab}`);
+      const btnActivo = document.getElementById(`btn-${tab}`);
       if (secActiva) secActiva.classList.remove('hidden');
-      if (tabActivo) {
-        tabActivo.classList.add('bg-amber-900', 'text-white');
+      if (btnActivo) btnActivo.className = 'flex-1 py-3 px-2 text-center tab-active whitespace-nowrap';
+    }
+
+    // --- ROLES Y PERMISOS ---
+    function obtenerUsuarioActivo() {
+      return window.usuarios[idUsuarioActivo] || Object.values(window.usuarios)[0];
+    }
+
+    function aplicarPermisosRol() {
+      const uActivo = obtenerUsuarioActivo();
+      if (!uActivo) return;
+      const configRol = PERMISOS_ROLES[uActivo.rol] || PERMISOS_ROLES.admin;
+
+      document.getElementById('badge-rol-activo').innerText = configRol.nombre;
+
+      const todasPestanas = ['reparto', 'cuadra', 'clientes', 'proveedores', 'stock', 'caja', 'precios', 'usuarios'];
+      let pestañaVisibleEstablecida = false;
+
+      todasPestanas.forEach(tab => {
+        const btn = document.getElementById(`btn-${tab}`);
+        if (configRol.pestanas.includes(tab)) {
+          if (btn) btn.style.display = 'block';
+          if (!pestañaVisibleEstablecida) {
+            verPestaña(tab);
+            pestañaVisibleEstablecida = true;
+          }
+        } else {
+          if (btn) btn.style.display = 'none';
+        }
+      });
+    }
+
+    function cargarComboUsuariosHeader() {
+      const select = document.getElementById('select-usuario-activo');
+      if (!select) return;
+      select.innerHTML = '';
+      Object.values(window.usuarios).forEach(u => {
+        const selected = u.id === idUsuarioActivo ? 'selected' : '';
+        select.innerHTML += `<option value="${u.id}" ${selected}>${u.nombre}</option>`;
+      });
+    }
+
+    function guardarUsuario() {
+      const nombre = document.getElementById('usr-nombre').value.trim();
+      const rol = document.getElementById('usr-rol').value;
+      const pin = prompt("Ingrese un PIN numérico (mínimo 4 dígitos) para este usuario:", "1234");
+
+      if (!nombre || !pin) return alert("Ingrese un nombre y un PIN válido.");
+
+      const id = generarID('USR');
+      const usuarioNuevo = { id, nombre, rol, pin };
+
+      window.guardarRegistroFB('usuarios', id, usuarioNuevo);
+      document.getElementById('usr-nombre').value = '';
+      alert("Usuario creado con éxito.");
+    }
+
+    function cambiarUsuarioActivo() {
+      const select = document.getElementById('select-usuario-activo');
+      const idNuevo = select.value;
+      
+      const usuariosActuales = window.usuarios || window.LISTA_USUARIOS_BASE;
+      const usuarioSeleccionado = usuariosActuales[idNuevo];
+
+      if (!usuarioSeleccionado) return;
+
+      const pinReal = usuarioSeleccionado.pin || "1234";
+      const inputPin = prompt(`Ingrese el PIN de acceso para ${usuarioSeleccionado.nombre}:`);
+
+      if (inputPin === pinReal) {
+        idUsuarioActivo = idNuevo;
+        aplicarPermisosRol();
+      } else {
+        select.value = idUsuarioActivo;
+        alert("PIN incorrecto. Acceso denegado.");
       }
     }
 
-    function generarID(prefix = 'ID') {
-      return prefix + '-' + Math.random().toString(36).substr(2, 6).toUpperCase();
+    function eliminarUsuario(idUsr) {
+      if (Object.keys(window.usuarios).length <= 1) return alert("Debe permanecer al menos un usuario registrado.");
+      if (confirm("¿Está seguro de eliminar este usuario?")) {
+        window.eliminarRegistroFB('usuarios', idUsr);
+        if (idUsuarioActivo === idUsr) idUsuarioActivo = Object.keys(window.usuarios)[0];
+      }
     }
 
-    // --- CONFIGURACIÓN DE RECETAS Y DESCUENTO DE STOCK ---
-    window.RECETAS = {
-      "Pebete": [
-        { insumoId: "STK-1", cantidadPorUnidad: 0.05 },
-        { insumoId: "STK-2", cantidadPorUnidad: 0.01 }
-      ],
-      "Hamburguesas x 5 (c/u)": [
-        { insumoId: "STK-1", cantidadPorUnidad: 0.06 }
-      ]
-    };
+    function renderizarUsuarios() {
+      const tbody = document.getElementById('tabla-usuarios');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      Object.values(window.usuarios).forEach(u => {
+        const configRol = PERMISOS_ROLES[u.rol] || PERMISOS_ROLES.admin;
+        const listaPermisos = configRol.pestanas.map(p => p.toUpperCase()).join(', ');
 
-    function descontarMateriaPrimaPorPedido(nombreProducto, unidadesElaboradas) {
-      const ingredientes = window.RECETAS[nombreProducto];
-      if (!ingredientes || ingredientes.length === 0) return;
+        tbody.innerHTML += `
+          <tr class="border-b hover:bg-amber-50">
+            <td class="p-2 font-bold text-gray-800">${u.nombre}</td>
+            <td class="p-2"><span class="bg-amber-100 text-amber-900 font-bold px-2 py-1 rounded text-xs">${configRol.nombre}</span></td>
+            <td class="p-2 text-xs text-gray-600">${listaPermisos}</td>
+            <td class="p-2 text-center">
+              <button onclick="eliminarUsuario('${u.id}')" class="bg-red-600 text-white text-xs px-2 py-1 rounded font-semibold hover:bg-red-700">✕</button>
+            </td>
+          </tr>
+        `;
+      });
+    }
 
-      ingredientes.forEach(item => {
-        const insumo = window.insumosStock[item.insumoId];
-        if (insumo) {
-          const cantidadAConsumir = item.cantidadPorUnidad * unidadesElaboradas;
-          insumo.stock = Math.max(0, insumo.stock - cantidadAConsumir);
-          window.guardarRegistroFB('insumosStock', insumo.id, insumo);
-        }
+    // --- GESTIÓN DE PRODUCTOS PANIFICADOS Y CATÁLOGO DESPACHO ---
+    function cargarComboProductosReparto() {
+      const select = document.getElementById('rep-producto');
+      if (!select) return;
+      select.innerHTML = '';
+      for (const prodKey in window.panificadosReparto) {
+        const unid = window.panificadosReparto[prodKey].unidPorPaq || 1;
+        const selected = (prodKey === "Pebete") ? "selected" : "";
+        select.innerHTML += `<option value="${prodKey}" ${selected}>${prodKey} (${unid} u/paq)</option>`;
+      }
+    }
+
+    function agregarNuevoPanificado() {
+      const nombre = document.getElementById('nuevo-panificado-nombre').value.trim();
+      const unidPorPaq = parseInt(document.getElementById('nuevo-panificado-unidades').value) || 1;
+      const menor = parseFloat(document.getElementById('nuevo-panificado-menor').value) || 0;
+      const mayor = parseFloat(document.getElementById('nuevo-panificado-mayor').value) || 0;
+
+      if (!nombre) return alert("Ingrese el nombre del panificado.");
+
+      const clave = nombre.replace(/\//g, "-");
+      window.guardarRegistroFB('panificadosReparto', clave, { unidPorPaq, menor, mayor });
+
+      document.getElementById('nuevo-panificado-nombre').value = '';
+      document.getElementById('nuevo-panificado-unidades').value = '';
+      document.getElementById('nuevo-panificado-menor').value = '';
+      document.getElementById('nuevo-panificado-mayor').value = '';
+    }
+
+    function renderizarPanificadosPrecios() {
+      const tbody = document.getElementById('tabla-panificados-precios');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      for (const [prod, config] of Object.entries(window.panificadosReparto)) {
+        const prodEscapado = prod.replace(/'/g, "\\'");
+        const unid = config.unidPorPaq || 1;
+        tbody.innerHTML += `
+          <tr class="border-b hover:bg-amber-50">
+            <td class="p-2">
+              <input type="text" value="${prod}" id="pan-nombre-${prod}" class="border p-1 rounded text-xs font-bold text-amber-950 w-full">
+            </td>
+            <td class="p-2">
+              <input type="number" value="${unid}" id="pan-unid-${prod}" class="border p-1 rounded w-20 text-center text-xs font-bold bg-amber-50">
+            </td>
+            <td class="p-2">$<input type="number" value="${config.menor}" id="pan-menor-${prod}" class="border p-1 rounded w-20 text-center text-xs"></td>
+            <td class="p-2">$<input type="number" value="${config.mayor}" id="pan-mayor-${prod}" class="border p-1 rounded w-20 text-center text-xs font-bold text-amber-900"></td>
+            <td class="p-2 text-center space-x-1">
+              <button onclick="guardarCambiosPanificado('${prodEscapado}')" class="bg-amber-700 text-white text-xs px-2 py-1 rounded font-semibold hover:bg-amber-800">Guardar</button>
+              <button onclick="eliminarPanificado('${prodEscapado}')" class="bg-red-600 text-white text-xs px-2 py-1 rounded font-semibold hover:bg-red-700">✕</button>
+            </td>
+          </tr>
+        `;
+      }
+    }
+
+    function guardarCambiosPanificado(nombreOriginal) {
+      const nuevoNombre = document.getElementById(`pan-nombre-${nombreOriginal}`).value.trim();
+      const unidPorPaq = parseInt(document.getElementById(`pan-unid-${nombreOriginal}`).value) || 1;
+      const menor = parseFloat(document.getElementById(`pan-menor-${nombreOriginal}`).value) || 0;
+      const mayor = parseFloat(document.getElementById(`pan-mayor-${nombreOriginal}`).value) || 0;
+
+      if (!nuevoNombre) return alert("El producto panificado debe tener un nombre válido.");
+
+      const claveOriginal = nombreOriginal.replace(/\//g, "-");
+      const claveNueva = nuevoNombre.replace(/\//g, "-");
+
+      if (claveOriginal !== claveNueva) {
+        window.eliminarRegistroFB('panificadosReparto', claveOriginal);
+      }
+
+      window.guardarRegistroFB('panificadosReparto', claveNueva, { unidPorPaq, menor, mayor });
+      alert(`Panificado guardado: ${nuevoNombre}`);
+    }
+
+    function eliminarPanificado(nombreProd) {
+      if (confirm(`¿Está seguro de eliminar "${nombreProd}" de los Productos Panificados?`)) {
+        const clave = nombreProd.replace(/\//g, "-");
+        window.eliminarRegistroFB('panificadosReparto', clave);
+      }
+    }
+
+    function agregarNuevoProducto() {
+      const nombre = document.getElementById('nuevo-prod-nombre').value.trim();
+      const mostrador = parseFloat(document.getElementById('nuevo-prod-mostrador').value) || 0;
+      const reparto = parseFloat(document.getElementById('nuevo-prod-reparto').value) || 0;
+      const unOcuarto = parseFloat(document.getElementById('nuevo-prod-unOcuarto').value) || 0;
+
+      if (!nombre) return alert("Ingrese el nombre del producto.");
+
+      const clave = nombre.replace(/\//g, "-");
+      window.guardarRegistroFB('productos', clave, { mostrador, reparto, unOcuarto });
+
+      document.getElementById('nuevo-prod-nombre').value = '';
+      document.getElementById('nuevo-prod-mostrador').value = '';
+      document.getElementById('nuevo-prod-reparto').value = '';
+      document.getElementById('nuevo-prod-unOcuarto').value = '';
+    }
+
+    function renderizarCatalogoPrecios() {
+      const tbody = document.getElementById('tabla-catalogo-precios');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      for (const [prod, config] of Object.entries(window.productos)) {
+        const prodEscapado = prod.replace(/'/g, "\\'");
+        tbody.innerHTML += `
+          <tr class="border-b hover:bg-amber-50">
+            <td class="p-2">
+              <input type="text" value="${prod}" id="nombre-${prod}" class="border p-1 rounded text-xs font-semibold text-gray-900 w-full">
+            </td>
+            <td class="p-2">$<input type="number" value="${config.mostrador}" id="mostrador-${prod}" class="border p-1 rounded w-20 text-center text-xs"></td>
+            <td class="p-2">$<input type="number" value="${config.reparto}" id="reparto-${prod}" class="border p-1 rounded w-20 text-center text-xs font-bold text-green-800"></td>
+            <td class="p-2">$<input type="number" value="${config.unOcuarto}" id="unOcuarto-${prod}" class="border p-1 rounded w-20 text-center text-xs"></td>
+            <td class="p-2 text-center space-x-1">
+              <button onclick="guardarCambiosProducto('${prodEscapado}')" class="bg-amber-700 text-white text-xs px-2 py-1 rounded font-semibold hover:bg-amber-800">Guardar</button>
+              <button onclick="eliminarProducto('${prodEscapado}')" class="bg-red-600 text-white text-xs px-2 py-1 rounded font-semibold hover:bg-red-700">✕</button>
+            </td>
+          </tr>
+        `;
+      }
+    }
+
+    function guardarCambiosProducto(nombreOriginal) {
+      const nuevoNombre = document.getElementById(`nombre-${nombreOriginal}`).value.trim();
+      const mostrador = parseFloat(document.getElementById(`mostrador-${nombreOriginal}`).value) || 0;
+      const reparto = parseFloat(document.getElementById(`reparto-${nombreOriginal}`).value) || 0;
+      const unOcuarto = parseFloat(document.getElementById(`unOcuarto-${nombreOriginal}`).value) || 0;
+
+      if (!nuevoNombre) return alert("El producto debe tener un nombre válido.");
+
+      const claveOriginal = nombreOriginal.replace(/\//g, "-");
+      const claveNueva = nuevoNombre.replace(/\//g, "-");
+
+      if (claveOriginal !== claveNueva) {
+        window.eliminarRegistroFB('productos', claveOriginal);
+      }
+
+      window.guardarRegistroFB('productos', claveNueva, { mostrador, reparto, unOcuarto });
+      alert(`Producto de Catálogo Despacho guardado: ${nuevoNombre}`);
+    }
+
+    function eliminarProducto(nombreProd) {
+      if (confirm(`¿Está seguro de eliminar "${nombreProd}" del Catálogo Despacho?`)) {
+        const clave = nombreProd.replace(/\//g, "-");
+        window.eliminarRegistroFB('productos', clave);
+      }
+    }
+
+    function filtrarTablaPrecios() {
+      const input = document.getElementById('buscar-producto').value.toLowerCase();
+      const filas = document.querySelectorAll('#tabla-catalogo-precios tr');
+
+      filas.forEach(fila => {
+        const inputNombre = fila.querySelector('td input[type="text"]');
+        const texto = inputNombre ? inputNombre.value.toLowerCase() : '';
+        fila.style.display = texto.includes(input) ? '' : 'none';
       });
     }
 
     // --- REPARTO Y LOGÍSTICA ---
+    function cargarComboClientes() {
+      const combo = document.getElementById('rep-cliente');
+      if (!combo) return;
+      combo.innerHTML = '<option value="">-- Seleccionar Cliente --</option>';
+      Object.values(window.clientes).forEach(c => combo.innerHTML += `<option value="${c.nombre}">${c.nombre}</option>`);
+    }
+
     function agregarPedidoReparto() {
       const clienteNombre = document.getElementById('rep-cliente').value;
       const producto = document.getElementById('rep-producto').value;
@@ -548,10 +959,7 @@
         return alert("Seleccione cliente, panificado e ingrese una cantidad de unidades válida.");
       }
 
-      const configPanificado = (window.panificadosReparto && window.panificadosReparto[producto]) 
-        ? window.panificadosReparto[producto] 
-        : { unidPorPaq: 1, menor: 0, mayor: 0 };
-
+      const configPanificado = window.panificadosReparto[producto] || { unidPorPaq: 1, menor: 0, mayor: 0 };
       const unidPorPaq = configPanificado.unidPorPaq || 1;
       const paquetesEquivalentes = unidades / unidPorPaq;
       const precioUnitario = paquetesEquivalentes >= 2 ? configPanificado.mayor : configPanificado.menor;
@@ -572,387 +980,469 @@
         estado: 'Cta Cte'
       };
 
-      // Guardar pedido en Firebase
       window.guardarRegistroFB('pedidosReparto', id, pedidoNuevo);
-
-      // Descontar automáticamente del stock
-      descontarMateriaPrimaPorPedido(producto, unidades);
-
       document.getElementById('rep-cantidad').value = '';
     }
 
-    function cambiarEstadoPedido(id, nuevoEstado) {
-      const pedidos = window.pedidosReparto || [];
-      const ped = pedidos.find(p => p.id === id);
-      if (ped) {
-        ped.estado = nuevoEstado;
-        window.guardarRegistroFB('pedidosReparto', id, ped);
+    function registrarPagoPedido(idPedido, nuevoEstado) {
+      if (window.pedidosReparto[idPedido]) {
+        window.pedidosReparto[idPedido].estado = nuevoEstado;
+        window.guardarRegistroFB('pedidosReparto', idPedido, window.pedidosReparto[idPedido]);
       }
     }
 
-    function eliminarPedidoReparto(id) {
-      if (confirm("¿Desea eliminar este registro de pedido?")) {
-        window.eliminarRegistroFB('pedidosReparto', id);
+    function eliminarPedido(idPedido) {
+      window.eliminarRegistroFB('pedidosReparto', idPedido);
+    }
+
+    function renderizarReparto() {
+      document.getElementById('label-fecha-reparto').innerText = `Fecha: ${fechaActual}`;
+      const tbody = document.getElementById('tabla-reparto');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      const pedidosHoy = Object.values(window.pedidosReparto).filter(p => p.fecha === fechaActual);
+      let totMonto = 0, totEfectivo = 0, totTransf = 0, totCtaCte = 0;
+
+      pedidosHoy.forEach((p) => {
+        totMonto += p.total;
+        if (p.estado === 'Efectivo') totEfectivo += p.total;
+        if (p.estado === 'Transferencia' || p.estado === 'MP') totTransf += p.total;
+        if (p.estado === 'Cta Cte') totCtaCte += p.total;
+
+        let badgeEstado = p.estado === 'Cta Cte'
+          ? '<span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded font-bold">A Cta. Cte.</span>'
+          : `<span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded font-bold">Pagado (${p.estado})</span>`;
+
+        const paqFormateado = Number.isInteger(p.paquetesEquivalentes) ? p.paquetesEquivalentes : p.paquetesEquivalentes.toFixed(2);
+        const precioUnitarioVer = p.precioUnitario || 0;
+
+        tbody.innerHTML += `
+          <tr class="border-b">
+            <td class="p-2 font-bold">${p.cliente}</td>
+            <td class="p-2 font-semibold text-amber-950">${p.producto}</td>
+            <td class="p-2 font-bold">${p.unidades} u. <span class="text-xs text-gray-500">(${paqFormateado} paq)</span></td>
+            <td class="p-2 text-gray-700">$${precioUnitarioVer.toLocaleString('es-AR')}</td>
+            <td class="p-2 font-bold text-amber-900">$${p.total.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+            <td class="p-2">${badgeEstado}</td>
+            <td class="p-2 text-center space-x-1">
+              <select onchange="registrarPagoPedido('${p.id}', this.value)" class="border rounded text-xs p-1">
+                <option value="Cta Cte" ${p.estado === 'Cta Cte' ? 'selected' : ''}>A Cta Cte</option>
+                <option value="Efectivo" ${p.estado === 'Efectivo' ? 'selected' : ''}>Efectivo</option>
+                <option value="Transferencia" ${p.estado === 'Transferencia' ? 'selected' : ''}>Transferencia</option>
+                <option value="MP" ${p.estado === 'MP' ? 'selected' : ''}>Mercado Pago</option>
+              </select>
+              <button onclick="eliminarPedido('${p.id}')" class="text-red-600 font-bold px-1">✕</button>
+            </td>
+          </tr>
+        `;
+      });
+
+      document.getElementById('tot-rep-monto').innerText = `$${totMonto.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+      document.getElementById('tot-rep-efectivo').innerText = `$${totEfectivo.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+      document.getElementById('tot-rep-ctacte').innerText = `$${totCtaCte.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+
+      document.getElementById('caja-rep-efectivo').innerText = `$${totEfectivo.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+      document.getElementById('caja-rep-transf').innerText = `$${totTransf.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+      document.getElementById('caja-rep-total').innerText = `$${(totEfectivo + totTransf).toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+    }
+
+    // --- CUADRA / PRODUCCIÓN ---
+    function renderizarCuadra() {
+      document.getElementById('label-fecha-cuadra').innerText = `Producción para el día: ${fechaActual}`;
+      const contenedor = document.getElementById('totales-panificados');
+      if (!contenedor) return;
+      contenedor.innerHTML = '';
+
+      const pedidosHoy = Object.values(window.pedidosReparto).filter(p => p.fecha === fechaActual);
+      const totalesUnidades = {};
+
+      pedidosHoy.forEach(p => { 
+        totalesUnidades[p.producto] = (totalesUnidades[p.producto] || 0) + p.unidades; 
+      });
+
+      if (Object.keys(totalesUnidades).length === 0) {
+        contenedor.innerHTML = '<p class="text-gray-400 italic">No hay pedidos de productos panificados cargados para esta fecha.</p>';
+        return;
+      }
+
+      for (const [prod, totalUnid] of Object.entries(totalesUnidades)) {
+        const configPan = window.panificadosReparto[prod] || { unidPorPaq: 1 };
+        const paqEquiv = totalUnid / (configPan.unidPorPaq || 1);
+        const paqFormateado = Number.isInteger(paqEquiv) ? paqEquiv : paqEquiv.toFixed(1);
+
+        contenedor.innerHTML += `
+          <div class="flex justify-between items-center p-3 bg-amber-50 rounded-lg border border-amber-300">
+            <div>
+              <span class="font-bold text-gray-800 text-base block">${prod}</span>
+              <span class="text-xs text-amber-800 font-semibold">Equivalente a ${paqFormateado} paquetes (${configPan.unidPorPaq || 1} u/paq)</span>
+            </div>
+            <span class="font-black text-amber-900 text-2xl">${totalUnid} <span class="text-xs font-normal text-amber-700">unidades</span></span>
+          </div>
+        `;
       }
     }
 
     // --- CLIENTES ---
-    function agregarClienteReparto() {
-      const nombre = document.getElementById('cli-nombre').value;
-      const direccion = document.getElementById('cli-direccion').value;
+    function guardarCliente() {
+      const nombre = document.getElementById('cli-nombre').value.trim();
+      const cuit = document.getElementById('cli-cuit').value.trim() || 'S/D';
+      const direccion = document.getElementById('cli-direccion').value.trim() || 'Chivilcoy';
+      const telefono = document.getElementById('cli-telefono').value.trim() || '';
 
       if (!nombre) return alert("Ingrese el nombre del cliente.");
 
       const id = generarID('CLI');
-      const nuevoCliente = { id, nombre, direccion, saldo: 0 };
-      window.guardarRegistroFB('clientesReparto', id, nuevoCliente);
+      window.guardarRegistroFB('clientes', id, { id, nombre, cuit, direccion, telefono });
 
       document.getElementById('cli-nombre').value = '';
+      document.getElementById('cli-cuit').value = '';
       document.getElementById('cli-direccion').value = '';
+      document.getElementById('cli-telefono').value = '';
     }
 
-    function eliminarClienteReparto(id) {
-      if (confirm("¿Desea eliminar este cliente?")) {
-        window.eliminarRegistroFB('clientesReparto', id);
-      }
+    function calcularSaldoCliente(nombreCliente) {
+      const totalPedidos = Object.values(window.pedidosReparto)
+        .filter(p => p.cliente === nombreCliente && p.estado === 'Cta Cte')
+        .reduce((acc, curr) => acc + curr.total, 0);
+
+      const totalPagos = Object.values(window.pagosClientes)
+        .filter(p => p.cliente === nombreCliente)
+        .reduce((acc, curr) => acc + curr.monto, 0);
+
+      return totalPedidos - totalPagos;
     }
 
-    // --- CUADRA DE PRODUCCIÓN ---
-    function agregarProduccionCuadra() {
-      const producto = document.getElementById('cua-producto').value;
-      const cantidad = parseFloat(document.getElementById('cua-cantidad').value);
-      const responsable = document.getElementById('cua-responsable').value;
+    function renderizarClientes() {
+      const tbody = document.getElementById('tabla-clientes');
+      if (!tbody) return;
+      tbody.innerHTML = '';
 
-      if (!producto || isNaN(cantidad) || cantidad <= 0) {
-        return alert("Ingrese un producto y cantidad válida.");
-      }
-
-      const id = generarID('CUA');
-      const nuevaElaboracion = {
-        id,
-        fecha: fechaActual,
-        hora: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        producto,
-        cantidad,
-        responsable: responsable || 'Cuadra'
-      };
-
-      window.guardarRegistroFB('produccionCuadra', id, nuevaElaboracion);
-
-      document.getElementById('cua-producto').value = '';
-      document.getElementById('cua-cantidad').value = '';
-      document.getElementById('cua-responsable').value = '';
+      Object.values(window.clientes).forEach(c => {
+        const saldoDeuda = calcularSaldoCliente(c.nombre);
+        tbody.innerHTML += `
+          <tr class="border-b">
+            <td class="p-2 font-bold text-gray-800">${c.nombre}</td>
+            <td class="p-2 text-gray-600">${c.direccion} (${c.telefono || 'Sin Tel.'})</td>
+            <td class="p-2 font-bold ${saldoDeuda > 0 ? 'text-red-600' : 'text-green-700'}">$${saldoDeuda.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+            <td class="p-2 text-center">
+              <button onclick="verHistorialCliente('${c.nombre}')" class="bg-amber-700 text-white text-xs px-2 py-1 rounded font-semibold hover:bg-amber-800">Ver / Cobrar</button>
+            </td>
+          </tr>
+        `;
+      });
     }
 
-    function eliminarProduccionCuadra(id) {
-      if (confirm("¿Desea borrar este registro de producción?")) {
-        window.eliminarRegistroFB('produccionCuadra', id);
-      }
+    function verHistorialCliente(nombreCliente) {
+      clienteSeleccionadoFicha = Object.values(window.clientes).find(c => c.nombre === nombreCliente);
+      if (!clienteSeleccionadoFicha) return;
+
+      document.getElementById('módulo-historial-cliente').classList.remove('hidden');
+      document.getElementById('historial-nombre-cliente').innerText = `Cuenta Corriente - ${nombreCliente}`;
+      document.getElementById('historial-contacto-cliente').innerText = `CUIT: ${clienteSeleccionadoFicha.cuit} | Dirección: ${clienteSeleccionadoFicha.direccion} | Tel: ${clienteSeleccionadoFicha.telefono || 'S/D'}`;
+
+      const tbody = document.getElementById('tabla-historial-cliente');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      const pedidos = Object.values(window.pedidosReparto)
+        .filter(p => p.cliente === nombreCliente && p.estado === 'Cta Cte')
+        .map(p => ({
+          fecha: p.fecha, concepto: `Entrega: ${p.producto} (${p.unidades} u.)`, debito: p.total, credito: 0
+        }));
+
+      const pagos = Object.values(window.pagosClientes)
+        .filter(p => p.cliente === nombreCliente)
+        .map(p => ({
+          fecha: p.fecha, concepto: `Pago: (${p.medio})`, debito: 0, credito: p.monto
+        }));
+
+      const cronologia = [...pedidos, ...pagos].sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+
+      let saldoAcumulado = 0;
+      cronologia.forEach(item => {
+        saldoAcumulado += (item.debito - item.credito);
+        tbody.innerHTML += `
+          <tr class="border-b text-xs">
+            <td class="p-2">${item.fecha}</td>
+            <td class="p-2 font-medium">${item.concepto}</td>
+            <td class="p-2 text-right text-red-600 font-bold">${item.debito > 0 ? '$' + item.debito.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '-'}</td>
+            <td class="p-2 text-right text-green-700 font-bold">${item.credito > 0 ? '$' + item.credito.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '-'}</td>
+            <td class="p-2 text-right font-black ${saldoAcumulado > 0 ? 'text-red-700' : 'text-green-800'}">$${saldoAcumulado.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+          </tr>
+        `;
+      });
     }
 
-    // --- PROVEEDORES Y COMPRAS ---
-    function agregarProveedor() {
-      const nombre = document.getElementById('pro-nombre').value;
-      const rubro = document.getElementById('pro-rubro').value;
+    function registrarPagoCliente() {
+      if (!clienteSeleccionadoFicha) return;
+      const fecha = document.getElementById('pago-fecha').value;
+      const monto = parseFloat(document.getElementById('pago-monto').value);
+      const medio = document.getElementById('pago-medio').value;
 
-      if (!nombre) return alert("Ingrese el nombre del proveedor.");
+      if (isNaN(monto) || monto <= 0) return alert("Ingrese un monto válido.");
+
+      const id = generarID('PAG-CLI');
+      window.guardarRegistroFB('pagosClientes', id, { id, cliente: clienteSeleccionadoFicha.nombre, fecha, monto, medio });
+
+      document.getElementById('pago-monto').value = '';
+      verHistorialCliente(clienteSeleccionadoFicha.nombre);
+    }
+
+    function cerrarHistorialCliente() {
+      document.getElementById('módulo-historial-cliente').classList.add('hidden');
+      clienteSeleccionadoFicha = null;
+    }
+
+    // --- PROVEEDORES ---
+    function guardarProveedor() {
+      const nombre = document.getElementById('prov-nombre').value.trim();
+      const cuit = document.getElementById('prov-cuit').value.trim() || 'S/D';
+      const telefono = document.getElementById('prov-telefono').value.trim() || 'S/D';
+      const rubro = document.getElementById('prov-rubro').value.trim() || 'Insumos';
+
+      if (!nombre) return alert("Ingrese Razón Social del proveedor.");
 
       const id = generarID('PROV');
-      const proveedor = { id, nombre, rubro };
+      window.guardarRegistroFB('proveedores', id, { id, nombre, cuit, telefono, rubro });
 
-      window.guardarRegistroFB('proveedores', id, proveedor);
-
-      document.getElementById('pro-nombre').value = '';
-      document.getElementById('pro-rubro').value = '';
+      document.getElementById('prov-nombre').value = '';
+      document.getElementById('prov-cuit').value = '';
+      document.getElementById('prov-telefono').value = '';
+      document.getElementById('prov-rubro').value = '';
     }
 
-    function agregarFacturaProveedor() {
-      const proveedor = document.getElementById('fac-proveedor').value;
-      const numero = document.getElementById('fac-numero').value;
-      const monto = parseFloat(document.getElementById('fac-monto').value);
+    function calcularSaldoProveedor(nombreProv) {
+      const totFacturas = Object.values(window.facturasProveedores)
+        .filter(f => f.proveedor === nombreProv)
+        .reduce((acc, curr) => acc + curr.total, 0);
 
-      if (!proveedor || !numero || isNaN(monto)) {
-        return alert("Complete todos los campos de la compra.");
-      }
+      const totPagos = Object.values(window.pagosProveedores)
+        .filter(p => p.proveedor === nombreProv)
+        .reduce((acc, curr) => acc + curr.monto, 0);
 
-      const id = generarID('FAC');
-      const factura = {
-        id,
-        fecha: fechaActual,
-        proveedor,
-        numero,
-        monto
-      };
-
-      window.guardarRegistroFB('facturasProveedores', id, factura);
-
-      document.getElementById('fac-numero').value = '';
-      document.getElementById('fac-monto').value = '';
+      return totFacturas - totPagos;
     }
 
-    function eliminarFacturaProveedor(id) {
-      if (confirm("¿Eliminar este comprobante?")) {
-        window.eliminarRegistroFB('facturasProveedores', id);
-      }
+    function renderizarProveedores() {
+      const tbody = document.getElementById('tabla-proveedores');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      Object.values(window.proveedores).forEach(p => {
+        const saldoDeuda = calcularSaldoProveedor(p.nombre);
+        tbody.innerHTML += `
+          <tr class="border-b">
+            <td class="p-2 font-bold text-gray-800">${p.nombre}</td>
+            <td class="p-2 text-gray-600">${p.rubro} (${p.telefono})</td>
+            <td class="p-2 font-bold ${saldoDeuda > 0 ? 'text-red-600' : 'text-green-700'}">$${saldoDeuda.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+            <td class="p-2 text-center">
+              <button onclick="verHistorialProveedor('${p.nombre}')" class="bg-amber-700 text-white text-xs px-2 py-1 rounded font-semibold hover:bg-amber-800">Ver / Facturas</button>
+            </td>
+          </tr>
+        `;
+      });
     }
 
-    // --- CONTROL DE STOCK ---
-    function agregarInsumoStock() {
-      const nombre = document.getElementById('stk-nombre').value;
-      const cantidad = parseFloat(document.getElementById('stk-cantidad').value);
-      const unidad = document.getElementById('stk-unidad').value || 'unidades';
+    function verHistorialProveedor(nombreProv) {
+      proveedorSeleccionadoFicha = Object.values(window.proveedores).find(p => p.nombre === nombreProv);
+      if (!proveedorSeleccionadoFicha) return;
 
-      if (!nombre || isNaN(cantidad)) {
-        return alert("Complete el nombre e ingrese un valor de stock válido.");
+      document.getElementById('módulo-historial-proveedor').classList.remove('hidden');
+      document.getElementById('historial-nombre-proveedor').innerText = `Cta. Cte. Proveedor - ${nombreProv}`;
+
+      const combo = document.getElementById('fact-insumo');
+      combo.innerHTML = '<option value="">-- Insumo --</option>';
+      Object.values(window.insumosStock).forEach(i => combo.innerHTML += `<option value="${i.nombre}">${i.nombre}</option>`);
+
+      document.getElementById('fact-fecha').value = fechaActual;
+      document.getElementById('pago-prov-fecha').value = fechaActual;
+
+      renderizarTablaHistorialProveedor();
+    }
+
+    function renderizarTablaHistorialProveedor() {
+      if (!proveedorSeleccionadoFicha) return;
+      const nombreProv = proveedorSeleccionadoFicha.nombre;
+      const tbody = document.getElementById('tabla-historial-proveedor');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      const facturas = Object.values(window.facturasProveedores)
+        .filter(f => f.proveedor === nombreProv)
+        .map(f => ({
+          fecha: f.fecha, concepto: `Factura ${f.nro}: ${f.insumo} (${f.cant} u.)`, debito: f.total, credito: 0
+        }));
+
+      const pagos = Object.values(window.pagosProveedores)
+        .filter(p => p.proveedor === nombreProv)
+        .map(p => ({
+          fecha: p.fecha, concepto: `Pago (${p.medio})`, debito: 0, credito: p.monto
+        }));
+
+      const cronologia = [...facturas, ...pagos].sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+
+      let saldoAcumulado = 0;
+      cronologia.forEach(item => {
+        saldoAcumulado += (item.debito - item.credito);
+        tbody.innerHTML += `
+          <tr class="border-b text-xs">
+            <td class="p-2">${item.fecha}</td>
+            <td class="p-2 font-medium">${item.concepto}</td>
+            <td class="p-2 text-right text-red-600 font-bold">${item.debito > 0 ? '$' + item.debito.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '-'}</td>
+            <td class="p-2 text-right text-green-700 font-bold">${item.credito > 0 ? '$' + item.credito.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '-'}</td>
+            <td class="p-2 text-right font-black ${saldoAcumulado > 0 ? 'text-red-700' : 'text-green-800'}">$${saldoAcumulado.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+          </tr>
+        `;
+      });
+    }
+
+    function cargarFacturaProveedor() {
+      if (!proveedorSeleccionadoFicha) return;
+      const fecha = document.getElementById('fact-fecha').value;
+      const nro = document.getElementById('fact-nro').value.trim();
+      const insumo = document.getElementById('fact-insumo').value;
+      const cant = parseFloat(document.getElementById('fact-cant').value);
+      const precio = parseFloat(document.getElementById('fact-precio').value);
+
+      if (!nro || !insumo || isNaN(cant) || cant <= 0 || isNaN(precio) || precio <= 0) return alert("Complete los datos de la factura.");
+
+      const total = cant * precio;
+      const idFact = generarID('FAC');
+
+      window.guardarRegistroFB('facturasProveedores', idFact, {
+        id: idFact, proveedor: proveedorSeleccionadoFicha.nombre, fecha, nro, insumo, cant, precio, total
+      });
+
+      const insObj = Object.values(window.insumosStock).find(i => i.nombre === insumo);
+      if (insObj) {
+        insObj.stock += cant;
+        window.guardarRegistroFB('insumosStock', insObj.id, insObj);
       }
+
+      document.getElementById('fact-nro').value = '';
+      document.getElementById('fact-cant').value = '';
+      document.getElementById('fact-precio').value = '';
+
+      renderizarTablaHistorialProveedor();
+    }
+
+    function registrarPagoProveedor() {
+      if (!proveedorSeleccionadoFicha) return;
+      const fecha = document.getElementById('pago-prov-fecha').value;
+      const monto = parseFloat(document.getElementById('pago-prov-monto').value);
+      const medio = document.getElementById('pago-prov-medio').value;
+
+      if (isNaN(monto) || monto <= 0) return alert("Ingrese un monto válido.");
+
+      const idPago = generarID('PAG-PROV');
+      window.guardarRegistroFB('pagosProveedores', idPago, {
+        id: idPago, proveedor: proveedorSeleccionadoFicha.nombre, fecha, monto, medio
+      });
+
+      document.getElementById('pago-prov-monto').value = '';
+      renderizarTablaHistorialProveedor();
+    }
+
+    function cerrarHistorialProveedor() {
+      document.getElementById('módulo-historial-proveedor').classList.add('hidden');
+      proveedorSeleccionadoFicha = null;
+    }
+
+    // --- STOCK ---
+    function guardarInsumo() {
+      const nombre = document.getElementById('ins-nombre').value.trim();
+      const stock = parseFloat(document.getElementById('ins-stock').value);
+      const min = parseFloat(document.getElementById('ins-minimo').value);
+      const unidad = document.getElementById('ins-unidad').value.trim() || 'Unid';
+
+      if (!nombre || isNaN(stock) || isNaN(min)) return alert("Complete todos los datos del insumo.");
 
       const id = generarID('STK');
-      const insumo = { id, nombre, stock: cantidad, unidad };
+      window.guardarRegistroFB('insumosStock', id, { id, nombre, stock, min, unidad });
 
-      window.guardarRegistroFB('insumosStock', id, insumo);
-
-      document.getElementById('stk-nombre').value = '';
-      document.getElementById('stk-cantidad').value = '';
-      document.getElementById('stk-unidad').value = '';
+      document.getElementById('ins-nombre').value = '';
+      document.getElementById('ins-stock').value = '';
+      document.getElementById('ins-minimo').value = '';
+      document.getElementById('ins-unidad').value = '';
     }
 
-    function eliminarInsumoStock(id) {
-      if (confirm("¿Eliminar este insumo del inventario?")) {
-        window.eliminarRegistroFB('insumosStock', id);
-      }
-    }
+    function renderizarStock() {
+      const tbody = document.getElementById('tabla-stock-insumos');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      Object.values(window.insumosStock).forEach(i => {
+        let badgeStock = i.stock <= i.min
+          ? `<span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded font-bold">⚠️ Reponer (${i.stock} ${i.unidad})</span>`
+          : `<span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded font-bold">OK (${i.stock} ${i.unidad})</span>`;
 
-    // --- CAJAS LOCALES ---
-    function registrarCajaLocal() {
-      const local = document.getElementById('caj-local').value;
-      const monto = parseFloat(document.getElementById('caj-monto').value);
-
-      if (isNaN(monto)) return alert("Ingrese un monto de caja válido.");
-
-      const id = generarID('CAJ');
-      const caja = { id, fecha: fechaActual, local, monto };
-
-      window.guardarRegistroFB('cajasLocales', id, caja);
-      document.getElementById('caj-monto').value = '';
-    }
-
-    function eliminarCajaLocal(id) {
-      if (confirm("¿Borrar este arqueo de caja?")) {
-        window.eliminarRegistroFB('cajasLocales', id);
-      }
-    }
-
-    // --- CONFIGURACIÓN PRODUCTOS DE REPARTO ---
-    function guardarConfigReparto() {
-      const nombre = document.getElementById('cfg-rep-nombre').value;
-      const unidPorPaq = parseInt(document.getElementById('cfg-rep-unidades').value, 10) || 1;
-      const menor = parseFloat(document.getElementById('cfg-rep-menor').value) || 0;
-      const mayor = parseFloat(document.getElementById('cfg-rep-mayor').value) || 0;
-
-      if (!nombre) return alert("Ingrese el nombre del panificado.");
-
-      const config = { nombre, unidPorPaq, menor, mayor };
-
-      window.guardarRegistroFB('panificadosReparto', nombre, config);
-
-      document.getElementById('cfg-rep-nombre').value = '';
-      document.getElementById('cfg-rep-unidades').value = '';
-      document.getElementById('cfg-rep-menor').value = '';
-      document.getElementById('cfg-rep-mayor').value = '';
-    }
-
-    function eliminarConfigReparto(key) {
-      if (confirm("¿Borrar esta configuración de panificado?")) {
-        window.eliminarRegistroFB('panificadosReparto', key);
-      }
-    }
-
-    // --- RENDERIZADO GENERAL Y VISTAS ---
-    window.renderizarTodo = function() {
-      // 1. Cargar desplegables de Clientes en Reparto
-      const selectCliRep = document.getElementById('rep-cliente');
-      const clientes = window.clientesReparto || [];
-      if (selectCliRep) {
-        selectCliRep.innerHTML = '<option value="">-- Seleccionar Cliente --</option>' +
-          clientes.map(c => `<option value="${c.nombre}">${c.nombre}</option>`).join('');
-      }
-
-      // 2. Cargar desplegable de Productos Reparto
-      const selectProdRep = document.getElementById('rep-producto');
-      const panificados = window.panificadosReparto || {};
-      if (selectProdRep) {
-        selectProdRep.innerHTML = '<option value="">-- Seleccionar Panificado --</option>' +
-          Object.keys(panificados).map(p => `<option value="${p}">${p}</option>`).join('');
-      }
-
-      // 3. Cargar desplegable de Proveedores
-      const selectProv = document.getElementById('fac-proveedor');
-      const proveedores = window.proveedores || [];
-      if (selectProv) {
-        selectProv.innerHTML = '<option value="">-- Seleccionar Proveedor --</option>' +
-          proveedores.map(p => `<option value="${p.nombre}">${p.nombre}</option>`).join('');
-      }
-
-      // 4. Tabla Reparto
-      const tablaRep = document.getElementById('tabla-pedidos-reparto');
-      const pedidos = window.pedidosReparto || [];
-      const pedidosHoy = pedidos.filter(p => p.fecha === fechaActual);
-
-      let totMonto = 0, totEfectivo = 0, totCtaCte = 0;
-
-      if (tablaRep) {
-        tablaRep.innerHTML = pedidosHoy.map(p => {
-          totMonto += p.total || 0;
-          if (p.estado === 'Efectivo') totEfectivo += p.total || 0;
-          if (p.estado === 'Cta Cte') totCtaCte += p.total || 0;
-
-          return `
-            <tr class="border-b hover:bg-amber-50/50">
-              <td class="p-2 font-semibold text-gray-800">${p.cliente}</td>
-              <td class="p-2">${p.producto}</td>
-              <td class="p-2">${p.unidades} unid. (${(p.paquetesEquivalentes || 0).toFixed(1)} paq)</td>
-              <td class="p-2">$${p.precioUnitario}</td>
-              <td class="p-2 font-bold text-amber-900">$${p.total}</td>
-              <td class="p-2">
-                <select onchange="cambiarEstadoPedido('${p.id}', this.value)" class="text-xs p-1 rounded border border-gray-300 font-semibold">
-                  <option value="Cta Cte" ${p.estado === 'Cta Cte' ? 'selected' : ''}>Cta Cte</option>
-                  <option value="Efectivo" ${p.estado === 'Efectivo' ? 'selected' : ''}>Efectivo</option>
-                  <option value="MercadoPago" ${p.estado === 'MercadoPago' ? 'selected' : ''}>MercadoPago</option>
-                </select>
-              </td>
-              <td class="p-2 text-right no-print">
-                <button onclick="eliminarPedidoReparto('${p.id}')" class="text-red-500 hover:text-red-700 px-2 py-1">
-                  <i class="fa-solid fa-trash"></i>
-                </button>
-              </td>
-            </tr>
-          `;
-        }).join('');
-
-        document.getElementById('tot-rep-monto').innerText = `$${totMonto}`;
-        document.getElementById('tot-rep-efectivo').innerText = `$${totEfectivo}`;
-        document.getElementById('tot-rep-ctacte').innerText = `$${totCtaCte}`;
-      }
-
-      // 5. Tabla Cuadra
-      const tablaCua = document.getElementById('tabla-produccion-cuadra');
-      const producciones = window.produccionCuadra || [];
-      const prodHoy = producciones.filter(p => p.fecha === fechaActual);
-
-      if (tablaCua) {
-        tablaCua.innerHTML = prodHoy.map(c => `
-          <tr class="border-b hover:bg-gray-50">
-            <td class="p-2 text-gray-500">${c.hora || ''}</td>
-            <td class="p-2 font-semibold text-gray-800">${c.producto}</td>
-            <td class="p-2">${c.cantidad}</td>
-            <td class="p-2 text-gray-600">${c.responsable}</td>
-            <td class="p-2 text-right">
-              <button onclick="eliminarProduccionCuadra('${c.id}')" class="text-red-500 hover:text-red-700">
-                <i class="fa-solid fa-trash"></i>
-              </button>
-            </td>
+        tbody.innerHTML += `
+          <tr class="border-b">
+            <td class="p-2 font-bold text-gray-800">${i.nombre}</td>
+            <td class="p-2 font-black text-amber-900">${i.stock} ${i.unidad}</td>
+            <td class="p-2 text-gray-600">${i.min} ${i.unidad}</td>
+            <td class="p-2 text-center">${badgeStock}</td>
           </tr>
-        `).join('');
-      }
+        `;
+      });
+    }
 
-      // 6. Tabla Clientes
-      const tablaCli = document.getElementById('tabla-clientes-reparto');
-      if (tablaCli) {
-        tablaCli.innerHTML = clientes.map(c => {
-          // Calcular saldo adeudado por cliente
-          const saldoPendiente = pedidos
-            .filter(p => p.cliente === c.nombre && p.estado === 'Cta Cte')
-            .reduce((acc, p) => acc + (p.total || 0), 0);
+    // --- NOTAS Y CIERRE DIARIO ---
+    function agregarNotaMostrador() {
+      const txt = document.getElementById('nota-mostrador').value.trim();
+      if (!txt) return;
 
-          return `
-            <tr class="border-b hover:bg-gray-50">
-              <td class="p-2 font-semibold text-gray-800">${c.nombre}</td>
-              <td class="p-2 text-gray-600">${c.direccion || '-'}</td>
-              <td class="p-2 font-bold ${saldoPendiente > 0 ? 'text-red-600' : 'text-green-600'}">$${saldoPendiente}</td>
-              <td class="p-2 text-right">
-                <button onclick="eliminarClienteReparto('${c.id}')" class="text-red-500 hover:text-red-700">
-                  <i class="fa-solid fa-trash"></i>
-                </button>
-              </td>
-            </tr>
-          `;
-        }).join('');
-      }
+      const id = generarID('NOTA');
+      window.guardarRegistroFB('notasMostrador', id, { id, texto: txt });
 
-      // 7. Tabla Facturas Proveedores
-      const tablaFac = document.getElementById('tabla-facturas-proveedores');
-      const facturas = window.facturasProveedores || [];
-      if (tablaFac) {
-        tablaFac.innerHTML = facturas.map(f => `
-          <tr class="border-b hover:bg-gray-50">
-            <td class="p-2">${f.fecha}</td>
-            <td class="p-2 font-semibold text-gray-800">${f.proveedor}</td>
-            <td class="p-2">${f.numero}</td>
-            <td class="p-2 font-bold text-amber-900">$${f.monto}</td>
-            <td class="p-2 text-right">
-              <button onclick="eliminarFacturaProveedor('${f.id}')" class="text-red-500 hover:text-red-700">
-                <i class="fa-solid fa-trash"></i>
-              </button>
-            </td>
-          </tr>
-        `).join('');
-      }
+      document.getElementById('nota-mostrador').value = '';
+    }
 
-      // 8. Tabla Insumos Stock
-      const tablaStk = document.getElementById('tabla-insumos-stock');
-      const insumos = window.insumosStock || {};
-      if (tablaStk) {
-        tablaStk.innerHTML = Object.values(insumos).map(i => `
-          <tr class="border-b hover:bg-gray-50">
-            <td class="p-2 font-mono text-xs text-gray-500">${i.id}</td>
-            <td class="p-2 font-semibold text-gray-800">${i.nombre}</td>
-            <td class="p-2 font-bold text-amber-800">${(i.stock || 0).toFixed(2)}</td>
-            <td class="p-2 text-gray-600">${i.unidad || 'unid'}</td>
-            <td class="p-2 text-right">
-              <button onclick="eliminarInsumoStock('${i.id}')" class="text-red-500 hover:text-red-700">
-                <i class="fa-solid fa-trash"></i>
-              </button>
-            </td>
-          </tr>
-        `).join('');
-      }
+    function renderizarNotas() {
+      const ul = document.getElementById('lista-notas-mostrador');
+      if (!ul) return;
+      ul.innerHTML = '';
+      Object.values(window.notasMostrador).forEach(n => {
+        ul.innerHTML += `<li>${n.texto || n}</li>`;
+      });
+    }
 
-      // 9. Tabla Cajas Locales
-      const tablaCaj = document.getElementById('tabla-cajas-locales');
-      const cajas = window.cajasLocales || [];
-      if (tablaCaj) {
-        tablaCaj.innerHTML = cajas.map(c => `
-          <tr class="border-b hover:bg-gray-50">
-            <td class="p-2">${c.fecha}</td>
-            <td class="p-2 font-semibold text-gray-800">${c.local}</td>
-            <td class="p-2 font-bold text-green-700">$${c.monto}</td>
-            <td class="p-2 text-right">
-              <button onclick="eliminarCajaLocal('${c.id}')" class="text-red-500 hover:text-red-700">
-                <i class="fa-solid fa-trash"></i>
-              </button>
-            </td>
-          </tr>
-        `).join('');
-      }
+    function guardarYReiniciarDia() {
+      if (confirm(`¿Cerrar la jornada operativa del ${fechaActual}?`)) {
+        const hoy = new Date(fechaActual);
+        hoy.setDate(hoy.getDate() + 1);
+        fechaActual = hoy.toISOString().split('T')[0];
+        document.getElementById('fecha-operativa').value = fechaActual;
 
-      // 10. Tabla Config Reparto
-      const tablaCfgRep = document.getElementById('tabla-config-reparto');
-      if (tablaCfgRep) {
-        tablaCfgRep.innerHTML = Object.entries(panificados).map(([key, item]) => `
-          <tr class="border-b hover:bg-gray-50">
-            <td class="p-2 font-semibold text-gray-800">${item.nombre || key}</td>
-            <td class="p-2">${item.unidPorPaq || 1} unid</td>
-            <td class="p-2 text-amber-900">$${item.menor || 0}</td>
-            <td class="p-2 text-amber-900 font-bold">$${item.mayor || 0}</td>
-            <td class="p-2 text-right">
-              <button onclick="eliminarConfigReparto('${key}')" class="text-red-500 hover:text-red-700">
-                <i class="fa-solid fa-trash"></i>
-              </button>
-            </td>
-          </tr>
-        `).join('');
+        renderizarTodo();
+        alert(`Jornada cerrada. Nueva fecha: ${fechaActual}`);
       }
-    };
+    }
+
+    function renderizarTodo() {
+      renderizarReparto();
+      renderizarCuadra();
+      renderizarClientes();
+      renderizarProveedores();
+      renderizarStock();
+      renderizarPanificadosPrecios();
+      renderizarCatalogoPrecios();
+      renderizarNotas();
+      renderizarUsuarios();
+    }
+
+    // Vinculación explícita global para llamadas inline del HTML
+    window.cargarComboUsuariosHeader = cargarComboUsuariosHeader;
+    window.cargarComboProductosReparto = cargarComboProductosReparto;
+    window.cargarComboClientes = cargarComboClientes;
+    window.renderizarTodo = renderizarTodo;
+    window.aplicarPermisosRol = aplicarPermisosRol;
+
+    // Inicialización
+    cargarComboUsuariosHeader();
+    cargarComboProductosReparto();
+    cargarComboClientes();
+    renderizarTodo();
+    aplicarPermisosRol();
   </script>
 </body>
 </html>
