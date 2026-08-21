@@ -111,52 +111,7 @@
   </nav>
 
   <main class="p-3 max-w-5xl mx-auto space-y-4">
-
-    <!-- 1. MÓDULO REPARTO Y LOGÍSTICA (PRODUCTOS PANIFICADOS DE REPARTO) -->
-    <section id="sec-reparto" class="space-y-4">
-      <div class="bg-white p-4 rounded-xl shadow border">
-        <h2 class="text-base font-bold text-gray-800 mb-2">Cargar Pedido de Reparto (Por Unidades)</h2>
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
-          <select id="rep-cliente" class="border p-2 rounded w-full text-sm font-medium text-gray-800"><option value="">-- Seleccionar Cliente --</option></select>
-          <select id="rep-producto" class="border p-2 rounded w-full text-sm font-bold text-amber-900"></select>
-          <input type="number" id="rep-cantidad" placeholder="Cantidad de Unidades" step="1" min="1" class="border p-2 rounded w-full text-sm">
-          <button onclick="agregarPedidoReparto()" class="bg-amber-700 text-white font-bold px-4 py-2 rounded text-sm hover:bg-amber-800 w-full">Cargar Pedido</button>
-        </div>
-      </div>
-
-      <div class="bg-white p-4 rounded-xl shadow border">
-        <div class="flex justify-between items-center mb-2">
-          <h2 class="text-base font-bold text-gray-800">Planilla Diaria de Reparto</h2>
-          <div class="flex items-center gap-2">
-            <span id="label-fecha-reparto" class="text-xs bg-amber-100 text-amber-900 px-2 py-1 rounded font-bold"></span>
-            <button onclick="window.print()" class="text-xs bg-gray-200 p-1 px-2 rounded font-semibold hover:bg-gray-300">🖨️ Imprimir</button>
-          </div>
-        </div>
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs md:text-sm">
-            <thead>
-              <tr class="bg-amber-100 text-amber-900 border-b">
-                <th class="p-2">Cliente</th>
-                <th class="p-2">Producto Panificado</th>
-                <th class="p-2">Unidades / Paquetes</th>
-                <th class="p-2">P. x Unid.</th>
-                <th class="p-2">Monto</th>
-                <th class="p-2">Estado / Medio Pago</th>
-                <th class="p-2 text-center">Registrar Pago</th>
-              </tr>
-            </thead>
-            <tbody id="tabla-reparto"></tbody>
-          </table>
-        </div>
-        <div class="mt-3 grid grid-cols-1 md:grid-cols-3 gap-2 text-xs md:text-sm font-bold bg-amber-50 p-3 rounded-lg border border-amber-200">
-          <div>Total Reparto: <span id="tot-rep-monto" class="text-amber-900">$0</span></div>
-          <div>Cobrado Efectivo Reparto: <span id="tot-rep-efectivo" class="text-green-700">$0</span></div>
-          <div>Pendiente Cta. Cte.: <span id="tot-rep-ctacte" class="text-red-600">$0</span></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- 2. MÓDULO PRODUCCIÓN / CUADRA -->
+    <!-- MÓDULO PRODUCCIÓN / CUADRA -->
     <section id="sec-cuadra" class="hidden space-y-4">
       <div class="bg-white p-4 rounded-xl shadow border border-amber-500">
         <div class="flex justify-between items-center mb-3">
@@ -179,7 +134,48 @@
       </div>
     </section>
 
-    <!-- 3. MÓDULO CLIENTES Y CUENTA CORRIENTE -->
+    <!-- MÓDULO REPARTO Y LOGÍSTICA -->
+    <section id="sec-reparto" class="space-y-4">
+      <div class="bg-white p-4 rounded-xl shadow border space-y-3">
+        <h2 class="text-base font-bold text-gray-800">🚚 Cargar Pedido de Reparto</h2>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
+          <select id="rep-cliente" class="border p-2 rounded text-sm bg-white"></select>
+          <select id="rep-producto" class="border p-2 rounded text-sm bg-white"></select>
+          <input type="number" id="rep-cantidad" placeholder="Cantidad de Unidades" class="border p-2 rounded text-sm">
+          <button onclick="agregarPedidoReparto()" class="bg-amber-700 text-white font-bold p-2 rounded text-sm hover:bg-amber-800">Cargar Pedido</button>
+        </div>
+      </div>
+
+      <div class="bg-white p-4 rounded-xl shadow border space-y-3">
+        <div class="flex justify-between items-center border-b pb-2">
+          <h2 class="text-base font-bold text-gray-800">📋 Detalle de Entregas y Cobros de Reparto</h2>
+          <span id="label-fecha-reparto" class="text-xs text-amber-900 font-bold bg-amber-100 px-2 py-1 rounded"></span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs md:text-sm">
+            <thead>
+              <tr class="bg-gray-100 border-b">
+                <th class="p-2">Cliente</th>
+                <th class="p-2">Producto Panificado</th>
+                <th class="p-2">Unidades / Paquetes</th>
+                <th class="p-2">Precio Un.</th>
+                <th class="p-2">Total ($)</th>
+                <th class="p-2">Estado</th>
+                <th class="p-2 text-center">Acción</th>
+              </tr>
+            </thead>
+            <tbody id="tabla-reparto"></tbody>
+          </table>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-2 pt-2 border-t text-xs font-bold text-gray-700">
+          <div>Total General Reparto: <span id="tot-rep-monto" class="text-amber-900">$0</span></div>
+          <div>Total Cobrado Efectivo: <span id="tot-rep-efectivo" class="text-green-700">$0</span></div>
+          <div>Total Pasado a Cta Cte: <span id="tot-rep-ctacte" class="text-red-600">$0</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MÓDULO CLIENTES Y CUENTA CORRIENTE -->
     <section id="sec-clientes" class="hidden space-y-4">
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div class="bg-white p-4 rounded-xl shadow border md:col-span-1">
@@ -254,7 +250,7 @@
       </div>
     </section>
 
-    <!-- 4. MÓDULO PROVEEDORES Y FACTURACIÓN -->
+    <!-- MÓDULO PROVEEDORES Y FACTURACIÓN -->
     <section id="sec-proveedores" class="hidden space-y-4">
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div class="bg-white p-4 rounded-xl shadow border md:col-span-1">
@@ -339,7 +335,7 @@
       </div>
     </section>
 
-    <!-- 5. MÓDULO CONTROL DE STOCK E INSUMOS -->
+    <!-- MÓDULO CONTROL DE STOCK E INSUMOS -->
     <section id="sec-stock" class="hidden space-y-4">
       <div class="bg-white p-4 rounded-xl shadow border">
         <h2 class="text-base font-bold text-gray-800 mb-3">➕ Alta / Configuración de Insumo o Materia Prima</h2>
@@ -353,7 +349,7 @@
       </div>
 
       <div class="bg-white p-4 rounded-xl shadow border">
-        <h2 class="text-base font-bold text-gray-800 mb-2">📦 Monitor de Stock e Insumos</h2>
+        <h2 class="text-base font-bold text-gray-800 mb-2">📦 Monitor de Stock e Insumos (Control Manual)</h2>
         <div class="overflow-x-auto">
           <table class="w-full text-left text-xs md:text-sm">
             <thead>
@@ -361,7 +357,8 @@
                 <th class="p-2">Insumo</th>
                 <th class="p-2">Stock Actual</th>
                 <th class="p-2">Stock Mínimo</th>
-                <th class="p-2 text-center">Estado Alerta</th>
+                <th class="p-2">Estado Alerta</th>
+                <th class="p-2 text-center">Acción Manual / Ajustes</th>
               </tr>
             </thead>
             <tbody id="tabla-stock-insumos"></tbody>
@@ -370,7 +367,7 @@
       </div>
     </section>
 
-    <!-- 6. MÓDULO CAJAS INDEPENDIENTES Y CIERRE DIARIO -->
+    <!-- MÓDULO CAJAS INDEPENDIENTES Y CIERRE DIARIO -->
     <section id="sec-caja" class="hidden space-y-4">
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div class="bg-white p-4 rounded-xl shadow border border-amber-300">
@@ -408,7 +405,7 @@
       </div>
     </section>
 
-    <!-- 7. MÓDULO GESTIÓN DE CATÁLOGO DESPACHO Y PRODUCTOS PANIFICADOS -->
+    <!-- MÓDULO GESTIÓN DE CATÁLOGO DESPACHO Y PRODUCTOS PANIFICADOS -->
     <section id="sec-precios" class="hidden space-y-6">
       
       <!-- SUB-SECCIÓN: PRODUCTOS PANIFICADOS (REPARTO Y CUADRA) -->
@@ -480,7 +477,7 @@
       </div>
     </section>
 
-    <!-- 8. MÓDULO ROLES Y USUARIOS DEL SISTEMA -->
+    <!-- MÓDULO ROLES Y USUARIOS DEL SISTEMA -->
     <section id="sec-usuarios" class="hidden space-y-4">
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div class="bg-white p-4 rounded-xl shadow border md:col-span-1 space-y-3">
@@ -530,7 +527,7 @@
 
     let fechaActual = new Date().toISOString().split('T')[0];
 
-    // DEFINICIÓN DE PERMISOS POR ROL
+    // DEFINICIÓN DE PERMISOS POR ROL (Sin Recetas)
     const PERMISOS_ROLES = {
       admin: {
         nombre: "Administrador",
@@ -1366,21 +1363,61 @@
       document.getElementById('ins-unidad').value = '';
     }
 
+    function ajustarStockManual(idInsumo, delta) {
+      const ins = window.insumosStock[idInsumo];
+      if (!ins) return;
+      ins.stock = Math.max(0, (ins.stock || 0) + delta);
+      window.guardarRegistroFB('insumosStock', idInsumo, ins);
+    }
+
+    function editarInsumoManual(idInsumo) {
+      const ins = window.insumosStock[idInsumo];
+      if (!ins) return;
+      const nuevoStock = prompt(`Modificar stock actual para "${ins.nombre}":`, ins.stock);
+      if (nuevoStock !== null) {
+        const val = parseFloat(nuevoStock);
+        if (!isNaN(val)) {
+          ins.stock = val;
+          window.guardarRegistroFB('insumosStock', idInsumo, ins);
+        } else {
+          alert("Valor inválido.");
+        }
+      }
+    }
+
+    function eliminarInsumo(idInsumo) {
+      if (confirm("¿Está seguro de eliminar este insumo del inventario?")) {
+        window.eliminarRegistroFB('insumosStock', idInsumo);
+      }
+    }
+
     function renderizarStock() {
       const tbody = document.getElementById('tabla-stock-insumos');
       if (!tbody) return;
       tbody.innerHTML = '';
+      
+      if (Object.keys(window.insumosStock || {}).length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="p-3 text-center text-gray-400 italic">No hay insumos cargados.</td></tr>';
+        return;
+      }
+
       Object.values(window.insumosStock).forEach(i => {
         let badgeStock = i.stock <= i.min
           ? `<span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded font-bold">⚠️ Reponer (${i.stock} ${i.unidad})</span>`
           : `<span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded font-bold">OK (${i.stock} ${i.unidad})</span>`;
 
         tbody.innerHTML += `
-          <tr class="border-b">
+          <tr class="border-b hover:bg-amber-50">
             <td class="p-2 font-bold text-gray-800">${i.nombre}</td>
             <td class="p-2 font-black text-amber-900">${i.stock} ${i.unidad}</td>
             <td class="p-2 text-gray-600">${i.min} ${i.unidad}</td>
-            <td class="p-2 text-center">${badgeStock}</td>
+            <td class="p-2">${badgeStock}</td>
+            <td class="p-2 text-center space-x-1">
+              <button onclick="ajustarStockManual('${i.id}', 1)" class="bg-green-600 text-white font-bold px-2 py-1 rounded text-xs hover:bg-green-700" title="Sumar 1">+1</button>
+              <button onclick="ajustarStockManual('${i.id}', -1)" class="bg-amber-600 text-white font-bold px-2 py-1 rounded text-xs hover:bg-amber-700" title="Restar 1">-1</button>
+              <button onclick="editarInsumoManual('${i.id}')" class="bg-blue-600 text-white font-bold px-2 py-1 rounded text-xs hover:bg-blue-700">Modificar</button>
+              <button onclick="eliminarInsumo('${i.id}')" class="bg-red-600 text-white font-bold px-2 py-1 rounded text-xs hover:bg-red-700">✕</button>
+            </td>
           </tr>
         `;
       });
