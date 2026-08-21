@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+<link rel="manifest" href="manifest.json">
 <!-- SDK e Integración Completa con Firebase Realtime Database -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -684,11 +685,6 @@
       return window.usuarios[idUsuarioActivo] || Object.values(window.usuarios)[0];
     }
 
-    function cambiarUsuarioActivo() {
-      idUsuarioActivo = document.getElementById('select-usuario-activo').value;
-      aplicarPermisosRol();
-    }
-
     function aplicarPermisosRol() {
       const uActivo = obtenerUsuarioActivo();
       if (!uActivo) return;
@@ -723,7 +719,7 @@
       });
     }
 
-function guardarUsuario() {
+    function guardarUsuario() {
       const nombre = document.getElementById('usr-nombre').value.trim();
       const rol = document.getElementById('usr-rol').value;
       const pin = prompt("Ingrese un PIN numérico (mínimo 4 dígitos) para este usuario:", "1234");
@@ -738,26 +734,22 @@ function guardarUsuario() {
       alert("Usuario creado con éxito.");
     }
 
-function cambiarUsuarioActivo() {
+    function cambiarUsuarioActivo() {
       const select = document.getElementById('select-usuario-activo');
       const idNuevo = select.value;
       
-      // Asegurarnos de buscar en los usuarios actuales o la base
       const usuariosActuales = window.usuarios || window.LISTA_USUARIOS_BASE;
       const usuarioSeleccionado = usuariosActuales[idNuevo];
 
       if (!usuarioSeleccionado) return;
 
-      // Si el usuario no tiene pin definido, le asignamos uno por defecto "1234"
       const pinReal = usuarioSeleccionado.pin || "1234";
-
       const inputPin = prompt(`Ingrese el PIN de acceso para ${usuarioSeleccionado.nombre}:`);
 
       if (inputPin === pinReal) {
         idUsuarioActivo = idNuevo;
         aplicarPermisosRol();
       } else {
-        // Revertir el select visualmente al usuario que estaba activo
         select.value = idUsuarioActivo;
         alert("PIN incorrecto. Acceso denegado.");
       }
@@ -972,7 +964,6 @@ function cambiarUsuarioActivo() {
       const paquetesEquivalentes = unidades / unidPorPaq;
       const precioUnitario = paquetesEquivalentes >= 2 ? configPanificado.mayor : configPanificado.menor;
       
-      // Multiplica UNIDADES por el precio unitario correspondiente
       const total = unidades * precioUnitario;
 
       const id = generarID('PED');
