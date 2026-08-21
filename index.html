@@ -7,6 +7,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>La Casa del Pan & La Espiga de Oro</title>
   <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- SDKs de Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
  <style>
   .tab-active {
     border-bottom: 3px solid #92400e;
@@ -669,6 +674,16 @@
   </div>
 
   <script>
+    // CONFIGURACIÓN DE FIREBASE Y SINCRONIZACIÓN EN TIEMPO REAL
+    const firebaseConfig = {
+      databaseURL: "https://panaderia-sync-281a5-default-rtdb.firebaseio.com/"
+    };
+
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+    const rtdb = firebase.database();
+
     function generarID(prefijo = 'ID') {
       return `${prefijo}-${Date.now().toString(36)}-${Math.random().toString(36).substr(2, 5)}`;
     }
@@ -743,11 +758,34 @@
 
     function cargarDB(key, fallback) {
       const data = localStorage.getItem(key);
-      return data ? JSON.parse(data) : fallback;
+      const valorInicial = data ? JSON.parse(data) : fallback;
+
+      // Sincronización en tiempo real con Firebase
+      rtdb.ref(key).on('value', (snapshot) => {
+        const val = snapshot.val();
+        if (val !== null) {
+          localStorage.setItem(key, JSON.stringify(val));
+          
+          if (key === 'db_repartos') { dbRepartos = val; renderizarPlanillaReparto(); renderizarCuadra(); }
+          if (key === 'db_clientes') { dbClientes = val; renderizarTablaClientes(); cargarSelectorClientesReparto(); }
+          if (key === 'db_proveedores') { dbProveedores = val; renderizarTablaProveedores(); }
+          if (key === 'db_insumos') { dbInsumos = val; renderizarStockInsumos(); cargarSelectorInsumosFactura(); }
+          if (key === 'db_panificados') { dbPanificados = val; renderizarTablaPanificados(); cargarSelectorPanificadosReparto(); }
+          if (key === 'db_productos') { dbProductos = val; renderizarTablaCatalogo(); }
+          if (key === 'db_usuarios') { dbUsuarios = val; renderizarTablaUsuarios(); renderizarUsuariosSelect(); }
+          if (key === 'db_notas_mostrador') { dbNotasMostrador = val; renderizarCuadra(); }
+          if (key === 'db_historial_clientes') { dbHistorialClientes = val; if(clienteSeleccionadoId) renderizarTablaHistorialCliente(); renderizarTablaClientes(); }
+          if (key === 'db_historial_proveedores') { dbHistorialProveedores = val; if(proveedorSeleccionadoId) renderizarTablaHistorialProveedor(); renderizarTablaProveedores(); }
+          if (key === 'db_historial_insumos') { dbHistorialInsumos = val; if(insumoSeleccionadoStockId) renderizarTablaHistorialStock(); }
+        }
+      });
+
+      return valorInicial;
     }
 
     function guardarDB(key, data) {
       localStorage.setItem(key, JSON.stringify(data));
+      rtdb.ref(key).set(data).catch(err => console.error("Error al sincronizar con Firebase:", err));
     }
 
     let dbUsuarios = cargarDB('db_usuarios', window.LISTA_USUARIOS_BASE);
@@ -1744,7 +1782,6 @@
           if (pedido) {
             pedido.monto = nuevoMonto;
             if (nuevaFecha !== fechaOriginal) {
-              // Si cambió de fecha, movemos el pedido al nuevo día operativo
               dbRepartos[fechaOriginal] = dbRepartos[fechaOriginal].filter(p => p.id !== movId);
               if (dbRepartos[fechaOriginal].length === 0) delete dbRepartos[fechaOriginal];
               
@@ -2310,13 +2347,12 @@
       renderizarUsuariosSelect();
     }
 
-  // FUNCIÓN DE IMPRESIÓN DE PRODUCCIÓN CORREGIDA
+    // FUNCIÓN DE IMPRESIÓN DE PRODUCCIÓN
     function imprimirReporteProduccion() {
       const fechaClave = fechaActual; 
       const partesFecha = fechaActual.split('-');
       const fecha = partesFecha.length === 3 ? `${partesFecha[2]}/${partesFecha[1]}/${partesFecha[0]}` : fechaActual;
 
-      // Recopilamos directamente los datos consolidados del día para imprimirlos de forma segura
       const pedidosHoy = dbRepartos[fechaActual] || [];
       const consolidados = {};
 
