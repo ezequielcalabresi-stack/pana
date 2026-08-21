@@ -950,7 +950,30 @@ function cambiarUsuarioActivo() {
         fila.style.display = texto.includes(input) ? '' : 'none';
       });
     }
+// --- CONFIGURACIÓN DE RECETAS Y DESCUENTO DE STOCK ---
+    window.RECETAS = {
+      "Pebete": [
+        { insumoId: "STK-1", cantidadPorUnidad: 0.05 }, // Ejemplo: 50g por unidad
+        { insumoId: "STK-2", cantidadPorUnidad: 0.01 }
+      ],
+      "Hamburguesas x 5 (c/u)": [
+        { insumoId: "STK-1", cantidadPorUnidad: 0.06 }
+      ]
+    };
 
+    function descontarMateriaPrimaPorPedido(nombreProducto, unidadesElaboradas) {
+      const ingredientes = window.RECETAS[nombreProducto];
+      if (!ingredientes || ingredientes.length === 0) return;
+
+      ingredientes.forEach(item => {
+        const insumo = window.insumosStock[item.insumoId];
+        if (insumo) {
+          const cantidadAConsumir = item.cantidadPorUnidad * unidadesElaboradas;
+          insumo.stock = Math.max(0, insumo.stock - cantidadAConsumir);
+          window.guardarRegistroFB('insumosStock', insumo.id, insumo);
+        }
+      });
+    }
     // --- REPARTO Y LOGÍSTICA ---
     function cargarComboClientes() {
       const combo = document.getElementById('rep-cliente');
@@ -959,7 +982,7 @@ function cambiarUsuarioActivo() {
       Object.values(window.clientes).forEach(c => combo.innerHTML += `<option value="${c.nombre}">${c.nombre}</option>`);
     }
 
-    function agregarPedidoReparto() {
+   function agregarPedidoReparto() {
       const clienteNombre = document.getElementById('rep-cliente').value;
       const producto = document.getElementById('rep-producto').value;
       const unidades = parseInt(document.getElementById('rep-cantidad').value, 10);
@@ -967,6 +990,36 @@ function cambiarUsuarioActivo() {
       if (!clienteNombre || !producto || isNaN(unidades) || unidades <= 0) {
         return alert("Seleccione cliente, panificado e ingrese una cantidad de unidades válida.");
       }
+
+      const configPanificado = window.panificadosReparto[producto] || { unidPorPaq: 1, menor: 0, mayor: 0 };
+      const unidPorPaq = configPanificado.unidPorPaq || 1;
+      const paquetesEquivalentes = unidades / unidPorPaq;
+      const precioUnitario = paquetesEquivalentes >= 2 ? configPanificado.mayor : configPanificado.menor;
+      
+      const total = unidades * precioUnitario;
+
+      const id = generarID('PED');
+      const pedidoNuevo = {
+        id,
+        fecha: fechaActual,
+        cliente: clienteNombre,
+        producto,
+        unidades,
+        unidPorPaq,
+        paquetesEquivalentes,
+        precioUnitario,
+        total,
+        estado: 'Cta Cte'
+      };
+
+      // Guardar pedido en Firebase
+      window.guardarRegistroFB('pedidosReparto', id, pedidoNuevo);
+
+      // Descontar automáticamente del stock
+      descontarMateriaPrimaPorPedido(producto, unidades);
+
+      document.getElementById('rep-cantidad').value = '';
+    }
 
       const configPanificado = window.panificadosReparto[producto] || { unidPorPaq: 1, menor: 0, mayor: 0 };
       const unidPorPaq = configPanificado.unidPorPaq || 1;
