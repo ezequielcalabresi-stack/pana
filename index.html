@@ -12,6 +12,9 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
+  <!-- LIBRERÍA GENERADORA DE PDF PARA APK/MÓVIL -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
  <style>
   .tab-active {
     border-bottom: 3px solid #92400e;
@@ -1385,45 +1388,50 @@
     }
 
     function lanzarImpresionUniversal(contenidoHtml, tituloDoc) {
+      const isReparto = tituloDoc.includes('Reparto');
       const divZonaRep = document.getElementById('print-zona-reparto');
       const divZonaCua = document.getElementById('print-zona-cuadra');
 
-      if (tituloDoc.includes('Reparto') && divZonaRep) divZonaRep.innerHTML = contenidoHtml;
-      if (tituloDoc.includes('Cuadra') && divZonaCua) divZonaCua.innerHTML = contenidoHtml;
+      const contenedorActivo = isReparto ? divZonaRep : divZonaCua;
+      if (divZonaRep) divZonaRep.innerHTML = isReparto ? contenidoHtml : '';
+      if (divZonaCua) divZonaCua.innerHTML = !isReparto ? contenidoHtml : '';
 
-      const ventana = window.open('', '_blank');
-      if (ventana) {
-        ventana.document.write(`
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <meta charset="UTF-8">
-            <title>${tituloDoc}</title>
-            <style>
-              body { font-family: Arial, sans-serif; padding: 12px; color: #000; }
-              .print-card-box { border: 1px dashed #000; padding: 8px 10px; margin-bottom: 10px; page-break-inside: avoid; }
-              .print-client-row { display: flex; justify-content: space-between; border-bottom: 1.5px solid #000; padding-bottom: 3px; margin-bottom: 5px; font-weight: bold; font-size: 11pt; }
-              table.print-item-table { width: 100%; border-collapse: collapse; margin-top: 4px; }
-              table.print-item-table th, table.print-item-table td { border: 1px solid #666; padding: 4px 6px; font-size: 9pt; }
-              table.print-item-table th { background-color: #f0f0f0; font-weight: bold; text-transform: uppercase; }
-            </style>
-          </head>
-          <body>
-            ${contenidoHtml}
-            <script>
-              window.onload = function() {
-                setTimeout(function() {
-                  window.print();
-                  window.close();
-                }, 250);
-              };
-            <\/script>
-          </body>
-          </html>
-        `);
-        ventana.document.close();
+      if (!contenedorActivo) return;
+
+      // Detección de celular o WebView de la APK
+      const esMovilOApk = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.matchMedia("(max-width: 768px)").matches;
+
+      if (esMovilOApk) {
+        // --- MODO APK / CELULAR: Generar y descargar PDF directamente ---
+        const opt = {
+          margin:       8,
+          filename:     `${tituloDoc}.pdf`,
+          image:        { type: 'jpeg', quality: 0.98 },
+          html2canvas:  { scale: 2, logging: false, useCORS: true },
+          jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        // Forzar visibilidad quitando el 'display: none' temporalmente para renderizar PDF
+        contenedorActivo.setAttribute('style', 'display: block !important; background: white !important; padding: 10px !important;');
+
+        html2pdf().set(opt).from(contenedorActivo).save().then(() => {
+          contenedorActivo.removeAttribute('style');
+        }).catch(err => {
+          console.warn("Error al generar PDF:", err);
+          contenedorActivo.removeAttribute('style');
+        });
+
       } else {
-        window.print();
+        // --- MODO PC / NAVEGADOR: Impresión nativa clásica con cuadro de diálogo ---
+        document.body.classList.remove('imprimiendo-reparto', 'imprimiendo-cuadra');
+        document.body.classList.add(isReparto ? 'imprimiendo-reparto' : 'imprimiendo-cuadra');
+
+        setTimeout(() => {
+          window.print();
+          setTimeout(() => {
+            document.body.classList.remove('imprimiendo-reparto', 'imprimiendo-cuadra');
+          }, 500);
+        }, 200);
       }
     }
 
@@ -1699,7 +1707,6 @@
           const pfx = `${suc}-${turno.charAt(0)}`;
           let info = datosCaja[suc]?.[turno];
           
-          // Compatibilidad con registros guardados antes de la estructuración por turnos
           if (!info) {
             const efAnt = (turno === 'manana') ? (datosCaja[`${suc}Efectivo`] || 0) : 0;
             const dgAnt = (turno === 'manana') ? (datosCaja[`${suc}Digital`] || 0) : 0;
