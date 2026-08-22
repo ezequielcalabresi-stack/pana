@@ -504,7 +504,6 @@
           <h3 class="text-xs font-bold text-gray-700">➕ Agregar Nuevo Panificado</h3>
           <div class="grid grid-cols-1 md:grid-cols-5 gap-2">
             <input type="text" id="nuevo-panificado-nombre" placeholder="Nombre (Ej: Pebete)" class="border p-2 rounded text-xs md:col-span-1">
-            <!-- ID CORREGIDO AQUÍ ABAJO PARA QUE COINCIDA CON EL SCRIPT -->
             <input type="number" id="nuevo-panificado-unidades" placeholder="Unidades x Paq (Ej: 24)" class="border p-2 rounded text-xs">
             <input type="number" id="nuevo-panificado-menor" placeholder="Precio x Unid (1 Paq) ($)" class="border p-2 rounded text-xs">
             <input type="number" id="nuevo-panificado-mayor" placeholder="Precio x Unid (2+ Paq) ($)" class="border p-2 rounded text-xs">
@@ -737,10 +736,15 @@
       databaseURL: "https://panaderia-sync-281a5-default-rtdb.firebaseio.com/"
     };
 
-    if (!firebase.apps.length) {
-      firebase.initializeApp(firebaseConfig);
+    let rtdb = null;
+    try {
+      if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+      }
+      rtdb = firebase.database();
+    } catch (e) {
+      console.warn("Modo offline o archivo local puro detectado. Firebase operará en segundo plano cuando haya conexión.");
     }
-    const rtdb = firebase.database();
 
     function generarID(prefijo = 'ID') {
       return `${prefijo}-${Date.now().toString(36)}-${Math.random().toString(36).substr(2, 5)}`;
@@ -818,31 +822,42 @@
       const data = localStorage.getItem(key);
       const valorInicial = data ? JSON.parse(data) : fallback;
 
-      rtdb.ref(key).on('value', (snapshot) => {
-        const val = snapshot.val();
-        if (val !== null) {
-          localStorage.setItem(key, JSON.stringify(val));
-          
-          if (key === 'db_repartos') { dbRepartos = val; renderizarPlanillaReparto(); renderizarCuadra(); }
-          if (key === 'db_clientes') { dbClientes = val; renderizarTablaClientes(); cargarSelectorClientesReparto(); }
-          if (key === 'db_proveedores') { dbProveedores = val; renderizarTablaProveedores(); }
-          if (key === 'db_insumos') { dbInsumos = val; renderizarStockInsumos(); cargarSelectorInsumosFactura(); }
-          if (key === 'db_panificados') { dbPanificados = val; renderizarTablaPanificados(); cargarSelectorPanificadosReparto(); }
-          if (key === 'db_productos') { dbProductos = val; renderizarTablaCatalogo(); }
-          if (key === 'db_usuarios') { dbUsuarios = val; renderizarTablaUsuarios(); renderizarUsuariosSelect(); }
-          if (key === 'db_notas_mostrador') { dbNotasMostrador = val; renderizarCuadra(); }
-          if (key === 'db_historial_clientes') { dbHistorialClientes = val; if(clienteSeleccionadoId) renderizarTablaHistorialCliente(); renderizarTablaClientes(); }
-          if (key === 'db_historial_proveedores') { dbHistorialProveedores = val; if(proveedorSeleccionadoId) renderizarTablaHistorialProveedor(); renderizarTablaProveedores(); }
-          if (key === 'db_historial_insumos') { dbHistorialInsumos = val; if(insumoSeleccionadoStockId) renderizarTablaHistorialStock(); }
+      if (rtdb) {
+        try {
+          rtdb.ref(key).on('value', (snapshot) => {
+            const val = snapshot.val();
+            if (val !== null) {
+              localStorage.setItem(key, JSON.stringify(val));
+              
+              if (key === 'db_repartos') { dbRepartos = val; renderizarPlanillaReparto(); renderizarCuadra(); }
+              if (key === 'db_clientes') { dbClientes = val; renderizarTablaClientes(); cargarSelectorClientesReparto(); }
+              if (key === 'db_proveedores') { dbProveedores = val; renderizarTablaProveedores(); }
+              if (key === 'db_insumos') { dbInsumos = val; renderizarStockInsumos(); cargarSelectorInsumosFactura(); }
+              if (key === 'db_panificados') { dbPanificados = val; renderizarTablaPanificados(); cargarSelectorPanificadosReparto(); }
+              if (key === 'db_productos') { dbProductos = val; renderizarTablaCatalogo(); }
+              if (key === 'db_usuarios') { dbUsuarios = val; renderizarTablaUsuarios(); renderizarUsuariosSelect(); }
+              if (key === 'db_notas_mostrador') { dbNotasMostrador = val; renderizarCuadra(); }
+              if (key === 'db_historial_clientes') { dbHistorialClientes = val; if(clienteSeleccionadoId) renderizarTablaHistorialCliente(); renderizarTablaClientes(); }
+              if (key === 'db_historial_proveedores') { dbHistorialProveedores = val; if(proveedorSeleccionadoId) renderizarTablaHistorialProveedor(); renderizarTablaProveedores(); }
+              if (key === 'db_historial_insumos') { dbHistorialInsumos = val; if(insumoSeleccionadoStockId) renderizarTablaHistorialStock(); }
+            }
+          });
+        } catch (e) {
+          console.warn("No se pudo conectar a Firebase en tiempo real, operando localmente.");
         }
-      });
+      }
 
       return valorInicial;
     }
 
     function guardarDB(key, data) {
+      // 1. Guardado local inmediato para asegurar funcionamiento offline y local sin trabas
       localStorage.setItem(key, JSON.stringify(data));
-      rtdb.ref(key).set(data).catch(err => console.error("Error al sincronizar con Firebase:", err));
+
+      // 2. Sincronización en segundo plano con Firebase si está disponible
+      if (rtdb) {
+        rtdb.ref(key).set(data).catch(err => console.warn("Sincronización diferida con Firebase:", err));
+      }
     }
 
     let dbUsuarios = cargarDB('db_usuarios', window.LISTA_USUARIOS_BASE);
@@ -2236,7 +2251,7 @@
       }
     }
 
-    // 7. CATALOGO DESPACHO Y PRODUCTOS PANIFICADOS (CORREGIDO ID DE UNIDADES)
+    // 7. CATALOGO DESPACHO Y PRODUCTOS PANIFICADOS
     function agregarNuevoPanificado() {
       const nombreInput = document.getElementById('nuevo-panificado-nombre');
       const unidInput = document.getElementById('nuevo-panificado-unidades');
