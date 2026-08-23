@@ -38,7 +38,7 @@
   @media print {
     @page {
       size: A4 portrait;
-      margin: 8mm;
+      margin: 10mm;
     }
 
     header, nav, button, input, select, textarea, .panel-carga-pedido, .no-print, .nav-buttons, main {
@@ -67,19 +67,20 @@
     }
 
     .print-card-box {
-      border: 1px dashed #000000 !important;
-      padding: 8px 10px !important;
-      margin-bottom: 10px !important;
+      border: 1px solid #000000 !important;
+      padding: 10px 12px !important;
+      margin-bottom: 12px !important;
       page-break-inside: avoid !important;
       break-inside: avoid !important;
+      background-color: #ffffff !important;
     }
 
     .print-client-row {
       display: flex !important;
       justify-content: space-between !important;
-      border-bottom: 1.5px solid #000000 !important;
-      padding-bottom: 3px !important;
-      margin-bottom: 5px !important;
+      border-bottom: 2px solid #000000 !important;
+      padding-bottom: 4px !important;
+      margin-bottom: 6px !important;
       font-weight: bold !important;
       font-size: 11pt !important;
     }
@@ -92,13 +93,14 @@
 
     table.print-item-table th, 
     table.print-item-table td {
-      border: 1px solid #666666 !important;
-      padding: 3px 6px !important;
-      font-size: 9pt !important;
+      border: 1px solid #333333 !important;
+      padding: 4px 8px !important;
+      font-size: 9.5pt !important;
     }
 
     table.print-item-table th {
-      background-color: #f0f0f0 !important;
+      background-color: #e5e7eb !important;
+      color: #000000 !important;
       font-weight: bold !important;
       text-transform: uppercase !important;
     }
@@ -228,7 +230,7 @@
       </div>
     </section>
 
-    <!-- 3. MÓDULO CLIENTES Y CUENTA CORRIENTE (Optimizado con Selector Rápido) -->
+    <!-- 3. MÓDULO CLIENTES Y CUENTA CORRIENTE -->
     <section id="sec-clientes" class="hidden space-y-4">
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div class="bg-white p-4 rounded-xl shadow border md:col-span-1">
@@ -317,7 +319,7 @@
       </div>
     </section>
 
-    <!-- 4. MÓDULO PROVEEDORES Y FACTURACIÓN (Optimizado con Selector Rápido) -->
+    <!-- 4. MÓDULO PROVEEDORES Y FACTURACIÓN -->
     <section id="sec-proveedores" class="hidden space-y-4">
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div class="bg-white p-4 rounded-xl shadow border md:col-span-1">
@@ -412,7 +414,7 @@
       </div>
     </section>
 
-    <!-- 5. MÓDULO CONTROL DE STOCK E INSUMOS (Con Control Manual de Consumos / Egresos) -->
+    <!-- 5. MÓDULO CONTROL DE STOCK E INSUMOS -->
     <section id="sec-stock" class="hidden space-y-4">
       <div class="bg-white p-4 rounded-xl shadow border">
         <h2 class="text-base font-bold text-gray-800 mb-3">➕ Alta / Configuración de Insumo Individual</h2>
@@ -425,7 +427,6 @@
         <button type="button" onclick="window.guardarInsumo()" class="bg-amber-700 text-white font-bold px-4 py-2 rounded text-sm hover:bg-amber-800 w-full">Guardar Insumo</button>
       </div>
 
-      <!-- REGISTRO MANUAL DE CONSUMO / EGRESO DE STOCK -->
       <div class="bg-amber-50 p-4 rounded-xl shadow border border-amber-300 space-y-3">
         <h2 class="text-base font-bold text-amber-900">📉 Registrar Movimiento / Consumo Manual de Insumo</h2>
         <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
@@ -487,11 +488,8 @@
           </div>
         </div>
 
-        <!-- La Casa del Pan (Alem) -->
         <div id="box-caja-alem" class="bg-white p-4 rounded-xl shadow border space-y-3">
           <h2 class="text-base font-bold text-gray-800 border-b pb-1">🏪 La Casa del Pan (Alem)</h2>
-          
-          <!-- TURNO MAÑANA -->
           <div class="bg-amber-50 p-2 rounded border border-amber-200 space-y-1">
             <div class="flex justify-between items-center">
               <span class="text-xs font-bold text-amber-900">🌅 Turno Mañana</span>
@@ -504,7 +502,6 @@
             <button type="button" onclick="cerrarTurnoParcial('alem', 'manana')" class="w-full mt-1 bg-amber-800 text-white text-xs py-1 rounded font-bold hover:bg-amber-900 shadow">Cerrar Turno Mañana</button>
           </div>
 
-          <!-- TURNO TARDE -->
           <div class="bg-orange-50 p-2 rounded border border-orange-200 space-y-1">
             <div class="flex justify-between items-center">
               <span class="text-xs font-bold text-orange-900">🌆 Turno Tarde</span>
@@ -518,11 +515,8 @@
           </div>
         </div>
 
-        <!-- La Espiga de Oro -->
         <div id="box-caja-espiga" class="bg-white p-4 rounded-xl shadow border space-y-3">
           <h2 class="text-base font-bold text-gray-800 border-b pb-1">🏪 La Espiga de Oro</h2>
-          
-          <!-- TURNO MAÑANA -->
           <div class="bg-amber-50 p-2 rounded border border-amber-200 space-y-1">
             <div class="flex justify-between items-center">
               <span class="text-xs font-bold text-amber-900">🌅 Turno Mañana</span>
@@ -535,7 +529,6 @@
             <button type="button" onclick="cerrarTurnoParcial('espiga', 'manana')" class="w-full mt-1 bg-amber-800 text-white text-xs py-1 rounded font-bold hover:bg-amber-900 shadow">Cerrar Turno Mañana</button>
           </div>
 
-          <!-- TURNO TARDE -->
           <div class="bg-orange-50 p-2 rounded border border-orange-200 space-y-1">
             <div class="flex justify-between items-center">
               <span class="text-xs font-bold text-orange-900">🌆 Turno Tarde</span>
@@ -550,7 +543,6 @@
         </div>
       </div>
 
-      <!-- REGISTRO DE EGRESOS / GASTOS DE CAJA -->
       <div class="bg-red-50 p-4 rounded-xl shadow border border-red-200 space-y-3">
         <h2 class="text-base font-bold text-red-900 flex items-center gap-1">💸 Registro de Egresos y Gastos Menores por Caja</h2>
         <div class="grid grid-cols-1 md:grid-cols-5 gap-2">
@@ -579,7 +571,6 @@
         </div>
       </div>
 
-      <!-- BOTÓN CIERRE DIARIO -->
       <div class="bg-amber-900 text-white p-4 rounded-xl shadow flex justify-between items-center">
         <div>
           <h3 class="font-bold text-base">Cierre Operativo Diario</h3>
@@ -588,7 +579,6 @@
         <button type="button" onclick="guardarYReiniciarDia()" class="bg-green-600 hover:bg-green-700 text-white font-bold px-4 py-2 rounded text-sm shadow">💾 Guardar Cierre Diario</button>
       </div>
 
-      <!-- REPORTES MENSUALES DETALLADOS -->
       <div class="bg-white p-4 rounded-xl shadow border space-y-4">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 border-b pb-2">
           <h2 class="text-base font-bold text-gray-800">📊 Reportes Operativos Mensuales</h2>
@@ -598,7 +588,6 @@
           </div>
         </div>
 
-        <!-- 1) REPORTE VENTAS MENSUALES -->
         <div class="space-y-2">
           <h3 class="text-xs font-bold text-amber-900 bg-amber-100 p-2 rounded">1. Reporte de Ventas Mensuales (Día a Día)</h3>
           <div class="overflow-x-auto">
@@ -610,7 +599,6 @@
           </div>
         </div>
 
-        <!-- 2) REPORTE CONSOLIDADO DE EGRESOS -->
         <div class="space-y-2 pt-2">
           <h3 class="text-xs font-bold text-red-900 bg-red-100 p-2 rounded">2. Flujo Completo de Egresos Mensuales (Gastos de Caja + Proveedores)</h3>
           <div class="overflow-x-auto">
@@ -631,7 +619,7 @@
       </div>
     </section>
 
-    <!-- 7. MÓDULO GESTIÓN DE CATÁLOGO DESPACHO Y PRODUCTOS PANIFICADOS (Totalmente Editable) -->
+    <!-- 7. MÓDULO GESTIÓN DE CATÁLOGO DESPACHO Y PRODUCTOS PANIFICADOS -->
     <section id="sec-precios" class="hidden space-y-6">
       <div class="bg-amber-50 p-4 rounded-xl shadow border border-amber-300 space-y-4">
         <h2 class="text-base font-bold text-amber-900">🍞 Productos Panificados (Mínimos x Paquete y Precios Editables)</h2>
@@ -718,7 +706,6 @@
     <!-- 8. MÓDULO ROLES, USUARIOS Y BACKUPS -->
     <section id="sec-usuarios" class="hidden space-y-4">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <!-- CAMBIO DE PIN -->
         <div class="bg-amber-50 p-4 rounded-xl shadow border border-amber-300 space-y-3">
           <h2 class="text-base font-bold text-amber-900 border-b border-amber-200 pb-2">🔑 Mi Perfil / Cambiar PIN</h2>
           <div>
@@ -732,7 +719,6 @@
           <button type="button" onclick="cambiarPinUsuarioActivo()" class="bg-amber-800 text-white font-bold px-4 py-2 rounded text-sm hover:bg-amber-900 w-full shadow">Actualizar mi PIN</button>
         </div>
 
-        <!-- COPIAS DE SEGURIDAD AUTOMÁTICAS Y RESTAURACIÓN -->
         <div class="bg-blue-50 p-4 rounded-xl shadow border border-blue-300 space-y-3">
           <h2 class="text-base font-bold text-blue-900 border-b border-blue-200 pb-2">🛡️ Copias de Seguridad (Backups)</h2>
           <p class="text-xs text-blue-800">El sistema realiza respaldos automáticos diarios conservando los últimos 30 días. Puedes descargar o restaurar el estado completo a cualquier fecha.</p>
@@ -798,36 +784,10 @@
   </main>
 
   <!-- ZONAS DE IMPRESIÓN Y MODALES -->
-  <div id="print-zona-reparto" class="p-2 bg-white">
-    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #000; padding-bottom:5px; margin-bottom:12px;">
-      <div>
-        <h2 style="font-size: 16pt; font-weight: bold; margin: 0;">Planilla Diaria de Reparto (Hoja de Ruta)</h2>
-        <span style="font-size: 9pt; color: #555;">La Casa del Pan & La Espiga de Oro</span>
-      </div>
-      <span id="print-label-fecha-reparto" style="font-size:11pt; font-weight:bold;"></span>
-    </div>
-    <div style="margin-bottom: 15px;"><div id="print-resumen-totales-clientes"></div></div>
-    <div style="margin-top: 15px; padding: 10px; border: 1.5px solid #000; font-size: 11pt; font-weight: bold; display: flex; justify-content: space-between; page-break-inside: avoid; break-inside: avoid;">
-      <div>Total General Reparto: <span id="print-tot-rep-monto">$0</span></div>
-      <div>Cobrado Efectivo: <span id="print-tot-rep-efectivo">$0</span></div>
-      <div>Pendiente Cta. Cte.: <span id="print-tot-rep-ctacte">$0</span></div>
-    </div>
-  </div>
-
-  <div id="print-zona-cuadra" class="p-2 bg-white">
-    <div class="print-card-box mb-3">
-      <h2 style="font-size: 16pt; font-weight: bold; margin: 0 0 4px 0;">📋 Producción Consolidada (Solo Cuadra)</h2>
-      <p id="print-label-fecha-cuadra" style="font-size: 10pt; color: #333; font-weight: bold; margin: 0 0 10px 0;"></p>
-      <div id="print-totales-panificados" style="display: flex; flex-direction: column; gap: 8px;"></div>
-    </div>
-    <div class="print-card-box">
-      <h3 style="font-size: 12pt; font-weight: bold; margin: 0 0 6px 0;">🏪 Pedidos Especiales y Mostrador</h3>
-      <ul id="print-lista-notas-mostrador" style="padding-left: 20px; font-size: 10pt; line-height: 1.4;"></ul>
-    </div>
-  </div>
+  <div id="print-zona-reparto" class="p-2 bg-white"></div>
+  <div id="print-zona-cuadra" class="p-2 bg-white"></div>
 
   <script>
-    // CONFIGURACIÓN DE FIREBASE Y SINCRONIZACIÓN EN TIEMPO REAL
     const firebaseConfig = {
       databaseURL: "https://panaderia-sync-281a5-default-rtdb.firebaseio.com/"
     };
@@ -888,23 +848,26 @@
 
     function cargarDB(key, fallback) {
       const data = localStorage.getItem(key);
-      const valorInicial = data ? JSON.parse(data) : fallback;
+      let valorInicial = data ? JSON.parse(data) : fallback;
       if (rtdb) {
         try {
           rtdb.ref(key).on('value', (snapshot) => {
             const val = snapshot.val();
-            if (val !== null) {
+            if (val !== null && val !== undefined) {
+              valorInicial = val;
               localStorage.setItem(key, JSON.stringify(val));
-              if (key === 'db_repartos') { dbRepartos = val; renderizarPlanillaReparto(); renderizarCuadra(); }
-              if (key === 'db_clientes') { dbClientes = val; renderizarTablaClientes(); cargarSelectorClientesReparto(); cargarBuscadorClientes(); }
-              if (key === 'db_proveedores') { dbProveedores = val; renderizarTablaProveedores(); cargarBuscadorProveedores(); }
-              if (key === 'db_insumos') { dbInsumos = val; renderizarStockInsumos(); cargarSelectorInsumosFactura(); cargarSelectorInsumosMovimiento(); }
-              if (key === 'db_panificados') { dbPanificados = val; renderizarTablaPanificados(); cargarSelectorPanificadosReparto(); }
-              if (key === 'db_productos') { dbProductos = val; renderizarTablaCatalogo(); cargarSelectorDespachoReparto(); }
-              if (key === 'db_usuarios') { dbUsuarios = val; renderizarTablaUsuarios(); renderizarUsuariosSelect(); }
-              if (key === 'db_cajas_diarias') { dbCajasDiarias = val; cargarCajasHoyUI(); renderizarReportesMensuales(); }
-              if (key === 'db_egresos_caja') { dbEgresosCaja = val; renderizarTablaEgresosHoy(); renderizarReportesMensuales(); }
+            } else if (!data) {
+              rtdb.ref(key).set(fallback);
             }
+            if (key === 'db_repartos') { dbRepartos = val || fallback; renderizarPlanillaReparto(); renderizarCuadra(); }
+            if (key === 'db_clientes') { dbClientes = val || fallback; renderizarTablaClientes(); cargarSelectorClientesReparto(); cargarBuscadorClientes(); }
+            if (key === 'db_proveedores') { dbProveedores = val || fallback; renderizarTablaProveedores(); cargarBuscadorProveedores(); }
+            if (key === 'db_insumos') { dbInsumos = val || fallback; renderizarStockInsumos(); cargarSelectorInsumosFactura(); cargarSelectorInsumosMovimiento(); }
+            if (key === 'db_panificados') { dbPanificados = val || fallback; renderizarTablaPanificados(); cargarSelectorPanificadosReparto(); }
+            if (key === 'db_productos') { dbProductos = val || fallback; renderizarTablaCatalogo(); cargarSelectorDespachoReparto(); }
+            if (key === 'db_usuarios') { dbUsuarios = val || fallback; renderizarTablaUsuarios(); renderizarUsuariosSelect(); }
+            if (key === 'db_cajas_diarias') { dbCajasDiarias = val || fallback; cargarCajasHoyUI(); renderizarReportesMensuales(); }
+            if (key === 'db_egresos_caja') { dbEgresosCaja = val || fallback; renderizarTablaEgresosHoy(); renderizarReportesMensuales(); }
           });
         } catch (e) { console.warn("Firebase Offline"); }
       }
@@ -976,8 +939,6 @@
       const fechaFormateada = obtenerFechaConDia(fechaActual);
       const lblRep = document.getElementById('label-fecha-reparto');
       if (lblRep) lblRep.innerText = `Fecha: ${fechaFormateada}`;
-      const printLblRep = document.getElementById('print-label-fecha-reparto');
-      if (printLblRep) printLblRep.innerText = `Fecha: ${fechaFormateada}`;
     }
 
     function cambiarFechaOperativa() {
@@ -1267,6 +1228,7 @@
       }
     }
 
+    // --- FORMATO OPTIMIZADO DE IMPRESIÓN REPARTO (LÍNEAS SÓLIDAS Y SALTOS DE PÁGINA) ---
     function generarHTMLImpresionReparto() {
       const fechaFormateada = obtenerFechaConDia(fechaActual);
       const pedidosHoy = dbRepartos[fechaActual] || [];
@@ -1290,29 +1252,29 @@
         datos.items.forEach(it => {
           itemsHtml += `
             <tr>
-              <td>${it.producto}</td>
-              <td style="text-align: center;">${it.origen === 'despacho' ? 'Despacho' : 'Cuadra'}</td>
-              <td style="text-align: center; font-weight: bold;">${it.unidades} un.</td>
-              <td style="text-align: right;">$${it.precioUnitario.toLocaleString()}</td>
-              <td style="text-align: right; font-weight: bold;">$${it.monto.toLocaleString()}</td>
+              <td style="border: 1px solid #333; padding: 4px 6px; text-align: left;">${it.producto}</td>
+              <td style="border: 1px solid #333; padding: 4px 6px; text-align: center;">${it.origen === 'despacho' ? 'Despacho' : 'Cuadra'}</td>
+              <td style="border: 1px solid #333; padding: 4px 6px; text-align: center; font-weight: bold;">${it.unidades} un.</td>
+              <td style="border: 1px solid #333; padding: 4px 6px; text-align: right;">$${it.precioUnitario.toLocaleString()}</td>
+              <td style="border: 1px solid #333; padding: 4px 6px; text-align: right; font-weight: bold;">$${it.monto.toLocaleString()}</td>
             </tr>
           `;
         });
 
         clientesHtml += `
-          <div class="print-card-box">
-            <div class="print-client-row">
-              <span>👤 CLIENTE: ${cliNombre.toUpperCase()}</span>
+          <div class="print-card-box" style="border: 1px solid #000; padding: 8px 10px; margin-bottom: 12px; page-break-inside: avoid; break-inside: avoid; background-color: #fff;">
+            <div class="print-client-row" style="display: flex; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 4px; margin-bottom: 6px; font-weight: bold; font-size: 11pt;">
+              <span>CLIENTE: ${cliNombre.toUpperCase()}</span>
               <span>TOTAL A COBRAR: $${datos.total.toLocaleString()}</span>
             </div>
-            <table class="print-item-table">
+            <table class="print-item-table" style="width: 100%; border-collapse: collapse; margin-top: 4px;">
               <thead>
-                <tr>
-                  <th style="text-align: left;">Producto / Descripción</th>
-                  <th style="width: 15%; text-align: center;">Origen</th>
-                  <th style="width: 15%; text-align: center;">Cantidad</th>
-                  <th style="width: 18%; text-align: right;">P. Unit ($)</th>
-                  <th style="width: 20%; text-align: right;">Importe ($)</th>
+                <tr style="background-color: #e5e7eb;">
+                  <th style="border: 1px solid #333; padding: 4px 6px; text-align: left;">PRODUCTO / DESCRIPCIÓN</th>
+                  <th style="border: 1px solid #333; width: 15%; padding: 4px 6px; text-align: center;">ORIGEN</th>
+                  <th style="border: 1px solid #333; width: 15%; padding: 4px 6px; text-align: center;">CANTIDAD</th>
+                  <th style="border: 1px solid #333; width: 18%; padding: 4px 6px; text-align: right;">P. UNIT ($)</th>
+                  <th style="border: 1px solid #333; width: 20%; padding: 4px 6px; text-align: right;">IMPORTE ($)</th>
                 </tr>
               </thead>
               <tbody>${itemsHtml}</tbody>
@@ -1325,23 +1287,29 @@
         clientesHtml = '<p style="color: #666; font-style: italic;">No hay pedidos de reparto cargados para el día de la fecha.</p>';
       }
 
-      return `
-        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #000; padding-bottom:5px; margin-bottom:12px;">
-          <div>
-            <h2 style="font-size: 16pt; font-weight: bold; margin: 0;">Planilla Diaria de Reparto (Hoja de Ruta)</h2>
-            <span style="font-size: 9pt; color: #555;">La Casa del Pan & La Espiga de Oro</span>
+      const contenedor = document.getElementById('print-zona-reparto');
+      if (contenedor) {
+        contenedor.innerHTML = `
+          <div style="font-family: Arial, sans-serif; color: #000; width: 100%;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding-bottom: 6px; margin-bottom: 12px;">
+              <div>
+                <h2 style="font-size: 16pt; font-weight: bold; margin: 0;">Planilla Diaria de Reparto (Hoja de Ruta)</h2>
+                <span style="font-size: 9.5pt; color: #333;">La Casa del Pan & La Espiga de Oro</span>
+              </div>
+              <span style="font-size: 11pt; font-weight: bold;">Fecha: ${fechaFormateada}</span>
+            </div>
+            <div style="margin-bottom: 15px;">${clientesHtml}</div>
+            <div style="margin-top: 15px; padding: 10px; border: 2px solid #000; font-size: 11pt; font-weight: bold; display: flex; justify-content: space-between; page-break-inside: avoid; break-inside: avoid; background-color: #f9fafb;">
+              <div>Total General Reparto: $${totalMonto.toLocaleString()}</div>
+              <div>Cobrado Efectivo: $${totalEfectivo.toLocaleString()}</div>
+              <div>Pendiente Cta. Cte.: $${totalCtaCte.toLocaleString()}</div>
+            </div>
           </div>
-          <span style="font-size:11pt; font-weight:bold;">Fecha: ${fechaFormateada}</span>
-        </div>
-        <div style="margin-bottom: 15px;">${clientesHtml}</div>
-        <div style="margin-top: 15px; padding: 10px; border: 1.5px solid #000; font-size: 11pt; font-weight: bold; display: flex; justify-content: space-between; page-break-inside: avoid; break-inside: avoid;">
-          <div>Total General Reparto: $${totalMonto.toLocaleString()}</div>
-          <div>Cobrado Efectivo: $${totalEfectivo.toLocaleString()}</div>
-          <div>Pendiente Cta. Cte.: $${totalCtaCte.toLocaleString()}</div>
-        </div>
-      `;
+        `;
+      }
     }
 
+    // --- FORMATO EXACTO ORIGINAL DE IMPRESIÓN CUADRA ---
     function generarHTMLImpresionCuadra() {
       const fechaFormateada = obtenerFechaConDia(fechaActual);
       const pedidosHoy = dbRepartos[fechaActual] || [];
@@ -1360,7 +1328,7 @@
       } else {
         lista.forEach(([prodNombre, cantUnidades]) => {
           produccionHtml += `
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background-color: #fef3c7; border: 1px solid #000; border-radius: 4px; margin-bottom: 6px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border: 1px solid #000; border-radius: 4px; margin-bottom: 6px;">
               <span style="font-weight: bold; color: #000; font-size: 11pt;">${prodNombre}</span>
               <span style="font-size: 12pt; font-weight: bold; color: #000;">${cantUnidades} un.</span>
             </div>
@@ -1375,71 +1343,68 @@
       });
       if (notasHoy.length === 0) notasHtml = '<p style="color: #6b7280; font-style: italic; margin: 0;">No hay pedidos especiales cargados.</p>';
 
-      return `
-        <div class="print-card-box mb-3">
-          <h2 style="font-size: 16pt; font-weight: bold; margin: 0 0 4px 0;">📋 Producción Consolidada (Solo Cuadra)</h2>
-          <p style="font-size: 10pt; color: #333; font-weight: bold; margin: 0 0 10px 0;">Fecha: ${fechaFormateada}</p>
-          <div style="display: flex; flex-direction: column;">${produccionHtml}</div>
-        </div>
-        <div class="print-card-box">
-          <h3 style="font-size: 12pt; font-weight: bold; margin: 0 0 6px 0;">🏪 Pedidos Especiales y Mostrador</h3>
-          <ul style="padding-left: 20px; font-size: 10pt; line-height: 1.4;">${notasHtml}</ul>
-        </div>
-      `;
-    }
-
-    function lanzarImpresionUniversal(contenidoHtml, tituloDoc) {
-      const isReparto = tituloDoc.includes('Reparto');
-      const divZonaRep = document.getElementById('print-zona-reparto');
-      const divZonaCua = document.getElementById('print-zona-cuadra');
-
-      const contenedorActivo = isReparto ? divZonaRep : divZonaCua;
-      if (divZonaRep) divZonaRep.innerHTML = isReparto ? contenidoHtml : '';
-      if (divZonaCua) divZonaCua.innerHTML = !isReparto ? contenidoHtml : '';
-
-      if (!contenedorActivo) return;
-
-      const esMovilOApk = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.matchMedia("(max-width: 768px)").matches;
-
-      if (esMovilOApk) {
-        const opt = {
-          margin:       8,
-          filename:     `${tituloDoc}.pdf`,
-          image:        { type: 'jpeg', quality: 0.98 },
-          html2canvas:  { scale: 2, logging: false, useCORS: true },
-          jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-        };
-
-        contenedorActivo.setAttribute('style', 'display: block !important; background: white !important; padding: 10px !important;');
-
-        html2pdf().set(opt).from(contenedorActivo).save().then(() => {
-          contenedorActivo.removeAttribute('style');
-        }).catch(err => {
-          console.warn("Error al generar PDF:", err);
-          contenedorActivo.removeAttribute('style');
-        });
-
-      } else {
-        document.body.classList.remove('imprimiendo-reparto', 'imprimiendo-cuadra');
-        document.body.classList.add(isReparto ? 'imprimiendo-reparto' : 'imprimiendo-cuadra');
-
-        setTimeout(() => {
-          window.print();
-          setTimeout(() => {
-            document.body.classList.remove('imprimiendo-reparto', 'imprimiendo-cuadra');
-          }, 500);
-        }, 200);
+      const contenedor = document.getElementById('print-zona-cuadra');
+      if (contenedor) {
+        contenedor.innerHTML = `
+          <div style="font-family: Arial, sans-serif;">
+            <div class="print-card-box mb-3" style="border: 1px dashed #000; padding: 8px 10px; margin-bottom: 10px;">
+              <h2 style="font-size: 16pt; font-weight: bold; margin: 0 0 4px 0;">Producción Consolidada (Solo Cuadra)</h2>
+              <p style="font-size: 10pt; color: #333; font-weight: bold; margin: 0 0 10px 0;">Fecha: ${fechaFormateada}</p>
+              <div style="display: flex; flex-direction: column; gap: 8px;">${produccionHtml}</div>
+            </div>
+            <div class="print-card-box" style="border: 1px dashed #000; padding: 8px 10px;">
+              <h3 style="font-size: 12pt; font-weight: bold; margin: 0 0 6px 0;">Pedidos Especiales y Mostrador</h3>
+              <ul style="padding-left: 20px; font-size: 10pt; line-height: 1.4;">${notasHtml}</ul>
+            </div>
+          </div>
+        `;
       }
     }
 
     function imprimirReparto() {
-      const htmlReparto = generarHTMLImpresionReparto();
-      lanzarImpresionUniversal(htmlReparto, `Hoja_de_Ruta_${fechaActual}`);
+      generarHTMLImpresionReparto();
+      const divZonaRep = document.getElementById('print-zona-reparto');
+      if (!divZonaRep) return;
+
+      const opt = {
+        margin:       10,
+        filename:     `Hoja_de_Ruta_${fechaActual}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, logging: false, useCORS: true },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+
+      divZonaRep.setAttribute('style', 'display: block !important; background: white !important; padding: 10px !important;');
+
+      html2pdf().set(opt).from(divZonaRep).save().then(() => {
+        divZonaRep.removeAttribute('style');
+      }).catch(err => {
+        console.warn("Error al generar PDF:", err);
+        divZonaRep.removeAttribute('style');
+      });
     }
 
     function imprimirCuadra() {
-      const htmlCuadra = generarHTMLImpresionCuadra();
-      lanzarImpresionUniversal(htmlCuadra, `Produccion_Cuadra_${fechaActual}`);
+      generarHTMLImpresionCuadra();
+      const divZonaCua = document.getElementById('print-zona-cuadra');
+      if (!divZonaCua) return;
+
+      const opt = {
+        margin:       10,
+        filename:     `Produccion_Cuadra_${fechaActual}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, logging: false, useCORS: true },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+
+      divZonaCua.setAttribute('style', 'display: block !important; background: white !important; padding: 10px !important;');
+
+      html2pdf().set(opt).from(divZonaCua).save().then(() => {
+        divZonaCua.removeAttribute('style');
+      }).catch(err => {
+        console.warn("Error al generar PDF:", err);
+        divZonaCua.removeAttribute('style');
+      });
     }
 
     // 2. PRODUCCIÓN / CUADRA
@@ -1497,7 +1462,7 @@
       guardarDB('db_notas_mostrador', dbNotasMostrador); renderizarCuadra();
     }
 
-    // 3. CLIENTES Y CTA CTE (Buscador Rápido y Resumen Deudas)
+    // 3. CLIENTES Y CTA CTE
     function guardarCliente() {
       const nombre = document.getElementById('cli-nombre').value.trim(); if (!nombre) return;
       const id = generarID('CLI');
@@ -1549,7 +1514,7 @@
       const tbody = document.getElementById('tabla-resumen-clientes-deuda'); if (!tbody) return; tbody.innerHTML = '';
       Object.values(dbClientes).sort((a, b) => a.nombre.localeCompare(b.nombre)).forEach(cli => {
         const saldo = calcularSaldoCliente(cli.id);
-        if (saldo <= 0) return; // Muestra solo los que tienen deudas pendientes
+        if (saldo <= 0) return;
         const tr = document.createElement('tr'); tr.className = "border-b hover:bg-gray-50";
         tr.innerHTML = `
           <td class="p-1.5 font-bold text-gray-800">${cli.nombre}</td>
@@ -1644,10 +1609,32 @@
     }
 
     function imprimirCtaCteCliente() {
-      window.print();
+      if (!clienteSeleccionadoId) return;
+      const cli = dbClientes[clienteSeleccionadoId];
+      const saldo = calcularSaldoCliente(clienteSeleccionadoId);
+      
+      let htmlContenido = `
+        <div style="padding: 20px; font-family: Arial, sans-serif; color: #000;">
+          <h2 style="font-size: 16pt; font-weight: bold; border-bottom: 2px solid #000; padding-bottom: 5px; margin-bottom: 10px;">Cuenta Corriente - ${cli.nombre}</h2>
+          <p style="font-size: 10pt; margin-bottom: 5px;"><strong>CUIT/DNI:</strong> ${cli.cuit || 'S/D'} | <strong>Tel:</strong> ${cli.telefono || 'S/D'}</p>
+          <p style="font-size: 11pt; font-weight: bold; margin-top: 10px; margin-bottom: 15px;">Saldo Actual Pendiente: $${saldo.toLocaleString()}</p>
+          <hr style="border: 1px solid #ccc; margin: 15px 0;">
+          <p style="font-size: 9pt; color: #555;">La Casa del Pan & La Espiga de Oro - Fecha: ${fechaActual}</p>
+        </div>
+      `;
+
+      const opt = {
+        margin:       10,
+        filename:     `CtaCte_${cli.nombre.replace(/\s+/g, '_')}_${fechaActual}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2 },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+
+      html2pdf().from(htmlContenido).set(opt).save();
     }
 
-    // 4. PROVEEDORES Y FACTURACIÓN (Buscador Rápido y Resumen Deudas)
+    // 4. PROVEEDORES Y FACTURACIÓN
     function guardarProveedor() {
       const nombre = document.getElementById('prov-nombre').value.trim(); if (!nombre) return;
       const id = generarID('PRV');
@@ -1713,6 +1700,45 @@
       if (selBuscador) selBuscador.value = "";
     }
 
+    function compartirCtaCteProveedorWhatsApp() {
+      if (!proveedorSeleccionadoId) return;
+      const prv = dbProveedores[proveedorSeleccionadoId];
+      const saldo = calcularSaldoProveedor(proveedorSeleccionadoId);
+      const telefono = prv.telefono ? prv.telefono.replace(/\D/g, '') : '';
+      const mensaje = encodeURIComponent(`Hola ${prv.nombre}, nos comunicamos de La Casa del Pan & La Espiga de Oro para coordinar el estado de cuenta y pagos pendientes. Saldo actual de deuda: $${saldo.toLocaleString()}. ¡Muchas gracias!`);
+      if (telefono) {
+        window.open(`https://wa.me/${telefono}?text=${mensaje}`, '_blank');
+      } else {
+        alert(`El proveedor ${prv.nombre} no tiene cargado un número de teléfono válido.`);
+      }
+    }
+
+    function imprimirCtaCteProveedor() {
+      if (!proveedorSeleccionadoId) return;
+      const prv = dbProveedores[proveedorSeleccionadoId];
+      const saldo = calcularSaldoProveedor(proveedorSeleccionadoId);
+
+      let htmlContenido = `
+        <div style="padding: 20px; font-family: Arial, sans-serif; color: #000;">
+          <h2 style="font-size: 16pt; font-weight: bold; border-bottom: 2px solid #000; padding-bottom: 5px; margin-bottom: 10px;">Estado de Cuenta - Proveedor: ${prv.nombre}</h2>
+          <p style="font-size: 10pt; margin-bottom: 5px;"><strong>CUIT:</strong> ${prv.cuit || 'S/D'} | <strong>Rubro:</strong> ${prv.rubro || 'S/D'}</p>
+          <p style="font-size: 11pt; font-weight: bold; margin-top: 10px; margin-bottom: 15px;">Saldo Deuda Acumulado: $${saldo.toLocaleString()}</p>
+          <hr style="border: 1px solid #ccc; margin: 15px 0;">
+          <p style="font-size: 9pt; color: #555;">La Casa del Pan & La Espiga de Oro - Fecha: ${fechaActual}</p>
+        </div>
+      `;
+
+      const opt = {
+        margin:       10,
+        filename:     `Proveedor_${prv.nombre.replace(/\s+/g, '_')}_${fechaActual}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2 },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+
+      html2pdf().from(htmlContenido).set(opt).save();
+    }
+
     function cargarFacturaProveedor() {
       if (!proveedorSeleccionadoId) return;
       const cant = parseFloat(document.getElementById('fact-cant').value); const precioUn = parseFloat(document.getElementById('fact-precio').value);
@@ -1765,7 +1791,7 @@
       });
     }
 
-    // 5. CONTROL DE STOCK E INSUMOS (Con Control Manual de Consumos / Egresos)
+    // 5. CONTROL DE STOCK E INSUMOS
     function cargarSelectorInsumosFactura() {
       const sel = document.getElementById('fact-insumo'); if (!sel) return; sel.innerHTML = '<option value="">-- Insumo --</option>';
       Object.values(dbInsumos).forEach(ins => { const opt = document.createElement('option'); opt.value = ins.id; opt.textContent = ins.nombre; sel.appendChild(opt); });
@@ -2172,7 +2198,7 @@
       `;
     }
 
-    // 7. CATALOGO Y PRECIOS (Totalmente Editables en vivo)
+    // 7. CATALOGO Y PRECIOS
     function agregarNuevoPanificado() {
       const nombre = document.getElementById('nuevo-panificado-nombre').value.trim();
       const unid = parseInt(document.getElementById('nuevo-panificado-unidades').value);
@@ -2274,7 +2300,7 @@
     function eliminarProductoCatalogo(nombre) { delete dbProductos[nombre]; guardarDB('db_productos', dbProductos); renderizarTablaCatalogo(); cargarSelectorDespachoReparto(); }
     function filtrarTablaPrecios() { const b = document.getElementById('buscar-producto').value.toLowerCase(); document.querySelectorAll('#tabla-catalogo-precios tr').forEach(f => f.style.display = f.innerText.toLowerCase().includes(b) ? '' : 'none'); }
 
-    // 8. USUARIOS Y SISTEMA DE BACKUPS AUTOMÁTICOS
+    // 8. USUARIOS Y BACKUPS
     function guardarUsuario() {
       const nombre = document.getElementById('usr-nombre').value.trim(); if (!nombre) return;
       const id = generarID('USR');
