@@ -71,6 +71,7 @@
       padding: 8px 10px !important;
       margin-bottom: 10px !important;
       page-break-inside: avoid !important;
+      break-inside: avoid !important;
     }
 
     .print-client-row {
@@ -176,7 +177,7 @@
           <h2 class="text-base font-bold text-gray-800">Planilla Detallada de Reparto</h2>
           <div class="flex items-center gap-2">
             <span id="label-fecha-reparto" class="text-xs bg-amber-100 text-amber-900 px-2 py-1 rounded font-bold"></span>
-            <button type="button" onclick="imprimirReparto()" class="text-xs bg-amber-800 text-white p-1.5 px-3 rounded font-semibold hover:bg-amber-900 shadow">🖨️ Imprimir Hoja de Ruta</button>
+            <button type="button" onclick="imprimirReparto()" class="text-xs bg-amber-800 text-white p-1.5 px-3 rounded font-semibold hover:bg-amber-900 shadow">🖨️ Imprimir / Descargar PDF</button>
           </div>
         </div>
         <div class="overflow-x-auto">
@@ -212,7 +213,7 @@
             <h2 class="text-lg font-bold text-gray-800">📋 Producción Consolidada (Solo Cuadra)</h2>
             <p id="label-fecha-cuadra" class="text-xs text-gray-500 font-semibold"></p>
           </div>
-          <button type="button" onclick="imprimirCuadra()" class="text-xs bg-amber-800 text-white p-2 rounded font-semibold hover:bg-amber-900 shadow">🖨️ Imprimir Producción</button>
+          <button type="button" onclick="imprimirCuadra()" class="text-xs bg-amber-800 text-white p-2 rounded font-semibold hover:bg-amber-900 shadow">🖨️ Imprimir / Descargar PDF</button>
         </div>
         <div id="totales-panificados" class="grid grid-cols-1 gap-2"></div>
       </div>
@@ -227,7 +228,7 @@
       </div>
     </section>
 
-    <!-- 3. MÓDULO CLIENTES Y CUENTA CORRIENTE -->
+    <!-- 3. MÓDULO CLIENTES Y CUENTA CORRIENTE (Optimizado con Selector Rápido) -->
     <section id="sec-clientes" class="hidden space-y-4">
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div class="bg-white p-4 rounded-xl shadow border md:col-span-1">
@@ -237,24 +238,34 @@
             <input type="text" id="cli-cuit" placeholder="CUIT / DNI" class="border p-2 rounded w-full text-sm">
             <input type="text" id="cli-direccion" placeholder="Dirección" class="border p-2 rounded w-full text-sm">
             <input type="text" id="cli-telefono" placeholder="Teléfono / WhatsApp" class="border p-2 rounded w-full text-sm">
+            <input type="email" id="cli-email" placeholder="Correo electrónico (Opcional)" class="border p-2 rounded w-full text-sm">
           </div>
           <button type="button" onclick="window.guardarCliente()" class="bg-amber-700 text-white font-bold px-4 py-2 rounded text-sm hover:bg-amber-800 w-full">Registrar Cliente</button>
         </div>
 
-        <div class="bg-white p-4 rounded-xl shadow border md:col-span-2">
-          <h2 class="text-base font-bold text-gray-800 mb-2">Saldos Consolidados en Cta. Cte.</h2>
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs md:text-sm">
-              <thead>
-                <tr class="bg-gray-100 border-b">
-                  <th class="p-2">Cliente</th>
-                  <th class="p-2">Contacto</th>
-                  <th class="p-2">Saldo Deuda</th>
-                  <th class="p-2 text-center">Acción</th>
-                </tr>
-              </thead>
-              <tbody id="tabla-clientes"></tbody>
-            </table>
+        <div class="bg-white p-4 rounded-xl shadow border md:col-span-2 space-y-3">
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
+            <h2 class="text-base font-bold text-gray-800">Seleccionar Cliente para ver Cta. Cte.</h2>
+            <select id="select-buscador-cliente" onchange="seleccionarClienteDesdeBuscador(this.value)" class="border p-2 rounded text-sm font-semibold bg-amber-50 text-amber-950 w-full md:w-64">
+              <option value="">-- Buscar / Elegir Cliente --</option>
+            </select>
+          </div>
+          <p class="text-xs text-gray-500">Selecciona un cliente del desplegable superior para desplegar su ficha de cuenta corriente de forma limpia sin saturar la pantalla.</p>
+          
+          <div class="bg-gray-50 p-3 rounded-lg border">
+            <h3 class="text-xs font-bold text-gray-700 mb-2">Resumen General de Clientes con Deuda Pendiente</h3>
+            <div class="overflow-x-auto max-h-48 overflow-y-auto">
+              <table class="w-full text-left text-xs">
+                <thead>
+                  <tr class="bg-gray-200 border-b">
+                    <th class="p-1.5">Cliente</th>
+                    <th class="p-1.5 text-right">Saldo Deuda</th>
+                    <th class="p-1.5 text-center">Acción</th>
+                  </tr>
+                </thead>
+                <tbody id="tabla-resumen-clientes-deuda"></tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
@@ -269,7 +280,7 @@
             <button type="button" onclick="compartirCtaCteWhatsApp()" class="bg-green-600 text-white text-xs px-3 py-2 rounded font-bold hover:bg-green-700">📲 WhatsApp</button>
             <button type="button" onclick="compartirCtaCteEmail()" class="bg-blue-600 text-white text-xs px-3 py-2 rounded font-bold hover:bg-blue-700">✉️ Mail</button>
             <button type="button" onclick="imprimirCtaCteCliente()" class="bg-gray-700 text-white text-xs px-3 py-2 rounded font-bold hover:bg-gray-800">🖨️ Imprimir</button>
-            <button type="button" onclick="window.cerrarHistorialCliente()" class="bg-gray-300 text-gray-800 text-xs px-3 py-2 rounded font-bold">✕ Cerrar</button>
+            <button type="button" onclick="window.cerrarHistorialCliente()" class="bg-gray-300 text-gray-800 text-xs px-3 py-2 rounded font-bold">✕ Cerrar Ficha</button>
           </div>
         </div>
 
@@ -306,7 +317,7 @@
       </div>
     </section>
 
-    <!-- 4. MÓDULO PROVEEDORES Y FACTURACIÓN -->
+    <!-- 4. MÓDULO PROVEEDORES Y FACTURACIÓN (Optimizado con Selector Rápido) -->
     <section id="sec-proveedores" class="hidden space-y-4">
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div class="bg-white p-4 rounded-xl shadow border md:col-span-1">
@@ -320,20 +331,29 @@
           <button type="button" onclick="window.guardarProveedor()" class="bg-amber-700 text-white font-bold px-4 py-2 rounded text-sm hover:bg-amber-800 w-full">Registrar Proveedor</button>
         </div>
 
-        <div class="bg-white p-4 rounded-xl shadow border md:col-span-2">
-          <h2 class="text-base font-bold text-gray-800 mb-2">Cta. Cte. con Proveedores</h2>
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs md:text-sm">
-              <thead>
-                <tr class="bg-gray-100 border-b">
-                  <th class="p-2">Proveedor</th>
-                  <th class="p-2">Rubro / Tel</th>
-                  <th class="p-2">Saldo Deuda</th>
-                  <th class="p-2 text-center">Acción</th>
-                </tr>
-              </thead>
-              <tbody id="tabla-proveedores"></tbody>
-            </table>
+        <div class="bg-white p-4 rounded-xl shadow border md:col-span-2 space-y-3">
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
+            <h2 class="text-base font-bold text-gray-800">Seleccionar Proveedor a Pagar</h2>
+            <select id="select-buscador-proveedor" onchange="seleccionarProveedorDesdeBuscador(this.value)" class="border p-2 rounded text-sm font-semibold bg-amber-50 text-amber-950 w-full md:w-64">
+              <option value="">-- Buscar / Elegir Proveedor --</option>
+            </select>
+          </div>
+          <p class="text-xs text-gray-500">Selecciona un proveedor para gestionar sus facturas y pagos pendientes.</p>
+          
+          <div class="bg-gray-50 p-3 rounded-lg border">
+            <h3 class="text-xs font-bold text-gray-700 mb-2">Resumen General de Proveedores con Deuda</h3>
+            <div class="overflow-x-auto max-h-48 overflow-y-auto">
+              <table class="w-full text-left text-xs">
+                <thead>
+                  <tr class="bg-gray-200 border-b">
+                    <th class="p-1.5">Proveedor</th>
+                    <th class="p-1.5 text-right">Saldo Deuda</th>
+                    <th class="p-1.5 text-center">Acción</th>
+                  </tr>
+                </thead>
+                <tbody id="tabla-resumen-proveedores-deuda"></tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
@@ -341,7 +361,7 @@
       <div id="módulo-historial-proveedor" class="bg-white p-4 rounded-xl shadow border border-amber-500 space-y-4 hidden">
         <div class="flex justify-between items-center border-b pb-2">
           <h2 id="historial-nombre-proveedor" class="text-lg font-bold text-amber-900"></h2>
-          <button type="button" onclick="window.cerrarHistorialProveedor()" class="bg-gray-300 text-gray-800 text-xs px-3 py-2 rounded font-bold">✕ Cerrar</button>
+          <button type="button" onclick="window.cerrarHistorialProveedor()" class="bg-gray-300 text-gray-800 text-xs px-3 py-2 rounded font-bold">✕ Cerrar Ficha</button>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -392,7 +412,7 @@
       </div>
     </section>
 
-    <!-- 5. MÓDULO CONTROL DE STOCK E INSUMOS -->
+    <!-- 5. MÓDULO CONTROL DE STOCK E INSUMOS (Con Control Manual de Consumos / Egresos) -->
     <section id="sec-stock" class="hidden space-y-4">
       <div class="bg-white p-4 rounded-xl shadow border">
         <h2 class="text-base font-bold text-gray-800 mb-3">➕ Alta / Configuración de Insumo Individual</h2>
@@ -405,28 +425,34 @@
         <button type="button" onclick="window.guardarInsumo()" class="bg-amber-700 text-white font-bold px-4 py-2 rounded text-sm hover:bg-amber-800 w-full">Guardar Insumo</button>
       </div>
 
+      <!-- REGISTRO MANUAL DE CONSUMO / EGRESO DE STOCK -->
+      <div class="bg-amber-50 p-4 rounded-xl shadow border border-amber-300 space-y-3">
+        <h2 class="text-base font-bold text-amber-900">📉 Registrar Movimiento / Consumo Manual de Insumo</h2>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
+          <select id="mov-stock-insumo" class="border p-2 rounded text-xs bg-white font-semibold"></select>
+          <select id="mov-stock-tipo" class="border p-2 rounded text-xs bg-white font-semibold">
+            <option value="salida">➖ Consumo / Salida (Uso en Cuadra)</option>
+            <option value="entrada">➕ Ajuste / Entrada Manual</option>
+          </select>
+          <input type="number" id="mov-stock-cantidad" placeholder="Cantidad" step="0.1" class="border p-2 rounded text-xs bg-white font-bold">
+          <button type="button" onclick="registrarMovimientoManualStock()" class="bg-amber-800 hover:bg-amber-900 text-white font-bold px-3 py-2 rounded text-xs shadow">Aplicar Movimiento</button>
+        </div>
+      </div>
+
       <div class="bg-white p-4 rounded-xl shadow border border-gray-200">
         <h3 class="text-base font-bold text-amber-700 mb-1">Carga Masiva de Insumos</h3>
         <p class="text-xs text-gray-600 mb-3">
           Pega las líneas de tu lista o Excel. Formato recomendado por fila:<br>
           <code class="bg-gray-100 px-1 py-0.5 rounded text-amber-800">Nombre, Stock Inicial, Stock Mínimo, Unidad</code>
         </p>
-
         <textarea 
           id="ins-masivo-texto" 
           rows="4" 
           class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-amber-500 font-mono text-sm"
           placeholder="Ejemplo:&#10;Harina 000, 50, 10, Kg&#10;Azúcar, 20, 5, Kg&#10;Levadura, 100, 20, Unid"
         ></textarea>
-
         <div class="mt-3 flex justify-end">
-          <button 
-            type="button" 
-            onclick="window.guardarInsumosMasivo()" 
-            class="bg-amber-600 hover:bg-amber-700 text-white font-semibold py-2 px-4 rounded shadow text-sm transition duration-200"
-          >
-            Cargar Insumos Masivamente
-          </button>
+          <button type="button" onclick="window.guardarInsumosMasivo()" class="bg-amber-600 hover:bg-amber-700 text-white font-semibold py-2 px-4 rounded shadow text-sm transition duration-200">Cargar Insumos Masivamente</button>
         </div>
       </div>
 
@@ -444,32 +470,6 @@
               </tr>
             </thead>
             <tbody id="tabla-stock-insumos"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <div id="modulo-historial-stock" class="bg-white p-4 rounded-xl shadow border border-amber-500 space-y-4 hidden">
-        <div class="flex justify-between items-center border-b pb-2">
-          <div>
-            <h2 id="historial-nombre-insumo" class="text-lg font-bold text-amber-900"></h2>
-            <p id="historial-stock-insumo" class="text-xs text-gray-600 font-semibold"></p>
-          </div>
-          <button type="button" onclick="cerrarHistorialStock()" class="bg-gray-300 text-gray-800 text-xs px-3 py-2 rounded font-bold hover:bg-gray-400">✕ Cerrar</button>
-        </div>
-
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs md:text-sm">
-            <thead>
-              <tr class="bg-amber-100 border-b text-amber-900 font-bold">
-                <th class="p-2">Fecha y Hora</th>
-                <th class="p-2">Tipo</th>
-                <th class="p-2">Cantidad</th>
-                <th class="p-2">Proveedor</th>
-                <th class="p-2">Usuario App</th>
-                <th class="p-2">Motivo / Detalle</th>
-              </tr>
-            </thead>
-            <tbody id="tabla-historial-insumo-body"></tbody>
           </table>
         </div>
       </div>
@@ -631,17 +631,17 @@
       </div>
     </section>
 
-    <!-- 7. MÓDULO GESTIÓN DE CATÁLOGO DESPACHO Y PRODUCTOS PANIFICADOS -->
+    <!-- 7. MÓDULO GESTIÓN DE CATÁLOGO DESPACHO Y PRODUCTOS PANIFICADOS (Totalmente Editable) -->
     <section id="sec-precios" class="hidden space-y-6">
       <div class="bg-amber-50 p-4 rounded-xl shadow border border-amber-300 space-y-4">
-        <h2 class="text-base font-bold text-amber-900">🍞 Productos Panificados (Unidades x Paquete y Precios)</h2>
+        <h2 class="text-base font-bold text-amber-900">🍞 Productos Panificados (Mínimos x Paquete y Precios Editables)</h2>
         <div class="bg-white p-3 rounded-lg border border-amber-200 space-y-2">
           <h3 class="text-xs font-bold text-gray-700">➕ Agregar Nuevo Panificado</h3>
           <div class="grid grid-cols-1 md:grid-cols-5 gap-2">
             <input type="text" id="nuevo-panificado-nombre" placeholder="Nombre (Ej: Pebete)" class="border p-2 rounded text-xs md:col-span-1">
-            <input type="number" id="nuevo-panificado-unidades" placeholder="Unidades x Paq (Ej: 24)" class="border p-2 rounded text-xs">
-            <input type="number" id="nuevo-panificado-menor" placeholder="Precio x Unid (1 Paq) ($)" class="border p-2 rounded text-xs">
-            <input type="number" id="nuevo-panificado-mayor" placeholder="Precio x Unid (2+ Paq) ($)" class="border p-2 rounded text-xs">
+            <input type="number" id="nuevo-panificado-unidades" placeholder="Mín. x Paq (Ej: 24)" class="border p-2 rounded text-xs">
+            <input type="number" id="nuevo-panificado-menor" placeholder="Precio Minorista ($)" class="border p-2 rounded text-xs">
+            <input type="number" id="nuevo-panificado-mayor" placeholder="Precio Mayorista ($)" class="border p-2 rounded text-xs">
             <button type="button" onclick="agregarNuevoPanificado()" class="bg-amber-800 text-white font-bold px-3 py-2 rounded text-xs hover:bg-amber-900">Guardar Panificado</button>
           </div>
         </div>
@@ -651,9 +651,9 @@
             <thead>
               <tr class="bg-amber-100 text-amber-950 border-b">
                 <th class="p-2">Panificado</th>
-                <th class="p-2">Unid. x Paquete</th>
-                <th class="p-2">Precio Minorista x Unid</th>
-                <th class="p-2">Precio Mayorista x Unid</th>
+                <th class="p-2">Mín. x Paquete</th>
+                <th class="p-2">Precio Minorista ($)</th>
+                <th class="p-2">Precio Mayorista ($)</th>
                 <th class="p-2 text-center">Acción</th>
               </tr>
             </thead>
@@ -663,7 +663,7 @@
       </div>
 
       <div class="bg-white p-4 rounded-xl shadow border space-y-4">
-        <h2 class="text-base font-bold text-gray-800">📋 Catálogo Despacho (Mostrador y Re-Venta)</h2>
+        <h2 class="text-base font-bold text-gray-800">📋 Catálogo Despacho (Mostrador y Re-Venta Editables)</h2>
         <div class="bg-amber-50 p-3 rounded-lg border border-amber-300 space-y-2">
           <h3 class="text-xs font-bold text-amber-900 flex items-center gap-1">📈 Ajuste Masivo de Precios por Porcentaje (Solo Administrador)</h3>
           <div class="flex flex-wrap items-center gap-2">
@@ -694,7 +694,7 @@
 
         <div>
           <div class="flex justify-between items-center mb-3">
-            <h3 class="text-xs font-bold text-gray-600">Listado Catálogo Despacho</h3>
+            <h3 class="text-xs font-bold text-gray-600">Listado Catálogo Despacho (Edición Directa)</h3>
             <input type="text" id="buscar-producto" onkeyup="filtrarTablaPrecios()" placeholder="🔍 Buscar producto..." class="border rounded p-1 text-xs w-48">
           </div>
           <div class="overflow-x-auto">
@@ -807,7 +807,7 @@
       <span id="print-label-fecha-reparto" style="font-size:11pt; font-weight:bold;"></span>
     </div>
     <div style="margin-bottom: 15px;"><div id="print-resumen-totales-clientes"></div></div>
-    <div style="margin-top: 15px; padding: 10px; border: 1.5px solid #000; font-size: 11pt; font-weight: bold; display: flex; justify-content: space-between; page-break-inside: avoid;">
+    <div style="margin-top: 15px; padding: 10px; border: 1.5px solid #000; font-size: 11pt; font-weight: bold; display: flex; justify-content: space-between; page-break-inside: avoid; break-inside: avoid;">
       <div>Total General Reparto: <span id="print-tot-rep-monto">$0</span></div>
       <div>Cobrado Efectivo: <span id="print-tot-rep-efectivo">$0</span></div>
       <div>Pendiente Cta. Cte.: <span id="print-tot-rep-ctacte">$0</span></div>
@@ -896,9 +896,9 @@
             if (val !== null) {
               localStorage.setItem(key, JSON.stringify(val));
               if (key === 'db_repartos') { dbRepartos = val; renderizarPlanillaReparto(); renderizarCuadra(); }
-              if (key === 'db_clientes') { dbClientes = val; renderizarTablaClientes(); cargarSelectorClientesReparto(); }
-              if (key === 'db_proveedores') { dbProveedores = val; renderizarTablaProveedores(); }
-              if (key === 'db_insumos') { dbInsumos = val; renderizarStockInsumos(); cargarSelectorInsumosFactura(); }
+              if (key === 'db_clientes') { dbClientes = val; renderizarTablaClientes(); cargarSelectorClientesReparto(); cargarBuscadorClientes(); }
+              if (key === 'db_proveedores') { dbProveedores = val; renderizarTablaProveedores(); cargarBuscadorProveedores(); }
+              if (key === 'db_insumos') { dbInsumos = val; renderizarStockInsumos(); cargarSelectorInsumosFactura(); cargarSelectorInsumosMovimiento(); }
               if (key === 'db_panificados') { dbPanificados = val; renderizarTablaPanificados(); cargarSelectorPanificadosReparto(); }
               if (key === 'db_productos') { dbProductos = val; renderizarTablaCatalogo(); cargarSelectorDespachoReparto(); }
               if (key === 'db_usuarios') { dbUsuarios = val; renderizarTablaUsuarios(); renderizarUsuariosSelect(); }
@@ -926,7 +926,6 @@
     let dbNotasMostrador = cargarDB('db_notas_mostrador', {});
     let dbHistorialClientes = cargarDB('db_historial_clientes', {});
     let dbHistorialProveedores = cargarDB('db_historial_proveedores', {});
-    let dbHistorialInsumos = cargarDB('db_historial_insumos', {});
     let dbCajasDiarias = cargarDB('db_cajas_diarias', {});
     let dbEgresosCaja = cargarDB('db_egresos_caja', {});
     let dbBackupsDiarios = cargarDB('db_backups_diarios', {});
@@ -934,7 +933,6 @@
     let usuarioActivoId = cargarDB('usuario_activo_id', 'USR-1');
     let clienteSeleccionadoId = null;
     let proveedorSeleccionadoId = null;
-    let insumoSeleccionadoStockId = null;
 
     window.addEventListener('DOMContentLoaded', () => {
       document.getElementById('fecha-operativa').value = fechaActual;
@@ -956,6 +954,9 @@
       renderizarTablaCatalogo();
       renderizarTablaUsuarios();
       cargarSelectorInsumosFactura();
+      cargarSelectorInsumosMovimiento();
+      cargarBuscadorClientes();
+      cargarBuscadorProveedores();
       cargarCajasHoyUI();
       renderizarTablaEgresosHoy();
       renderizarReportesMensuales();
@@ -1333,7 +1334,7 @@
           <span style="font-size:11pt; font-weight:bold;">Fecha: ${fechaFormateada}</span>
         </div>
         <div style="margin-bottom: 15px;">${clientesHtml}</div>
-        <div style="margin-top: 15px; padding: 10px; border: 1.5px solid #000; font-size: 11pt; font-weight: bold; display: flex; justify-content: space-between; page-break-inside: avoid;">
+        <div style="margin-top: 15px; padding: 10px; border: 1.5px solid #000; font-size: 11pt; font-weight: bold; display: flex; justify-content: space-between; page-break-inside: avoid; break-inside: avoid;">
           <div>Total General Reparto: $${totalMonto.toLocaleString()}</div>
           <div>Cobrado Efectivo: $${totalEfectivo.toLocaleString()}</div>
           <div>Pendiente Cta. Cte.: $${totalCtaCte.toLocaleString()}</div>
@@ -1398,11 +1399,9 @@
 
       if (!contenedorActivo) return;
 
-      // Detección de celular o WebView de la APK
       const esMovilOApk = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.matchMedia("(max-width: 768px)").matches;
 
       if (esMovilOApk) {
-        // --- MODO APK / CELULAR: Generar y descargar PDF directamente ---
         const opt = {
           margin:       8,
           filename:     `${tituloDoc}.pdf`,
@@ -1411,7 +1410,6 @@
           jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
 
-        // Forzar visibilidad quitando el 'display: none' temporalmente para renderizar PDF
         contenedorActivo.setAttribute('style', 'display: block !important; background: white !important; padding: 10px !important;');
 
         html2pdf().set(opt).from(contenedorActivo).save().then(() => {
@@ -1422,7 +1420,6 @@
         });
 
       } else {
-        // --- MODO PC / NAVEGADOR: Impresión nativa clásica con cuadro de diálogo ---
         document.body.classList.remove('imprimiendo-reparto', 'imprimiendo-cuadra');
         document.body.classList.add(isReparto ? 'imprimiendo-reparto' : 'imprimiendo-cuadra');
 
@@ -1500,13 +1497,27 @@
       guardarDB('db_notas_mostrador', dbNotasMostrador); renderizarCuadra();
     }
 
-    // 3. CLIENTES Y CTA CTE
+    // 3. CLIENTES Y CTA CTE (Buscador Rápido y Resumen Deudas)
     function guardarCliente() {
       const nombre = document.getElementById('cli-nombre').value.trim(); if (!nombre) return;
       const id = generarID('CLI');
-      dbClientes[id] = { id, nombre, cuit: document.getElementById('cli-cuit').value.trim(), direccion: document.getElementById('cli-direccion').value.trim(), telefono: document.getElementById('cli-telefono').value.trim() };
+      dbClientes[id] = { 
+        id, 
+        nombre, 
+        cuit: document.getElementById('cli-cuit').value.trim(), 
+        direccion: document.getElementById('cli-direccion').value.trim(), 
+        telefono: document.getElementById('cli-telefono').value.trim(),
+        email: document.getElementById('cli-email')?.value.trim() || '' 
+      };
       guardarDB('db_clientes', dbClientes);
-      document.getElementById('cli-nombre').value = ''; cargarSelectorClientesReparto(); renderizarTablaClientes();
+      document.getElementById('cli-nombre').value = ''; 
+      if(document.getElementById('cli-cuit')) document.getElementById('cli-cuit').value = '';
+      if(document.getElementById('cli-direccion')) document.getElementById('cli-direccion').value = '';
+      if(document.getElementById('cli-telefono')) document.getElementById('cli-telefono').value = '';
+      if(document.getElementById('cli-email')) document.getElementById('cli-email').value = '';
+      cargarSelectorClientesReparto(); 
+      renderizarTablaClientes();
+      cargarBuscadorClientes();
     }
 
     function calcularSaldoCliente(cliId) {
@@ -1516,42 +1527,73 @@
       return saldo;
     }
 
+    function cargarBuscadorClientes() {
+      const sel = document.getElementById('select-buscador-cliente');
+      if (!sel) return;
+      sel.innerHTML = '<option value="">-- Buscar / Elegir Cliente --</option>';
+      Object.values(dbClientes).sort((a, b) => a.nombre.localeCompare(b.nombre)).forEach(c => {
+        const saldo = calcularSaldoCliente(c.id);
+        const opt = document.createElement('option');
+        opt.value = c.id;
+        opt.textContent = `${c.nombre} (Saldo: $${saldo.toLocaleString()})`;
+        sel.appendChild(opt);
+      });
+    }
+
+    function seleccionarClienteDesdeBuscador(cliId) {
+      if (!cliId) { cerrarHistorialCliente(); return; }
+      verHistorialCliente(cliId);
+    }
+
     function renderizarTablaClientes() {
-      const tbody = document.getElementById('tabla-clientes'); if (!tbody) return; tbody.innerHTML = '';
+      const tbody = document.getElementById('tabla-resumen-clientes-deuda'); if (!tbody) return; tbody.innerHTML = '';
       Object.values(dbClientes).sort((a, b) => a.nombre.localeCompare(b.nombre)).forEach(cli => {
         const saldo = calcularSaldoCliente(cli.id);
+        if (saldo <= 0) return; // Muestra solo los que tienen deudas pendientes
         const tr = document.createElement('tr'); tr.className = "border-b hover:bg-gray-50";
         tr.innerHTML = `
-          <td class="p-2 font-bold text-gray-800">${cli.nombre}</td>
-          <td class="p-2 text-xs">${cli.telefono || 'S/D'}</td>
-          <td class="p-2 font-bold ${saldo > 0 ? 'text-red-600' : 'text-green-700'}">$${saldo.toLocaleString()}</td>
-          <td class="p-2 text-center flex justify-center gap-1">
-            <button onclick="verHistorialCliente('${cli.id}')" class="bg-amber-700 text-white text-xs px-2 py-1 rounded font-bold">Ver Cta. Cte.</button>
-            <button onclick="eliminarCliente('${cli.id}')" class="bg-red-600 text-white text-xs px-2 py-1 rounded font-bold">✕</button>
+          <td class="p-1.5 font-bold text-gray-800">${cli.nombre}</td>
+          <td class="p-1.5 text-right font-bold text-red-600">$${saldo.toLocaleString()}</td>
+          <td class="p-1.5 text-center flex justify-center gap-1">
+            <button onclick="verHistorialCliente('${cli.id}')" class="bg-amber-700 text-white text-[10px] px-2 py-1 rounded font-bold">Ver Cta.</button>
+            <button onclick="eliminarCliente('${cli.id}')" class="bg-red-600 text-white text-[10px] px-1.5 py-1 rounded font-bold">✕</button>
           </td>
         `;
         tbody.appendChild(tr);
       });
+      if (tbody.innerHTML === '') {
+        tbody.innerHTML = '<tr><td colspan="3" class="p-2 text-center text-gray-400 italic">No hay clientes con saldo pendiente de cobro.</td></tr>';
+      }
+      cargarBuscadorClientes();
     }
 
     function eliminarCliente(cliId) {
-      if (confirm("¿Eliminar cliente?")) { delete dbClientes[cliId]; guardarDB('db_clientes', dbClientes); renderizarTablaClientes(); cargarSelectorClientesReparto(); }
+      if (confirm("¿Eliminar cliente?")) { delete dbClientes[cliId]; guardarDB('db_clientes', dbClientes); renderizarTablaClientes(); cargarSelectorClientesReparto(); cerrarHistorialCliente(); }
     }
 
     function verHistorialCliente(cliId) {
       clienteSeleccionadoId = cliId; const cli = dbClientes[cliId]; if (!cli) return;
       document.getElementById('historial-nombre-cliente').textContent = cli.nombre;
+      const saldoActual = calcularSaldoCliente(cliId);
+      document.getElementById('historial-contacto-cliente').textContent = `Tel: ${cli.telefono || 'S/D'} | Email: ${cli.email || 'S/D'} | Saldo Actual: $${saldoActual.toLocaleString()}`;
       document.getElementById('módulo-historial-cliente').classList.remove('hidden');
+      const selBuscador = document.getElementById('select-buscador-cliente');
+      if (selBuscador) selBuscador.value = cliId;
       renderizarTablaHistorialCliente();
     }
 
-    function cerrarHistorialCliente() { clienteSeleccionadoId = null; document.getElementById('módulo-historial-cliente').classList.add('hidden'); }
+    function cerrarHistorialCliente() { 
+      clienteSeleccionadoId = null; 
+      document.getElementById('módulo-historial-cliente').classList.add('hidden'); 
+      const selBuscador = document.getElementById('select-buscador-cliente');
+      if (selBuscador) selBuscador.value = "";
+    }
 
     function renderizarTablaHistorialCliente() {
       if (!clienteSeleccionadoId) return;
       const tbody = document.getElementById('tabla-historial-cliente'); if (!tbody) return; tbody.innerHTML = '';
       const movs = [];
-      Object.entries(dbRepartos).forEach(([fecha, pDia]) => { pDia.forEach(p => { if (p.clienteId === clienteSeleccionadoId && !p.pagado) movs.push({ id: p.id, fecha, concepto: `Pedido Reparto: ${p.producto}`, debito: p.monto, credito: 0 }); }); });
+      Object.entries(dbRepartos).forEach(([fecha, pDia]) => { pDia.forEach(p => { if (p.clienteId === clienteSeleccionadoId && !p.pagado) movs.push({ id: p.id, fecha, concepto: `Pedido Reparto: ${p.producto} (${p.unidades} un.)`, debito: p.monto, credito: 0 }); }); });
       (dbHistorialClientes[clienteSeleccionadoId] || []).forEach(p => movs.push({ id: p.id, fecha: p.fecha, concepto: `Pago (${p.medio})`, debito: p.tipo === 'debito' ? p.monto : 0, credito: p.tipo === 'credito' ? p.monto : 0 }));
       movs.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
 
@@ -1569,15 +1611,48 @@
       const monto = parseFloat(document.getElementById('pago-monto').value); if (isNaN(monto) || monto <= 0) return;
       if (!dbHistorialClientes[clienteSeleccionadoId]) dbHistorialClientes[clienteSeleccionadoId] = [];
       dbHistorialClientes[clienteSeleccionadoId].push({ id: generarID('PAG'), fecha: document.getElementById('pago-fecha').value || fechaActual, monto, medio: document.getElementById('pago-medio').value, tipo: 'credito' });
-      guardarDB('db_historial_clientes', dbHistorialClientes); document.getElementById('pago-monto').value = ''; renderizarTablaHistorialCliente(); renderizarTablaClientes();
+      guardarDB('db_historial_clientes', dbHistorialClientes); document.getElementById('pago-monto').value = ''; renderizarTablaHistorialCliente(); renderizarTablaClientes(); verHistorialCliente(clienteSeleccionadoId);
     }
 
-    // 4. PROVEEDORES Y FACTURACIÓN
+    function compartirCtaCteWhatsApp() {
+      if (!clienteSeleccionadoId) return;
+      const cli = dbClientes[clienteSeleccionadoId];
+      const saldo = calcularSaldoCliente(clienteSeleccionadoId);
+      const telefono = cli.telefono ? cli.telefono.replace(/\D/g, '') : '';
+      const mensaje = encodeURIComponent(`Hola ${cli.nombre}, te escribimos de La Casa del Pan & La Espiga de Oro. Tu saldo actual pendiente en cuenta corriente es de $${saldo.toLocaleString()}. ¡Muchas gracias!`);
+      if (telefono) {
+        window.open(`https://wa.me/${telefono}?text=${mensaje}`, '_blank');
+      } else {
+        alert(`El cliente ${cli.nombre} no tiene cargado un número de teléfono válido.`);
+      }
+    }
+
+    function compartirCtaCteEmail() {
+      if (!clienteSeleccionadoId) return;
+      const cli = dbClientes[clienteSeleccionadoId];
+      const saldo = calcularSaldoCliente(clienteSeleccionadoId);
+      const asunto = encodeURIComponent("Resumen de Cuenta Corriente - Panadería");
+      const cuerpo = encodeURIComponent(`Hola ${cli.nombre},\n\nLe acercamos el estado de su cuenta corriente en La Casa del Pan & La Espiga de Oro.\nSaldo pendiente actual: $${saldo.toLocaleString()}\n\nAtentamente,\nAdministración.`);
+      if (cli.email) {
+        window.location.href = `mailto:${cli.email}?subject=${asunto}&body=${cuerpo}`;
+      } else {
+        const emailManual = prompt(`El cliente no tiene email registrado. Ingrese una dirección de correo:`);
+        if (emailManual) {
+          window.location.href = `mailto:${emailManual}?subject=${asunto}&body=${cuerpo}`;
+        }
+      }
+    }
+
+    function imprimirCtaCteCliente() {
+      window.print();
+    }
+
+    // 4. PROVEEDORES Y FACTURACIÓN (Buscador Rápido y Resumen Deudas)
     function guardarProveedor() {
       const nombre = document.getElementById('prov-nombre').value.trim(); if (!nombre) return;
       const id = generarID('PRV');
       dbProveedores[id] = { id, nombre, cuit: document.getElementById('prov-cuit').value.trim(), telefono: document.getElementById('prov-telefono').value.trim(), rubro: document.getElementById('prov-rubro').value.trim() };
-      guardarDB('db_proveedores', dbProveedores); renderizarTablaProveedores();
+      guardarDB('db_proveedores', dbProveedores); renderizarTablaProveedores(); cargarBuscadorProveedores();
     }
 
     function calcularSaldoProveedor(provId) {
@@ -1586,35 +1661,76 @@
       return saldo;
     }
 
+    function cargarBuscadorProveedores() {
+      const sel = document.getElementById('select-buscador-proveedor');
+      if (!sel) return;
+      sel.innerHTML = '<option value="">-- Buscar / Elegir Proveedor --</option>';
+      Object.values(dbProveedores).sort((a, b) => a.nombre.localeCompare(b.nombre)).forEach(p => {
+        const saldo = calcularSaldoProveedor(p.id);
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = `${p.nombre} (Deuda: $${saldo.toLocaleString()})`;
+        sel.appendChild(opt);
+      });
+    }
+
+    function seleccionarProveedorDesdeBuscador(provId) {
+      if (!provId) { cerrarHistorialProveedor(); return; }
+      verHistorialProveedor(provId);
+    }
+
     function renderizarTablaProveedores() {
-      const tbody = document.getElementById('tabla-proveedores'); if (!tbody) return; tbody.innerHTML = '';
+      const tbody = document.getElementById('tabla-resumen-proveedores-deuda'); if (!tbody) return; tbody.innerHTML = '';
       Object.values(dbProveedores).sort((a, b) => a.nombre.localeCompare(b.nombre)).forEach(prv => {
         const saldo = calcularSaldoProveedor(prv.id);
         const tr = document.createElement('tr'); tr.className = "border-b hover:bg-gray-50";
-        tr.innerHTML = `<td class="p-2 font-bold">${prv.nombre}</td><td class="p-2 text-xs">${prv.rubro || 'Gral.'}</td><td class="p-2 font-bold text-red-600">$${saldo.toLocaleString()}</td><td class="p-2 text-center"><button onclick="verHistorialProveedor('${prv.id}')" class="bg-amber-700 text-white text-xs px-2 py-1 rounded font-bold">Cta. Cte.</button></td>`;
+        tr.innerHTML = `
+          <td class="p-1.5 font-bold">${prv.nombre}</td>
+          <td class="p-1.5 text-right font-bold text-red-600">$${saldo.toLocaleString()}</td>
+          <td class="p-1.5 text-center"><button onclick="verHistorialProveedor('${prv.id}')" class="bg-amber-700 text-white text-[10px] px-2 py-1 rounded font-bold">Ver Cta.</button></td>
+        `;
         tbody.appendChild(tr);
       });
+      if (tbody.innerHTML === '') {
+        tbody.innerHTML = '<tr><td colspan="3" class="p-2 text-center text-gray-400 italic">No hay proveedores registrados.</td></tr>';
+      }
+      cargarBuscadorProveedores();
     }
 
     function verHistorialProveedor(provId) {
       proveedorSeleccionadoId = provId; const prv = dbProveedores[provId]; if (!prv) return;
       document.getElementById('historial-nombre-proveedor').textContent = prv.nombre;
       document.getElementById('módulo-historial-proveedor').classList.remove('hidden');
+      const selBuscador = document.getElementById('select-buscador-proveedor');
+      if (selBuscador) selBuscador.value = provId;
       renderizarTablaHistorialProveedor();
     }
 
-    function cerrarHistorialProveedor() { proveedorSeleccionadoId = null; document.getElementById('módulo-historial-proveedor').classList.add('hidden'); }
+    function cerrarHistorialProveedor() { 
+      proveedorSeleccionadoId = null; 
+      document.getElementById('módulo-historial-proveedor').classList.add('hidden'); 
+      const selBuscador = document.getElementById('select-buscador-proveedor');
+      if (selBuscador) selBuscador.value = "";
+    }
 
     function cargarFacturaProveedor() {
       if (!proveedorSeleccionadoId) return;
       const cant = parseFloat(document.getElementById('fact-cant').value); const precioUn = parseFloat(document.getElementById('fact-precio').value);
+      const insumoId = document.getElementById('fact-insumo').value;
       if (isNaN(cant) || isNaN(precioUn)) return;
+      
       if (!dbHistorialProveedores[proveedorSeleccionadoId]) dbHistorialProveedores[proveedorSeleccionadoId] = [];
 
       dbHistorialProveedores[proveedorSeleccionadoId].push({
         id: generarID('FAC'), fecha: document.getElementById('fact-fecha').value || fechaActual,
         nroFactura: document.getElementById('fact-nro').value.trim() || 'S/N', monto: cant * precioUn, tipo: 'factura'
       });
+
+      if (insumoId && dbInsumos[insumoId]) {
+        dbInsumos[insumoId].stock += cant;
+        guardarDB('db_insumos', dbInsumos);
+        renderizarStockInsumos();
+      }
 
       guardarDB('db_historial_proveedores', dbHistorialProveedores);
       renderizarTablaHistorialProveedor(); renderizarTablaProveedores(); renderizarReportesMensuales();
@@ -1649,24 +1765,107 @@
       });
     }
 
-    // 5. CONTROL DE STOCK
+    // 5. CONTROL DE STOCK E INSUMOS (Con Control Manual de Consumos / Egresos)
     function cargarSelectorInsumosFactura() {
       const sel = document.getElementById('fact-insumo'); if (!sel) return; sel.innerHTML = '<option value="">-- Insumo --</option>';
       Object.values(dbInsumos).forEach(ins => { const opt = document.createElement('option'); opt.value = ins.id; opt.textContent = ins.nombre; sel.appendChild(opt); });
+    }
+
+    function cargarSelectorInsumosMovimiento() {
+      const sel = document.getElementById('mov-stock-insumo'); if (!sel) return; sel.innerHTML = '<option value="">-- Insumo --</option>';
+      Object.values(dbInsumos).sort((a, b) => a.nombre.localeCompare(b.nombre)).forEach(ins => { const opt = document.createElement('option'); opt.value = ins.id; opt.textContent = `${ins.nombre} (Stock: ${ins.stock} ${ins.unidad})`; sel.appendChild(opt); });
     }
 
     function guardarInsumo() {
       const nombre = document.getElementById('ins-nombre').value.trim(); if (!nombre) return;
       const id = generarID('INS');
       dbInsumos[id] = { id, nombre, stock: parseFloat(document.getElementById('ins-stock').value) || 0, minimo: parseFloat(document.getElementById('ins-minimo').value) || 0, unidad: document.getElementById('ins-unidad').value.trim() || 'Unid' };
-      guardarDB('db_insumos', dbInsumos); renderizarStockInsumos(); cargarSelectorInsumosFactura();
+      guardarDB('db_insumos', dbInsumos); 
+      document.getElementById('ins-nombre').value = '';
+      document.getElementById('ins-stock').value = '';
+      document.getElementById('ins-minimo').value = '';
+      document.getElementById('ins-unidad').value = '';
+      renderizarStockInsumos(); 
+      cargarSelectorInsumosFactura();
+      cargarSelectorInsumosMovimiento();
+    }
+
+    function guardarInsumosMasivo() {
+      const texto = document.getElementById('ins-masivo-texto').value.trim();
+      if (!texto) { alert("El campo de texto está vacío."); return; }
+      
+      const lineas = texto.split('\n');
+      let contador = 0;
+
+      lineas.forEach(linea => {
+        const partes = linea.split(',').map(p => p.trim());
+        if (partes.length >= 1 && partes[0]) {
+          const nombre = partes[0];
+          const stock = parseFloat(partes[1]) || 0;
+          const minimo = parseFloat(partes[2]) || 0;
+          const unidad = partes[3] || 'Unid';
+          
+          const id = generarID('INS');
+          dbInsumos[id] = { id, nombre, stock, minimo, unidad };
+          contador++;
+        }
+      });
+
+      if (contador > 0) {
+        guardarDB('db_insumos', dbInsumos);
+        document.getElementById('ins-masivo-texto').value = '';
+        renderizarStockInsumos();
+        cargarSelectorInsumosFactura();
+        cargarSelectorInsumosMovimiento();
+        alert(`¡Se cargaron ${contador} insumos exitosamente al stock!`);
+      } else {
+        alert("No se pudieron procesar las líneas. Verifique el formato.");
+      }
+    }
+
+    function registrarMovimientoManualStock() {
+      const insId = document.getElementById('mov-stock-insumo').value;
+      const tipo = document.getElementById('mov-stock-tipo').value;
+      const cant = parseFloat(document.getElementById('mov-stock-cantidad').value);
+
+      if (!insId || isNaN(cant) || cant <= 0) { alert("Seleccione un insumo y una cantidad válida."); return; }
+      const ins = dbInsumos[insId];
+      if (!ins) return;
+
+      if (tipo === 'salida') {
+        ins.stock -= cant;
+      } else {
+        ins.stock += cant;
+      }
+
+      guardarDB('db_insumos', dbInsumos);
+      document.getElementById('mov-stock-cantidad').value = '';
+      renderizarStockInsumos();
+      cargarSelectorInsumosMovimiento();
+      alert(`¡Movimiento registrado con éxito! Nuevo stock de ${ins.nombre}: ${ins.stock} ${ins.unidad}`);
+    }
+
+    function eliminarInsumoStock(id) {
+      if (confirm("¿Estás seguro de eliminar este insumo del stock?")) {
+        delete dbInsumos[id];
+        guardarDB('db_insumos', dbInsumos);
+        renderizarStockInsumos();
+        cargarSelectorInsumosFactura();
+        cargarSelectorInsumosMovimiento();
+      }
     }
 
     function renderizarStockInsumos() {
       const tbody = document.getElementById('tabla-stock-insumos'); if (!tbody) return; tbody.innerHTML = '';
       Object.values(dbInsumos).sort((a, b) => a.nombre.localeCompare(b.nombre)).forEach(ins => {
         const tr = document.createElement('tr'); tr.className = "border-b hover:bg-gray-50";
-        tr.innerHTML = `<td class="p-2 font-bold">${ins.nombre}</td><td class="p-2 font-semibold">${ins.stock} ${ins.unidad}</td><td class="p-2 text-gray-500">${ins.minimo} ${ins.unidad}</td><td class="p-2 text-center">${ins.stock <= ins.minimo ? `<span class="bg-red-100 text-red-800 text-xs px-2 py-0.5 rounded font-bold">⚠️ Alerta</span>` : `<span class="bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded font-bold">Normal</span>`}</td><td class="p-2 text-center">-</td>`;
+        tr.innerHTML = `
+          <td class="p-2 font-bold">${ins.nombre}</td>
+          <td class="p-2 font-semibold">${ins.stock} ${ins.unidad}</td>
+          <td class="p-2 text-gray-500">${ins.minimo} ${ins.unidad}</td>
+          <td class="p-2 text-center">${ins.stock <= ins.minimo ? `<span class="bg-red-100 text-red-800 text-xs px-2 py-0.5 rounded font-bold">⚠️ Alerta</span>` : `<span class="bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded font-bold">Normal</span>`}</td>
+          <td class="p-2 text-center"><button onclick="eliminarInsumoStock('${ins.id}')" class="bg-red-600 text-white text-xs px-2 py-1 rounded font-bold">✕ Eliminar</button></td>
+        `;
         tbody.appendChild(tr);
       });
     }
@@ -1708,9 +1907,7 @@
           let info = datosCaja[suc]?.[turno];
           
           if (!info) {
-            const efAnt = (turno === 'manana') ? (datosCaja[`${suc}Efectivo`] || 0) : 0;
-            const dgAnt = (turno === 'manana') ? (datosCaja[`${suc}Digital`] || 0) : 0;
-            info = { efectivo: efAnt, digital: dgAnt, cerrado: false, usuario: "" };
+            info = { efectivo: 0, digital: 0, cerrado: false, usuario: "" };
           }
 
           const inEf = document.getElementById(`${pfx}-efectivo`);
@@ -1870,23 +2067,18 @@
 
       for (let d = 1; d <= diasEnMes; d++) {
         const diaStr = `${anio}-${String(mes).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-        
         const cDia = dbCajasDiarias[diaStr] || {};
         
         let vAlem = 0;
         if (cDia.alem) {
           vAlem = ((cDia.alem.manana?.efectivo || 0) + (cDia.alem.manana?.digital || 0)) +
                   ((cDia.alem.tarde?.efectivo || 0) + (cDia.alem.tarde?.digital || 0));
-        } else {
-          vAlem = (cDia.alemEfectivo || 0) + (cDia.alemDigital || 0);
         }
 
         let vEspiga = 0;
         if (cDia.espiga) {
           vEspiga = ((cDia.espiga.manana?.efectivo || 0) + (cDia.espiga.manana?.digital || 0)) +
                     ((cDia.espiga.tarde?.efectivo || 0) + (cDia.espiga.tarde?.digital || 0));
-        } else {
-          vEspiga = (cDia.espigaEfectivo || 0) + (cDia.espigaDigital || 0);
         }
 
         let vReparto = 0;
@@ -1980,7 +2172,7 @@
       `;
     }
 
-    // 7. CATALOGO Y PRECIOS
+    // 7. CATALOGO Y PRECIOS (Totalmente Editables en vivo)
     function agregarNuevoPanificado() {
       const nombre = document.getElementById('nuevo-panificado-nombre').value.trim();
       const unid = parseInt(document.getElementById('nuevo-panificado-unidades').value);
@@ -1989,14 +2181,35 @@
       if (!nombre || isNaN(unid) || isNaN(menor) || isNaN(mayor)) return;
 
       dbPanificados[nombre] = { unidPorPaq: unid, menor, mayor };
-      guardarDB('db_panificados', dbPanificados); renderizarTablaPanificados(); cargarSelectorPanificadosReparto();
+      guardarDB('db_panificados', dbPanificados); 
+      document.getElementById('nuevo-panificado-nombre').value = '';
+      document.getElementById('nuevo-panificado-unidades').value = '';
+      document.getElementById('nuevo-panificado-menor').value = '';
+      document.getElementById('nuevo-panificado-mayor').value = '';
+      renderizarTablaPanificados(); 
+      cargarSelectorPanificadosReparto();
+    }
+
+    function editarPanificadoDirecto(nombre, campo, valor) {
+      if (!dbPanificados[nombre]) return;
+      const valNum = parseFloat(valor);
+      if (isNaN(valNum)) return;
+      dbPanificados[nombre][campo] = valNum;
+      guardarDB('db_panificados', dbPanificados);
+      cargarSelectorPanificadosReparto();
     }
 
     function renderizarTablaPanificados() {
       const tbody = document.getElementById('tabla-panificados-precios'); if (!tbody) return; tbody.innerHTML = '';
       Object.entries(dbPanificados).sort((a, b) => a[0].localeCompare(b[0])).forEach(([nombre, data]) => {
         const tr = document.createElement('tr'); tr.className = "border-b hover:bg-gray-50";
-        tr.innerHTML = `<td class="p-2 font-bold">${nombre}</td><td class="p-2">${data.unidPorPaq}</td><td class="p-2">$${data.menor}</td><td class="p-2 font-bold text-amber-900">$${data.mayor}</td><td class="p-2 text-center"><button onclick="eliminarPanificado('${nombre}')" class="bg-red-600 text-white text-xs px-2 py-1 rounded">✕</button></td>`;
+        tr.innerHTML = `
+          <td class="p-2 font-bold">${nombre}</td>
+          <td class="p-2"><input type="number" value="${data.unidPorPaq}" onchange="editarPanificadoDirecto('${nombre}', 'unidPorPaq', this.value)" class="w-16 border rounded p-1 text-xs font-bold"></td>
+          <td class="p-2"><input type="number" value="${data.menor}" onchange="editarPanificadoDirecto('${nombre}', 'menor', this.value)" class="w-20 border rounded p-1 text-xs font-bold"></td>
+          <td class="p-2"><input type="number" value="${data.mayor}" onchange="editarPanificadoDirecto('${nombre}', 'mayor', this.value)" class="w-20 border rounded p-1 text-xs font-bold text-amber-900"></td>
+          <td class="p-2 text-center"><button onclick="eliminarPanificado('${nombre}')" class="bg-red-600 text-white text-xs px-2 py-1 rounded">✕</button></td>
+        `;
         tbody.appendChild(tr);
       });
     }
@@ -2012,6 +2225,7 @@
         let p = dbProductos[nombre];
         if (p.mostrador > 0) p.mostrador = Math.round(p.mostrador * factor);
         if (p.reparto > 0) p.reparto = Math.round(p.reparto * factor);
+        if (p.unOcuarto > 0) p.unOcuarto = Math.round(p.unOcuarto * factor);
       });
 
       guardarDB('db_productos', dbProductos); renderizarTablaCatalogo();
@@ -2024,14 +2238,35 @@
         reparto: parseFloat(document.getElementById('nuevo-prod-reparto').value) || 0,
         unOcuarto: parseFloat(document.getElementById('nuevo-prod-unOcuarto').value) || 0
       };
-      guardarDB('db_productos', dbProductos); renderizarTablaCatalogo(); cargarSelectorDespachoReparto();
+      guardarDB('db_productos', dbProductos); 
+      document.getElementById('nuevo-prod-nombre').value = '';
+      document.getElementById('nuevo-prod-mostrador').value = '';
+      document.getElementById('nuevo-prod-reparto').value = '';
+      document.getElementById('nuevo-prod-unOcuarto').value = '';
+      renderizarTablaCatalogo(); 
+      cargarSelectorDespachoReparto();
+    }
+
+    function editarProductoCatalogoDirecto(nombre, campo, valor) {
+      if (!dbProductos[nombre]) return;
+      const valNum = parseFloat(valor);
+      if (isNaN(valNum)) return;
+      dbProductos[nombre][campo] = valNum;
+      guardarDB('db_productos', dbProductos);
+      cargarSelectorDespachoReparto();
     }
 
     function renderizarTablaCatalogo() {
       const tbody = document.getElementById('tabla-catalogo-precios'); if (!tbody) return; tbody.innerHTML = '';
       Object.entries(dbProductos).sort((a, b) => a[0].localeCompare(b[0])).forEach(([nombre, p]) => {
         const tr = document.createElement('tr'); tr.className = "border-b hover:bg-gray-50";
-        tr.innerHTML = `<td class="p-2 font-bold">${nombre}</td><td class="p-2">$${p.mostrador}</td><td class="p-2 font-bold text-amber-900">$${p.reparto}</td><td class="p-2">$${p.unOcuarto}</td><td class="p-2 text-center"><button onclick="eliminarProductoCatalogo('${nombre}')" class="bg-red-600 text-white text-xs px-2 py-1 rounded">✕</button></td>`;
+        tr.innerHTML = `
+          <td class="p-2 font-bold">${nombre}</td>
+          <td class="p-2"><input type="number" value="${p.mostrador}" onchange="editarProductoCatalogoDirecto('${nombre}', 'mostrador', this.value)" class="w-24 border rounded p-1 text-xs font-bold"></td>
+          <td class="p-2"><input type="number" value="${p.reparto}" onchange="editarProductoCatalogoDirecto('${nombre}', 'reparto', this.value)" class="w-24 border rounded p-1 text-xs font-bold text-amber-900"></td>
+          <td class="p-2"><input type="number" value="${p.unOcuarto}" onchange="editarProductoCatalogoDirecto('${nombre}', 'unOcuarto', this.value)" class="w-24 border rounded p-1 text-xs font-bold"></td>
+          <td class="p-2 text-center"><button onclick="eliminarProductoCatalogo('${nombre}')" class="bg-red-600 text-white text-xs px-2 py-1 rounded">✕</button></td>
+        `;
         tbody.appendChild(tr);
       });
     }
