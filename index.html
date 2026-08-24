@@ -1,4 +1,4 @@
-	<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <link rel="manifest" href="manifest.json">
@@ -90,9 +90,34 @@
 
     <!-- 1. MÓDULO REPARTO Y LOGÍSTICA -->
     <section id="sec-reparto" class="space-y-4">
-      <!-- MANTIENE SU LÓGICA ORIGINAL (PRECIO UNITARIO) -->
-      <div class="bg-white p-4 rounded-xl shadow border border-amber-300 space-y-3">
-        <h2 class="text-base font-bold text-amber-900 flex items-center gap-1">🍞 Cargar Pedido Principal (Panificados / Cuadra)</h2>
+      
+      <!-- BANNER DE AVISO DE FECHA VISUALIZADA -->
+      <div id="banner-alerta-fecha" class="bg-amber-600 text-white px-4 py-2.5 text-center font-bold text-xs md:text-sm shadow-md rounded-xl flex justify-center items-center gap-2 border-2 border-amber-800">
+        <span>📅 Visualizando planilla de: <span id="texto-fecha-alerta" class="bg-white text-amber-900 px-2.5 py-0.5 rounded text-sm underline uppercase"></span></span>
+      </div>
+
+      <!-- AVISO DE ESTADO DE REPARTO CERRADO -->
+      <div id="banner-reparto-cerrado" class="hidden bg-amber-100 border-l-4 border-amber-800 p-4 rounded-r shadow flex justify-between items-center">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">🔒</span>
+          <div>
+            <h3 class="text-xs font-bold text-amber-900 uppercase">Hoja de Ruta / Reparto Cerrado y Consolidado</h3>
+            <p class="text-[11px] text-amber-800">Los cobros de este día ya fueron cerrados. Los saldos pendientes pasaron a Cuenta Corriente.</p>
+          </div>
+        </div>
+        <div id="contenedor-btn-reabrir-reparto"></div>
+      </div>
+
+      <!-- CARGA DE PEDIDO PRINCIPAL CON FECHA EDITABLE DE DESTINO -->
+      <div id="panel-carga-panificados" class="bg-white p-4 rounded-xl shadow border border-amber-300 space-y-3">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
+          <h2 class="text-base font-bold text-amber-900 flex items-center gap-1">🍞 Cargar Pedido Principal (Panificados / Cuadra)</h2>
+          <div class="flex items-center gap-2 bg-amber-50 p-1.5 rounded-lg border border-amber-200">
+            <label class="text-xs font-bold text-amber-900">📅 Fecha de Destino del Pedido:</label>
+            <input type="date" id="rep-fecha-destino" class="bg-white text-amber-950 font-bold text-xs p-1 rounded border border-amber-300">
+          </div>
+        </div>
+        <p class="text-[11px] text-gray-500">ℹ️ Podés elegir la fecha exacta en la que se va a iniciar este pedido sin modificar la fecha operativa de caja.</p>
         <div class="grid grid-cols-1 md:grid-cols-5 gap-2 text-sm">
           <select id="rep-cliente" class="border p-2 rounded w-full text-sm font-medium text-gray-800 md:col-span-1"><option value="">-- Cliente --</option></select>
           <select id="rep-producto" onchange="actualizarPrecioSugeridoPanificado()" class="border p-2 rounded w-full text-sm font-bold text-amber-900 md:col-span-2"></select>
@@ -105,8 +130,8 @@
         </div>
       </div>
 
-      <!-- MODIFICADO PARA QUE MUESTRE Y CALCULE EL MONTO TOTAL -->
-      <div class="bg-purple-50 p-4 rounded-xl shadow border border-purple-200 space-y-3">
+      <!-- MÓDULO ADICIONAL DE DESPACHO -->
+      <div id="panel-carga-despacho" class="bg-purple-50 p-4 rounded-xl shadow border border-purple-200 space-y-3">
         <h2 class="text-sm font-bold text-purple-900 flex items-center gap-1">🏪 Cargar Adicional de Despacho / Re-Venta (Opcional)</h2>
         <div class="grid grid-cols-1 md:grid-cols-5 gap-2 text-sm">
           <select id="rep-despacho-cliente" class="border p-2 rounded w-full text-sm font-medium text-gray-800 md:col-span-1"><option value="">-- Mismo Cliente --</option></select>
@@ -121,7 +146,7 @@
       </div>
 
       <!-- SECCIÓN AUTOMATIZACIÓN (COLAPSABLE) -->
-      <div class="bg-blue-50 p-4 rounded-xl shadow border border-blue-300">
+      <div id="panel-automatizacion" class="bg-blue-50 p-4 rounded-xl shadow border border-blue-300">
         <div class="flex justify-between items-center cursor-pointer" onclick="toggleAutomatizacion()">
           <div>
             <h2 class="text-sm font-bold text-blue-900 flex items-center gap-1">⚙️ Automatización de Pedidos Recurrentes</h2>
@@ -206,10 +231,13 @@
             <tbody id="tabla-reparto"></tbody>
           </table>
         </div>
-        <div class="mt-3 grid grid-cols-1 md:grid-cols-3 gap-2 text-xs md:text-sm font-bold bg-amber-50 p-3 rounded-lg border border-amber-200">
-          <div>Total Reparto: <span id="tot-rep-monto" class="text-amber-900">$0</span></div>
-          <div>Cobrado Efectivo: <span id="tot-rep-efectivo" class="text-green-700">$0</span></div>
-          <div>Pendiente Cta. Cte.: <span id="tot-rep-ctacte" class="text-red-600">$0</span></div>
+        <div class="mt-3 flex flex-col md:flex-row justify-between items-center gap-3">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs md:text-sm font-bold bg-amber-50 p-3 rounded-lg border border-amber-200 flex-1 w-full">
+            <div>Total Reparto: <span id="tot-rep-monto" class="text-amber-900">$0</span></div>
+            <div>Cobrado Efectivo: <span id="tot-rep-efectivo" class="text-green-700">$0</span></div>
+            <div>Pendiente Cta. Cte.: <span id="tot-rep-ctacte" class="text-red-600">$0</span></div>
+          </div>
+          <button type="button" id="btn-cerrar-reparto-dia" onclick="cerrarRepartoDelDia()" class="bg-green-700 hover:bg-green-800 text-white font-bold px-4 py-3 rounded-lg text-sm shadow whitespace-nowrap">🔒 Cerrar Reparto del Día</button>
         </div>
       </div>
     </section>
@@ -217,12 +245,18 @@
     <!-- 2. MÓDULO PRODUCCIÓN / CUADRA -->
     <section id="sec-cuadra" class="hidden space-y-4">
       <div id="box-cuadra-consolidado" class="bg-white p-4 rounded-xl shadow border border-amber-500">
-        <div class="flex justify-between items-center mb-3">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 mb-3">
           <div>
             <h2 class="text-lg font-bold text-gray-800">📋 Producción Consolidada (Solo Cuadra)</h2>
             <p id="label-fecha-cuadra" class="text-xs text-gray-500 font-semibold"></p>
           </div>
-          <button type="button" onclick="imprimirCuadra()" class="text-xs bg-amber-800 text-white p-2 rounded font-semibold hover:bg-amber-900 shadow">🖨️ Imprimir / Guardar PDF Cuadra</button>
+          <div class="flex flex-wrap items-center gap-2">
+            <div class="flex items-center gap-1 bg-amber-50 p-1.5 rounded-lg border border-amber-200">
+              <label class="text-xs font-bold text-amber-900">📅 Fecha Producción:</label>
+              <input type="date" id="cuadra-fecha-selector" onchange="cambiarFechaCuadra()" class="bg-white text-amber-950 font-bold text-xs p-1 rounded border border-amber-300">
+            </div>
+            <button type="button" onclick="imprimirCuadra()" class="text-xs bg-amber-800 text-white p-2 rounded font-semibold hover:bg-amber-900 shadow">🖨️ Imprimir / Guardar PDF Cuadra</button>
+          </div>
         </div>
         <div id="totales-panificados" class="grid grid-cols-1 gap-2"></div>
       </div>
@@ -737,7 +771,7 @@
 
     <!-- 8. USUARIOS Y BACKUPS -->
     <section id="sec-usuarios" class="hidden space-y-4">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div class="bg-amber-50 p-4 rounded-xl shadow border border-amber-300 space-y-3">
           <h2 class="text-base font-bold text-amber-900 border-b border-amber-200 pb-2">🔑 Mi Perfil / Cambiar PIN</h2>
           <div>
@@ -764,6 +798,11 @@
               <button type="button" onclick="restaurarFechaSeleccionada()" class="bg-amber-700 hover:bg-amber-800 text-white font-bold text-xs px-3 py-1.5 rounded shadow">Restaurar</button>
             </div>
           </div>
+        </div>
+
+        <div class="bg-purple-50 p-4 rounded-xl shadow border border-purple-300 space-y-3">
+          <h2 class="text-base font-bold text-purple-900 border-b border-purple-200 pb-2">⏰ Referencia de Fecha</h2>
+          <p class="text-xs text-purple-800">La caja opera con la Fecha Operativa general. Los nuevos pedidos se cargan a la fecha que vos elijas en el selector del formulario y la Cuadra preselecciona el día siguiente pasada las 15:00 hs.</p>
         </div>
       </div>
 
@@ -868,7 +907,7 @@
     </div>
   </div>
 
-  <!-- NUEVO: MODAL EDITAR MOVIMIENTO CLIENTE -->
+  <!-- MODAL EDITAR MOVIMIENTO CLIENTE -->
   <div id="modal-editar-mov-cliente" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
     <div class="bg-white p-5 rounded-xl shadow-xl max-w-md w-full space-y-3">
       <h3 class="text-base font-bold text-amber-900 border-b pb-2">✏️ Editar Movimiento de Cuenta</h3>
@@ -893,7 +932,7 @@
     </div>
   </div>
 
-  <!-- NUEVO: MODAL EDITAR MOVIMIENTO PROVEEDOR -->
+  <!-- MODAL EDITAR MOVIMIENTO PROVEEDOR -->
   <div id="modal-editar-mov-proveedor" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
     <div class="bg-white p-5 rounded-xl shadow-xl max-w-md w-full space-y-3">
       <h3 class="text-base font-bold text-amber-900 border-b pb-2">✏️ Editar Registro de Proveedor</h3>
@@ -918,7 +957,7 @@
     </div>
   </div>
 
-  <!-- NUEVO: MODAL EDITAR INSUMO / STOCK -->
+  <!-- MODAL EDITAR INSUMO / STOCK -->
   <div id="modal-editar-insumo" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
     <div class="bg-white p-5 rounded-xl shadow-xl max-w-md w-full space-y-3">
       <h3 class="text-base font-bold text-amber-900 border-b pb-2">✏️ Editar Insumo / Control de Stock</h3>
@@ -966,7 +1005,9 @@
       return `${prefijo}-${Date.now().toString(36)}-${Math.random().toString(36).substr(2, 5)}`;
     }
 
+    // Fecha operativa por defecto (hoy del calendario real)
     let fechaActual = new Date().toISOString().split('T')[0];
+    let fechaCuadraActiva = fechaActual;
 
     const PERMISOS_ROLES = {
       admin: { nombre: "Administrador / Dueño", pestanas: ['reparto', 'cuadra', 'clientes', 'proveedores', 'stock', 'caja', 'precios', 'usuarios'] },
@@ -1029,6 +1070,7 @@
             if (key === 'db_cajas_diarias') { dbCajasDiarias = val || fallback; cargarCajasHoyUI(); renderizarReportesMensuales(); }
             if (key === 'db_egresos_caja') { dbEgresosCaja = val || fallback; renderizarTablaEgresosHoy(); renderizarReportesMensuales(); }
             if (key === 'db_recurrentes') { dbRecurrentes = val || fallback; renderizarTablaRecurrentes(); }
+            if (key === 'db_repartos_cerrados') { dbRepartosCerrados = val || fallback; renderizarPlanillaReparto(); }
           });
         } catch (e) { console.warn("Firebase Offline"); }
       }
@@ -1054,20 +1096,26 @@
     let dbCajasDiarias = cargarDB('db_cajas_diarias', {});
     let dbEgresosCaja = cargarDB('db_egresos_caja', {});
     let dbBackupsDiarios = cargarDB('db_backups_diarios', {});
+    let dbRepartosCerrados = cargarDB('db_repartos_cerrados', {});
 
     let usuarioActivoId = cargarDB('usuario_activo_id', 'USR-1');
     let clienteSeleccionadoId = null;
     let proveedorSeleccionadoId = null;
     
-    // Variables de estado para los modales de edición
     let movClienteEditContext = null;
     let movProvEditContext = null;
     let insumoEditContext = null;
 
     window.addEventListener('DOMContentLoaded', () => {
       document.getElementById('fecha-operativa').value = fechaActual;
+      const inputDestino = document.getElementById('rep-fecha-destino');
+      if (inputDestino) inputDestino.value = fechaActual;
+
+      // Inicializar fecha de Cuadra según hora actual (> 15:00 hs = mañana)
+      inicializarFechaCuadra();
+
       document.getElementById('reporte-mes-select').value = fechaActual.substring(0, 7);
-      
+
       ejecutarBackupDiarioAutomatico();
       renderizarUsuariosSelect();
       renderizarMenuNavegacion();
@@ -1097,6 +1145,26 @@
       renderizarSelectorBackups();
     });
 
+    function inicializarFechaCuadra() {
+      const ahora = new Date();
+      const hora = ahora.getHours();
+      let d = new Date();
+      if (hora >= 15) {
+        d.setDate(d.getDate() + 1);
+      }
+      fechaCuadraActiva = d.toISOString().split('T')[0];
+      const inputCuadra = document.getElementById('cuadra-fecha-selector');
+      if (inputCuadra) inputCuadra.value = fechaCuadraActiva;
+    }
+
+    function cambiarFechaCuadra() {
+      const input = document.getElementById('cuadra-fecha-selector');
+      if (input && input.value) {
+        fechaCuadraActiva = input.value;
+        renderizarCuadra();
+      }
+    }
+
     function obtenerFechaConDia(fechaStr) {
       if (!fechaStr) return '';
       const [anio, mes, dia] = fechaStr.split('-').map(Number);
@@ -1108,8 +1176,17 @@
 
     function actualizarEtiquetasFecha() {
       const fechaFormateada = obtenerFechaConDia(fechaActual);
+      
       const lblRep = document.getElementById('label-fecha-reparto');
       if (lblRep) lblRep.innerText = `Fecha: ${fechaFormateada}`;
+      
+      const txtAlerta = document.getElementById('texto-fecha-alerta');
+      if (txtAlerta) txtAlerta.innerText = fechaFormateada;
+
+      const inputFecha = document.getElementById('fecha-operativa');
+      if (inputFecha && inputFecha.value !== fechaActual) {
+        inputFecha.value = fechaActual;
+      }
     }
 
     function cambiarFechaOperativa() {
@@ -1117,6 +1194,11 @@
       if (input && input.value) {
         fechaActual = input.value;
         actualizarEtiquetasFecha();
+        
+        // Sincronizar también por defecto el selector de destino del pedido si el usuario no lo había cambiado a mano
+        const inputDestino = document.getElementById('rep-fecha-destino');
+        if (inputDestino) inputDestino.value = fechaActual;
+
         procesarPedidosRecurrentesAutomaticos();
         renderizarPlanillaReparto();
         renderizarCuadra();
@@ -1313,7 +1395,6 @@
       guardarDB('db_repartos', dbRepartos);
     }
 
-    // MODAL EDITAR AUTOMATIZADOS
     function abrirModalPedidosAuto() {
       document.getElementById('modal-pedidos-auto').classList.remove('hidden');
       renderizarTablaPedidosAuto();
@@ -1328,6 +1409,7 @@
       tbody.innerHTML = '';
       const pedidosHoy = dbRepartos[fechaActual] || [];
       const automaticos = pedidosHoy.filter(p => p.origenAuto);
+      const isCerrado = dbRepartosCerrados[fechaActual] === true;
 
       if (automaticos.length === 0) {
         tbody.innerHTML = '<tr><td colspan="6" class="p-3 text-center text-gray-500 italic">No hay pedidos automáticos para hoy.</td></tr>';
@@ -1340,16 +1422,17 @@
         tr.innerHTML = `
           <td class="p-2 font-semibold text-gray-800">${p.clienteNombre}</td>
           <td class="p-2">${p.producto}</td>
-          <td class="p-2"><input type="number" step="0.01" value="${p.unidades}" onchange="modificarCantidadPedido('${p.id}', this.value)" class="w-16 border rounded p-1 text-xs font-bold text-blue-900"></td>
-          <td class="p-2"><input type="number" step="0.01" value="${p.precioUnitario}" onchange="modificarPrecioPedidoDirecto('${p.id}', this.value)" class="w-20 border rounded p-1 text-xs font-bold"></td>
+          <td class="p-2"><input type="number" step="0.01" value="${p.unidades}" ${isCerrado ? 'disabled' : ''} onchange="modificarCantidadPedido('${p.id}', this.value)" class="w-16 border rounded p-1 text-xs font-bold text-blue-900"></td>
+          <td class="p-2"><input type="number" step="0.01" value="${p.precioUnitario}" ${isCerrado ? 'disabled' : ''} onchange="modificarPrecioPedidoDirecto('${p.id}', this.value)" class="w-20 border rounded p-1 text-xs font-bold"></td>
           <td class="p-2 font-bold text-amber-900">$${p.monto.toLocaleString()}</td>
-          <td class="p-2 text-center"><button onclick="eliminarPedidoReparto('${p.id}', '${p.producto}');" class="bg-red-600 text-white text-xs px-2 py-1 rounded font-bold">✕ Eliminar</button></td>
+          <td class="p-2 text-center">${!isCerrado ? `<button onclick="eliminarPedidoReparto('${p.id}', '${p.producto}');" class="bg-red-600 text-white text-xs px-2 py-1 rounded font-bold">✕ Eliminar</button>` : '<span class="text-xs text-gray-400">Cerrado</span>'}</td>
         `;
         tbody.appendChild(tr);
       });
     }
 
     function modificarCantidadPedido(pedidoId, nuevaCantVal) {
+      if (dbRepartosCerrados[fechaActual]) return;
       const nuevaCant = parseFloat(nuevaCantVal);
       if (isNaN(nuevaCant) || nuevaCant <= 0) return;
       const pedido = (dbRepartos[fechaActual] || []).find(p => p.id === pedidoId);
@@ -1364,7 +1447,6 @@
         }
       }
     }
-
 
     function renderizarUsuariosSelect() {
       const sel = document.getElementById('select-usuario-activo');
@@ -1429,6 +1511,7 @@
       renderizarTablaEgresosHoy();
       renderizarReportesMensuales();
       renderizarCuadra();
+      renderizarPlanillaReparto();
     }
 
     function renderizarMenuNavegacion() {
@@ -1535,6 +1618,9 @@
     }
 
     function agregarPedidoPanificado() {
+      const fechaDestino = document.getElementById('rep-fecha-destino').value || fechaActual;
+      if (dbRepartosCerrados[fechaDestino]) { alert(`⚠️ El reparto del día ${fechaDestino} ya se encuentra cerrado.`); return; }
+      
       const cliId = document.getElementById('rep-cliente').value;
       const prodNombre = document.getElementById('rep-producto').value;
       const cant = parseFloat(document.getElementById('rep-cantidad').value);
@@ -1544,8 +1630,8 @@
       const cliente = dbClientes[cliId]; const panificado = dbPanificados[prodNombre];
       if (!cliente) return;
 
-      if (!dbRepartos[fechaActual]) dbRepartos[fechaActual] = [];
-      dbRepartos[fechaActual].push({
+      if (!dbRepartos[fechaDestino]) dbRepartos[fechaDestino] = [];
+      dbRepartos[fechaDestino].push({
         id: generarID('REP'), clienteId: cliId, clienteNombre: cliente.nombre, producto: prodNombre,
         unidades: cant, unidPorPaq: panificado ? panificado.unidPorPaq : 1, precioUnitario: precioPersonalizado,
         monto: cant * precioPersonalizado, origen: 'cuadra', pagado: false, medioPago: "Pendiente"
@@ -1553,10 +1639,16 @@
 
       guardarDB('db_repartos', dbRepartos);
       document.getElementById('rep-cantidad').value = '';
+      
+      alert(`¡Pedido cargado con éxito para la fecha ${fechaDestino} (sin alterar tu caja operativa actual)!`);
+
       renderizarPlanillaReparto(); renderizarCuadra(); renderizarReportesMensuales();
     }
 
     function agregarPedidoDespacho() {
+      const fechaDestino = document.getElementById('rep-fecha-destino').value || fechaActual;
+      if (dbRepartosCerrados[fechaDestino]) { alert(`⚠️ El reparto del día ${fechaDestino} ya se encuentra cerrado.`); return; }
+
       let cliId = document.getElementById('rep-despacho-cliente').value || document.getElementById('rep-cliente').value;
       const prodNombre = document.getElementById('rep-despacho-producto').value;
       const cant = parseFloat(document.getElementById('rep-despacho-cantidad').value);
@@ -1565,8 +1657,8 @@
       if (!cliId || !prodNombre || isNaN(cant) || cant <= 0 || isNaN(montoTotal)) { alert("Verifique los datos del adicional."); return; }
       const cliente = dbClientes[cliId]; if (!cliente) return;
 
-      if (!dbRepartos[fechaActual]) dbRepartos[fechaActual] = [];
-      dbRepartos[fechaActual].push({
+      if (!dbRepartos[fechaDestino]) dbRepartos[fechaDestino] = [];
+      dbRepartos[fechaDestino].push({
         id: generarID('REP'), clienteId: cliId, clienteNombre: cliente.nombre, producto: prodNombre,
         unidades: cant, unidPorPaq: 1, 
         precioUnitario: (montoTotal / cant), 
@@ -1576,13 +1668,63 @@
 
       guardarDB('db_repartos', dbRepartos);
       document.getElementById('rep-despacho-cantidad').value = '';
+
+      alert(`¡Ítem de despacho cargado con éxito para la fecha ${fechaDestino}!`);
+
       renderizarPlanillaReparto(); renderizarCuadra(); renderizarReportesMensuales();
+    }
+
+    function cerrarRepartoDelDia() {
+      if (dbRepartosCerrados[fechaActual]) { alert("El reparto de este día ya está cerrado."); return; }
+      if (!confirm(`🔒 ¿Desea cerrar el Reparto del día ${fechaActual}?\n\nLos pedidos que queden pendientes pasarán formalmente a la Cuenta Corriente de los clientes y se bloqueará la edición operativa.`)) return;
+
+      dbRepartosCerrados[fechaActual] = true;
+      guardarDB('db_repartos_cerrados', dbRepartosCerrados);
+      renderizarPlanillaReparto();
+      alert("¡Reparto cerrado con éxito!");
+    }
+
+    function reabrirRepartoDelDia() {
+      const usr = dbUsuarios[usuarioActivoId];
+      if (!usr || usr.rol !== 'admin') {
+        alert("⚠️ Solo el Administrador / Dueño puede reabrir un reparto cerrado.");
+        return;
+      }
+
+      if (confirm(`🔓 ¿Desea reabrir el Reparto del día ${fechaActual} para correcciones?`)) {
+        dbRepartosCerrados[fechaActual] = false;
+        guardarDB('db_repartos_cerrados', dbRepartosCerrados);
+        renderizarPlanillaReparto();
+        alert("¡Reparto reabierto con éxito!");
+      }
     }
 
     function renderizarPlanillaReparto() {
       const tbody = document.getElementById('tabla-reparto');
       if (!tbody) return;
       tbody.innerHTML = '';
+
+      const isCerrado = dbRepartosCerrados[fechaActual] === true;
+      const usr = dbUsuarios[usuarioActivoId];
+      const esAdmin = (usr && usr.rol === 'admin');
+
+      const banner = document.getElementById('banner-reparto-cerrado');
+      const btnCerrarReparto = document.getElementById('btn-cerrar-reparto-dia');
+      const contReabrir = document.getElementById('contenedor-btn-reabrir-reparto');
+
+      if (isCerrado) {
+        if (banner) banner.classList.remove('hidden');
+        if (btnCerrarReparto) btnCerrarReparto.classList.add('hidden');
+        if (contReabrir && esAdmin) {
+          contReabrir.innerHTML = `<button type="button" onclick="reabrirRepartoDelDia()" class="bg-amber-800 hover:bg-amber-900 text-white font-bold px-3 py-1.5 rounded text-xs shadow">🔓 Reabrir Reparto (Admin)</button>`;
+        } else if (contReabrir) {
+          contReabrir.innerHTML = '';
+        }
+      } else {
+        if (banner) banner.classList.add('hidden');
+        if (btnCerrarReparto) btnCerrarReparto.classList.remove('hidden');
+        if (contReabrir) contReabrir.innerHTML = '';
+      }
 
       const pedidosHoy = dbRepartos[fechaActual] || [];
       let totalMonto = 0, totalEfectivo = 0, totalCtaCte = 0;
@@ -1595,18 +1737,33 @@
         const iconoAuto = p.origenAuto ? '🤖 ' : '';
 
         const tr = document.createElement('tr'); tr.className = "border-b hover:bg-gray-50 text-xs md:text-sm";
+        
+        let colAcciones = '';
+        if (isCerrado) {
+          colAcciones = p.pagado ? `<span class="text-xs text-gray-500 font-bold">Cobrado (${p.medioPago})</span>` : `<span class="text-xs text-red-600 font-bold">En Cta. Cte.</span>`;
+        } else {
+          colAcciones = !p.pagado ? `
+            <select onchange="marcarPedidoCobrado('${p.id}', this.value)" class="border rounded text-xs p-1">
+              <option value="">-- Pago --</option>
+              <option value="Efectivo">Efectivo</option>
+              <option value="Transferencia">Transferencia</option>
+            </select>
+            <button onclick="eliminarPedidoReparto('${p.id}', '${p.producto}')" class="bg-red-600 text-white text-xs px-2 py-1 rounded font-bold">✕</button>
+          ` : `
+            <button onclick="deshacerCobroPedido('${p.id}')" class="text-xs text-amber-700 underline font-bold">Cambiar</button>
+            <button onclick="eliminarPedidoReparto('${p.id}', '${p.producto}')" class="bg-red-600 text-white text-xs px-2 py-1 rounded font-bold">✕</button>
+          `;
+        }
+
         tr.innerHTML = `
           <td class="p-2 font-semibold text-gray-800">${p.clienteNombre}</td>
           <td class="p-2">${iconoAuto}${p.producto}</td>
           <td class="p-2">${p.origen === 'despacho' ? `<span class="bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded text-[10px] font-bold">Despacho</span>` : `<span class="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded text-[10px] font-bold">Cuadra</span>`}</td>
           <td class="p-2">${p.unidades} un.</td>
-          <td class="p-2 font-bold"><input type="number" step="0.01" value="${p.precioUnitario}" onchange="modificarPrecioPedidoDirecto('${p.id}', this.value)" class="w-16 border rounded p-0.5 text-xs font-bold"></td>
+          <td class="p-2 font-bold"><input type="number" step="0.01" value="${p.precioUnitario}" ${isCerrado ? 'disabled' : ''} onchange="modificarPrecioPedidoDirecto('${p.id}', this.value)" class="w-16 border rounded p-0.5 text-xs font-bold"></td>
           <td class="p-2 font-bold text-amber-900">$${p.monto.toLocaleString()}</td>
           <td class="p-2">${p.pagado ? `<span class="bg-green-100 text-green-800 px-2 py-0.5 rounded text-[11px] font-bold">Cobrado (${p.medioPago})</span>` : `<span class="bg-red-100 text-red-800 px-2 py-0.5 rounded text-[11px] font-bold">Pendiente</span>`}</td>
-          <td class="p-2 text-center flex items-center justify-center gap-1">
-            ${!p.pagado ? `<select onchange="marcarPedidoCobrado('${p.id}', this.value)" class="border rounded text-xs p-1"><option value="">-- Pago --</option><option value="Efectivo">Efectivo</option><option value="Transferencia">Transferencia</option></select>` : `<button onclick="deshacerCobroPedido('${p.id}')" class="text-xs text-amber-700 underline font-bold">Cambiar</button>`}
-            <button onclick="eliminarPedidoReparto('${p.id}', '${p.producto}')" class="bg-red-600 text-white text-xs px-2 py-1 rounded font-bold">✕</button>
-          </td>
+          <td class="p-2 text-center flex items-center justify-center gap-1">${colAcciones}</td>
         `;
         tbody.appendChild(tr);
       });
@@ -1624,6 +1781,7 @@
     }
 
     function modificarPrecioPedidoDirecto(pedidoId, nuevoPrecioVal) {
+      if (dbRepartosCerrados[fechaActual]) return;
       const nuevoPrecio = parseFloat(nuevoPrecioVal); if (isNaN(nuevoPrecio)) return;
       const pedido = (dbRepartos[fechaActual] || []).find(p => p.id === pedidoId);
       if (pedido) { 
@@ -1639,17 +1797,20 @@
     }
 
     function marcarPedidoCobrado(pedidoId, medioPago) {
+      if (dbRepartosCerrados[fechaActual]) return;
       if (!medioPago) return;
       const pedido = (dbRepartos[fechaActual] || []).find(p => p.id === pedidoId);
       if (pedido) { pedido.pagado = true; pedido.medioPago = medioPago; guardarDB('db_repartos', dbRepartos); renderizarPlanillaReparto(); renderizarReportesMensuales(); }
     }
 
     function deshacerCobroPedido(pedidoId) {
+      if (dbRepartosCerrados[fechaActual]) return;
       const pedido = (dbRepartos[fechaActual] || []).find(p => p.id === pedidoId);
       if (pedido) { pedido.pagado = false; pedido.medioPago = "Pendiente"; guardarDB('db_repartos', dbRepartos); renderizarPlanillaReparto(); renderizarReportesMensuales(); }
     }
 
     function eliminarPedidoReparto(pedidoId, productoNombre) {
+      if (dbRepartosCerrados[fechaActual]) { alert("⚠️ El reparto de este día ya se encuentra cerrado."); return; }
       if (confirm(`⚠️ ¿Desea eliminar el pedido de "${productoNombre}"?`)) {
         if (dbRepartos[fechaActual]) {
           dbRepartos[fechaActual] = dbRepartos[fechaActual].filter(p => p.id !== pedidoId);
@@ -1664,10 +1825,9 @@
       }
     }
 
-    // --- IMPRESIÓN DIRECTA / IMPRESIÓN PDF NATIVA ---
     function imprimirCuadra() {
-      const fechaFormateada = obtenerFechaConDia(fechaActual);
-      const pedidosHoy = dbRepartos[fechaActual] || [];
+      const fechaFormateada = obtenerFechaConDia(fechaCuadraActiva);
+      const pedidosHoy = dbRepartos[fechaCuadraActiva] || [];
       const consolidados = {};
 
       pedidosHoy.forEach(p => {
@@ -1692,7 +1852,7 @@
       }
 
       let notasHtml = '';
-      const notasHoy = dbNotasMostrador[fechaActual] || [];
+      const notasHoy = dbNotasMostrador[fechaCuadraActiva] || [];
       notasHoy.forEach((nota) => {
         notasHtml += `<li style="margin-bottom: 6px; font-size: 12px; color: #374151; font-weight: 500;">${nota}</li>`;
       });
@@ -1709,7 +1869,7 @@
               <p style="font-size: 13px; margin: 4px 0 0 0; color: #4b5563; font-weight: 600;">Planilla de Producción Consolidada (Cuadra)</p>
             </div>
             <div style="text-align: right; background-color: #fef3c7; border: 1px solid #fde68a; padding: 8px 14px; border-radius: 6px;">
-              <span style="font-size: 10px; color: #92400e; font-weight: 700; display: block; text-transform: uppercase;">Fecha Operativa</span>
+              <span style="font-size: 10px; color: #92400e; font-weight: 700; display: block; text-transform: uppercase;">Fecha de Producción</span>
               <span style="font-size: 12px; font-weight: 800; color: #78350f;">${fechaFormateada}</span>
             </div>
           </div>
@@ -1829,19 +1989,25 @@
         if (boxConsolidado) boxConsolidado.classList.remove('hidden');
       }
 
-      const fechaFormateada = obtenerFechaConDia(fechaActual);
-      const lblCua = document.getElementById('label-fecha-cuadra'); if (lblCua) lblCua.innerText = `Fecha: ${fechaFormateada}`;
+      const fechaFormateada = obtenerFechaConDia(fechaCuadraActiva);
+      const lblCua = document.getElementById('label-fecha-cuadra'); if (lblCua) lblCua.innerText = `Fecha de Producción: ${fechaFormateada}`;
+      
+      const inputSelector = document.getElementById('cuadra-fecha-selector');
+      if (inputSelector && inputSelector.value !== fechaCuadraActiva) {
+        inputSelector.value = fechaCuadraActiva;
+      }
+
       const contTotales = document.getElementById('totales-panificados'); if (!contTotales) return;
       contTotales.innerHTML = '';
 
       const consolidados = {};
-      (dbRepartos[fechaActual] || []).forEach(p => {
+      (dbRepartos[fechaCuadraActiva] || []).forEach(p => {
         if (p.origen === 'despacho') return;
         consolidados[p.producto] = (consolidados[p.producto] || 0) + p.unidades;
       });
 
       const lista = Object.entries(consolidados).sort((a, b) => a[0].localeCompare(b[0]));
-      if (lista.length === 0) contTotales.innerHTML = '<p class="text-sm text-gray-500 italic">No hay pedidos de cuadra cargados.</p>';
+      if (lista.length === 0) contTotales.innerHTML = '<p class="text-sm text-gray-500 italic">No hay pedidos de cuadra cargados para esta fecha.</p>';
       else {
         lista.forEach(([prodNombre, cantUnidades]) => {
           const card = document.createElement('div'); card.className = "p-3 bg-amber-50 rounded-lg border border-amber-200 flex justify-between items-center";
@@ -1853,7 +2019,7 @@
       const listaNotas = document.getElementById('lista-notas-mostrador');
       if (listaNotas) {
         listaNotas.innerHTML = '';
-        (dbNotasMostrador[fechaActual] || []).forEach((nota, idx) => {
+        (dbNotasMostrador[fechaCuadraActiva] || []).forEach((nota, idx) => {
           const li = document.createElement('li'); li.className = "flex justify-between items-center bg-gray-50 p-2 rounded border mb-1";
           li.innerHTML = `<span>${nota}</span><button onclick="eliminarNotaMostrador(${idx})" class="text-xs text-red-600 font-bold">Eliminar</button>`;
           listaNotas.appendChild(li);
@@ -1863,13 +2029,13 @@
 
     function agregarNotaMostrador() {
       const input = document.getElementById('nota-mostrador'); if (!input || !input.value.trim()) return;
-      if (!dbNotasMostrador[fechaActual]) dbNotasMostrador[fechaActual] = [];
-      dbNotasMostrador[fechaActual].push(input.value.trim());
+      if (!dbNotasMostrador[fechaCuadraActiva]) dbNotasMostrador[fechaCuadraActiva] = [];
+      dbNotasMostrador[fechaCuadraActiva].push(input.value.trim());
       guardarDB('db_notas_mostrador', dbNotasMostrador); input.value = ''; renderizarCuadra();
     }
 
     function eliminarNotaMostrador(idx) {
-      if (dbNotasMostrador[fechaActual]) dbNotasMostrador[fechaActual].splice(idx, 1);
+      if (dbNotasMostrador[fechaCuadraActiva]) dbNotasMostrador[fechaCuadraActiva].splice(idx, 1);
       guardarDB('db_notas_mostrador', dbNotasMostrador); renderizarCuadra();
     }
 
@@ -2004,7 +2170,6 @@
       if (selBuscador) selBuscador.value = "";
     }
 
-    // MODAL EDICION CLIENTE LOGICA
     function abrirModalEditarMovCliente(id, origen, fechaOriginal) {
       movClienteEditContext = { id, origen, fechaOriginal };
       let m = null;
@@ -2078,7 +2243,7 @@
       cerrarModalEditarMovCliente();
       renderizarTablaHistorialCliente();
       renderizarTablaClientes();
-      verHistorialCliente(clienteSeleccionadoId); // Para actualizar el saldo superior
+      verHistorialCliente(clienteSeleccionadoId);
     }
 
     function borrarMovimientoCliente(movId) {
@@ -2120,7 +2285,7 @@
         tr.innerHTML = `<td class="p-2">${tdFecha}</td><td class="p-2">${tdConcepto}</td><td class="p-2 text-right text-red-600">${tdDebito}</td><td class="p-2 text-right text-green-700">${tdCredito}</td><td class="p-2 text-right font-bold text-red-600">$${acumulado.toLocaleString()}</td>
         <td class="p-2 text-center flex justify-center items-center gap-1">
           <button onclick="abrirModalEditarMovCliente('${m.id}', '${m.origen}', '${m.fechaOriginal}')" class="text-[10px] text-blue-600 font-bold border border-blue-600 px-2 py-0.5 rounded hover:bg-blue-50">Editar</button>
-          ${m.origen === 'pago' ? `<button onclick="borrarMovimientoCliente('${m.id}')" class="text-[10px] text-red-600 font-bold border border-red-600 px-2 py-0.5 rounded hover:bg-red-50">Borrar</button>` : ''}
+          ${m.origen === 'pago' ? `<button onclick="borrarMovimientoCliente('${m.id}')" class="text-[10px] text-red-600 font-bold border border-red-600 px-2 py-0.5 rounded hover:bg-blue-50">Borrar</button>` : ''}
         </td>`;
         tbody.appendChild(tr);
       });
@@ -2142,7 +2307,6 @@
       guardarDB('db_historial_clientes', dbHistorialClientes); document.getElementById('pago-monto').value = ''; renderizarTablaHistorialCliente(); renderizarTablaClientes(); verHistorialCliente(clienteSeleccionadoId);
     }
 
-    // --- ENVIAR RESUMEN A CLIENTES (WHATSAPP & MAIL) ---
     function enviarResumenWhatsAppCliente() {
       if (!clienteSeleccionadoId) return;
       const cli = dbClientes[clienteSeleccionadoId];
@@ -2210,7 +2374,7 @@
           cuerpo += `- ${m.fecha}: ${m.concepto} -> ${m.tipo}$${m.monto.toLocaleString()}\n`;
         });
         cuerpo += `\nSALDO TOTAL A PAGAR: $${saldo.toLocaleString()}\n\n`;
-        cuerpo += `Saludos cordiales,\nLa Casa del Pan & La Espiga de Oro`;
+        cuerpo += `Saludos cordiales,\nLa Casa del Pan`;
       }
 
       const emailDestino = cli.email || '';
@@ -2300,7 +2464,7 @@
       const prv = dbProveedores[proveedorSeleccionadoId];
 
       const nuevoNombre = document.getElementById('edit-prov-nombre').value.trim();
-      if (!nuevoNombre) { alert("El nombre del proveedor no puede estar vacío."); return; }
+      if (!nuevoNombre) { alert("El nombre del proveedor não puede estar vacío."); return; }
 
       prv.nombre = nuevoNombre;
       prv.cuit = document.getElementById('edit-prov-cuit').value.trim();
@@ -2357,7 +2521,6 @@
       renderizarTablaHistorialProveedor(); renderizarTablaProveedores(); renderizarReportesMensuales();
     }
 
-    // MODAL EDICION PROVEEDOR LOGICA
     function abrirModalEditarMovProveedor(id) {
       movProvEditContext = id;
       const m = dbHistorialProveedores[proveedorSeleccionadoId].find(x => x.id === id);
@@ -2431,7 +2594,7 @@
         tr.innerHTML = `<td class="p-2">${tdFecha}</td><td class="p-2">${tdConcepto}</td><td class="p-2 text-right text-red-600">${tdMontoFactura}</td><td class="p-2 text-right text-green-700">${tdMontoPago}</td><td class="p-2 text-right font-bold text-red-600">$${acumulado.toLocaleString()}</td>
         <td class="p-2 text-center flex justify-center items-center gap-1">
           <button onclick="abrirModalEditarMovProveedor('${m.id}')" class="text-[10px] text-blue-600 font-bold border border-blue-600 px-2 py-0.5 rounded hover:bg-blue-50">Editar</button>
-          <button onclick="borrarMovimientoProveedor('${m.id}')" class="text-[10px] text-red-600 font-bold border border-red-600 px-2 py-0.5 rounded hover:bg-red-50">Borrar</button>
+          <button onclick="borrarMovimientoProveedor('${m.id}')" class="text-[10px] text-red-600 font-bold border border-red-600 px-2 py-0.5 rounded hover:bg-blue-50">Borrar</button>
         </td>`;
         tbody.appendChild(tr);
       });
@@ -2445,7 +2608,6 @@
       tbody.appendChild(trBorrar);
     }
 
-    // --- ENVIAR RESUMEN A PROVEEDORES (WHATSAPP & MAIL) ---
     function enviarResumenWhatsAppProveedor() {
       if (!proveedorSeleccionadoId) return;
       const prv = dbProveedores[proveedorSeleccionadoId];
@@ -2531,7 +2693,6 @@
       cargarSelectorInsumosMovimiento();
     }
 
-    // MODAL EDICION INSUMOS LOGICA
     function abrirModalEditarInsumo(id) {
       insumoEditContext = id;
       const ins = dbInsumos[id];
@@ -3207,7 +3368,7 @@
         dbBackupsDiarios[hoy] = {
           fechaBackup: hoy,
           timestamp: Date.now(),
-          datos: { dbUsuarios, dbPanificados, dbProductos, dbClientes, dbProveedores, dbInsumos, dbRepartos, dbRecurrentes, dbNotasMostrador, dbHistorialClientes, dbHistorialProveedores, dbCajasDiarias, dbEgresosCaja }
+          datos: { dbUsuarios, dbPanificados, dbProductos, dbClientes, dbProveedores, dbInsumos, dbRepartos, dbRecurrentes, dbNotasMostrador, dbHistorialClientes, dbHistorialProveedores, dbCajasDiarias, dbEgresosCaja, dbRepartosCerrados }
         };
 
         const fechasGuardadas = Object.keys(dbBackupsDiarios).sort();
@@ -3260,13 +3421,13 @@
         guardarDB('db_historial_proveedores', bkp.dbHistorialProveedores);
         guardarDB('db_cajas_diarias', bkp.dbCajasDiarias);
         guardarDB('db_egresos_caja', bkp.dbEgresosCaja);
+        guardarDB('db_repartos_cerrados', bkp.dbRepartosCerrados || {});
 
         alert("¡Sistema restaurado correctamente!");
         window.location.reload();
       }
     }
 
-    // MOSTRAR / OCULTAR SECCIÓN AUTOMATIZACIÓN
     function toggleAutomatizacion() {
       const cuerpo = document.getElementById('cont-automatizacion-cuerpo');
       const btn = document.getElementById('btn-toggle-auto');
