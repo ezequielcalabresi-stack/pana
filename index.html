@@ -1,115 +1,60 @@
-<!DOCTYPE html>
+<<!DOCTYPE html>
 <html lang="es">
 <head>
-  <!-- MANIFIESTO PARA CONVERTIR EN PWA / APK -->
   <link rel="manifest" href="manifest.json">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>La Casa del Pan & La Espiga de Oro</title>
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- SDKs de Firebase -->
+  <!-- SDKs Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
-  <!-- LIBRERÍA GENERADORA DE PDF PARA APK/MÓVIL -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-
- <style>
-  .tab-active {
-    border-bottom: 3px solid #92400e;
-    color: #92400e;
-    background-color: #fef3c7;
-  }
-  .tab-inactive {
-    color: #4b5563;
-    background-color: #ffffff;
-  }
-  .tab-inactive:hover {
-    background-color: #f9fafb;
-  }
-
-  /* ESTILOS EXCLUSIVOS PARA IMPRESIÓN EN NAVEGADOR Y APK */
-  #print-zona-reparto,
-  #print-zona-cuadra {
-    display: none !important;
-  }
-
-  @media print {
-    @page {
-      size: A4 portrait;
-      margin: 10mm;
+  <style>
+    .tab-active {
+      border-bottom: 3px solid #92400e;
+      color: #92400e;
+      background-color: #fef3c7;
+    }
+    .tab-inactive {
+      color: #4b5563;
+      background-color: #ffffff;
+    }
+    .tab-inactive:hover {
+      background-color: #f9fafb;
     }
 
-    header, nav, button, input, select, textarea, .panel-carga-pedido, .no-print, .nav-buttons, main {
-      display: none !important;
+    /* OCULTAR ÁREA DE IMPRESIÓN EN LA APLICACIÓN Y APK */
+    #area-impresion {
+      display: none;
     }
 
-    body {
-      background-color: #ffffff !important;
-      color: #000000 !important;
-      font-size: 10pt !important;
-      font-family: Arial, sans-serif !important;
-      margin: 0 !important;
-      padding: 0 !important;
+    /* REGLAS EXCLUSIVAS AL MOMENTO DE IMPRIMIR / PDF */
+    @media print {
+      body > *:not(#area-impresion) {
+        display: none !important;
+      }
+      #area-impresion {
+        display: block !important;
+        visibility: visible !important;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        margin: 0;
+        padding: 20px;
+        background: #ffffff !important;
+        color: #000000 !important;
+      }
+      #area-impresion * {
+        visibility: visible !important;
+      }
     }
-
-    body.imprimiendo-reparto #print-zona-reparto,
-    body.imprimiendo-cuadra #print-zona-cuadra {
-      display: block !important;
-      position: absolute !important;
-      top: 0 !important;
-      left: 0 !important;
-      width: 100% !important;
-      margin: 0 !important;
-      padding: 0 !important;
-      background: white !important;
-    }
-
-    .print-card-box {
-      border: 1px solid #000000 !important;
-      padding: 10px 12px !important;
-      margin-bottom: 12px !important;
-      page-break-inside: avoid !important;
-      break-inside: avoid !important;
-      background-color: #ffffff !important;
-    }
-
-    .print-client-row {
-      display: flex !important;
-      justify-content: space-between !important;
-      border-bottom: 2px solid #000000 !important;
-      padding-bottom: 4px !important;
-      margin-bottom: 6px !important;
-      font-weight: bold !important;
-      font-size: 11pt !important;
-    }
-
-    table.print-item-table {
-      width: 100% !important;
-      border-collapse: collapse !important;
-      margin-top: 4px !important;
-    }
-
-    table.print-item-table th, 
-    table.print-item-table td {
-      border: 1px solid #333333 !important;
-      padding: 4px 8px !important;
-      font-size: 9.5pt !important;
-    }
-
-    table.print-item-table th {
-      background-color: #e5e7eb !important;
-      color: #000000 !important;
-      font-weight: bold !important;
-      text-transform: uppercase !important;
-    }
-  }
-</style>
+  </style>
 </head>
 <body class="bg-gray-100 font-sans min-h-screen">
 
-  <!-- ENCABEZADO Y FECHA OPERATIVA CON SELECTOR DE USUARIOS -->
   <header class="bg-amber-800 text-white p-4 shadow-lg flex flex-col md:flex-row justify-between items-center gap-2">
     <div>
       <h1 class="text-xl font-bold md:text-2xl">La Casa del Pan & La Espiga de Oro</h1>
@@ -130,7 +75,6 @@
     </div>
   </header>
 
-  <!-- NAVEGACIÓN PRINCIPAL -->
   <nav class="flex border-b border-gray-300 bg-white sticky top-0 z-10 text-xs md:text-sm font-semibold overflow-x-auto nav-buttons">
     <button onclick="verPestaña('reparto')" id="btn-reparto" class="flex-1 py-3 px-2 text-center tab-active whitespace-nowrap">🚚 Reparto y Cobros</button>
     <button onclick="verPestaña('cuadra')" id="btn-cuadra" class="flex-1 py-3 px-2 text-center tab-inactive whitespace-nowrap">👨‍🍳 Cuadra</button>
@@ -148,12 +92,12 @@
     <section id="sec-reparto" class="space-y-4">
       <div class="bg-white p-4 rounded-xl shadow border border-amber-300 space-y-3">
         <h2 class="text-base font-bold text-amber-900 flex items-center gap-1">🍞 Cargar Pedido Principal (Panificados / Cuadra)</h2>
-        <div class="grid grid-cols-1 md:grid-cols-5 gap-2">
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-2 text-sm">
           <select id="rep-cliente" class="border p-2 rounded w-full text-sm font-medium text-gray-800 md:col-span-1"><option value="">-- Cliente --</option></select>
           <select id="rep-producto" onchange="actualizarPrecioSugeridoPanificado()" class="border p-2 rounded w-full text-sm font-bold text-amber-900 md:col-span-2"></select>
           <input type="number" id="rep-cantidad" placeholder="Cant. (Unid)" step="1" min="1" oninput="actualizarPrecioSugeridoPanificado()" class="border p-2 rounded w-full text-sm md:col-span-1">
           <div class="flex items-center border rounded px-2 bg-amber-50 border-amber-300 md:col-span-1">
-            <span class="text-xs font-bold text-amber-900 mr-1">$</span>
+            <span class="text-sm font-bold text-amber-900 mr-1">$</span>
             <input type="number" id="rep-precio-unitario" placeholder="P. Unit." step="0.01" class="w-full bg-transparent text-sm font-bold text-amber-950 focus:outline-none">
           </div>
           <button type="button" onclick="agregarPedidoPanificado()" class="bg-amber-800 text-white font-bold px-4 py-2 rounded text-sm hover:bg-amber-900 w-full md:col-span-5 shadow">Cargar Pedido Panificado</button>
@@ -161,16 +105,65 @@
       </div>
 
       <div class="bg-purple-50 p-4 rounded-xl shadow border border-purple-200 space-y-3">
-        <h2 class="text-xs font-bold text-purple-900 flex items-center gap-1">🏪 Cargar Adicional de Despacho / Re-Venta (Opcional)</h2>
-        <div class="grid grid-cols-1 md:grid-cols-5 gap-2">
-          <select id="rep-despacho-cliente" class="border p-2 rounded w-full text-xs font-medium text-gray-800 md:col-span-1"><option value="">-- Mismo Cliente --</option></select>
-          <select id="rep-despacho-producto" onchange="actualizarPrecioSugeridoDespacho()" class="border p-2 rounded w-full text-xs font-bold text-purple-900 md:col-span-2"></select>
-          <input type="number" id="rep-despacho-cantidad" placeholder="Cant." step="1" min="1" oninput="actualizarPrecioSugeridoDespacho()" class="border p-2 rounded w-full text-xs md:col-span-1">
+        <h2 class="text-sm font-bold text-purple-900 flex items-center gap-1">🏪 Cargar Adicional de Despacho / Re-Venta (Opcional)</h2>
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-2 text-sm">
+          <select id="rep-despacho-cliente" class="border p-2 rounded w-full text-sm font-medium text-gray-800 md:col-span-1"><option value="">-- Mismo Cliente --</option></select>
+          <select id="rep-despacho-producto" onchange="actualizarPrecioSugeridoDespacho()" class="border p-2 rounded w-full text-sm font-bold text-purple-900 md:col-span-2"></select>
+          <input type="number" id="rep-despacho-cantidad" placeholder="Cant." step="1" min="1" oninput="actualizarPrecioSugeridoDespacho()" class="border p-2 rounded w-full text-sm md:col-span-1">
           <div class="flex items-center border rounded px-2 bg-white border-purple-300 md:col-span-1">
-            <span class="text-xs font-bold text-purple-900 mr-1">$</span>
-            <input type="number" id="rep-despacho-precio-unitario" placeholder="P. Unit." step="0.01" class="w-full bg-transparent text-xs font-bold text-purple-950 focus:outline-none">
+            <span class="text-sm font-bold text-purple-900 mr-1">$</span>
+            <input type="number" id="rep-despacho-precio-unitario" placeholder="P. Unit." step="0.01" class="w-full bg-transparent text-sm font-bold text-purple-950 focus:outline-none">
           </div>
-          <button type="button" onclick="agregarPedidoDespacho()" class="bg-purple-700 text-white font-bold px-3 py-1.5 rounded text-xs hover:bg-purple-800 w-full md:col-span-5 shadow">Cargar Ítem de Despacho</button>
+          <button type="button" onclick="agregarPedidoDespacho()" class="bg-purple-700 text-white font-bold px-4 py-2 rounded text-sm hover:bg-purple-800 w-full md:col-span-5 shadow">Cargar Ítem de Despacho</button>
+        </div>
+      </div>
+
+      <div class="bg-blue-50 p-4 rounded-xl shadow border border-blue-300 space-y-3">
+        <h2 class="text-sm font-bold text-blue-900 flex items-center gap-1">⚙️ Automatización de Pedidos Recurrentes</h2>
+        <p class="text-xs text-blue-800">Configura entregas fijas por días de la semana o por rangos del mes.</p>
+        
+        <div class="grid grid-cols-1 md:grid-cols-6 gap-2 text-xs">
+          <select id="rec-cliente" class="border p-2 rounded bg-white font-semibold md:col-span-1"><option value="">-- Cliente --</option></select>
+          <select id="rec-producto" class="border p-2 rounded bg-white font-semibold md:col-span-2"><option value="">-- Producto --</option></select>
+          <input type="number" id="rec-cantidad" placeholder="Cantidad" class="border p-2 rounded bg-white font-bold md:col-span-1">
+          <select id="rec-tipo-frecuencia" onchange="cambiarTipoFrecuenciaUI(this.value)" class="border p-2 rounded bg-white font-semibold md:col-span-1">
+            <option value="dias_semana">Días de Semana</option>
+            <option value="rango_mes">Rango Días del Mes</option>
+            <option value="todos_dias">Todos los Días</option>
+          </select>
+          <button type="button" onclick="guardarPedidoRecurrente()" class="bg-blue-700 hover:bg-blue-800 text-white font-bold px-3 py-2 rounded shadow md:col-span-1">Guardar Regla</button>
+        </div>
+
+        <div id="cont-dias-semana" class="flex flex-wrap gap-3 pt-1 text-xs font-semibold text-blue-950">
+          <label><input type="checkbox" class="rec-dia" value="1"> Lunes</label>
+          <label><input type="checkbox" class="rec-dia" value="2"> Martes</label>
+          <label><input type="checkbox" class="rec-dia" value="3"> Miércoles</label>
+          <label><input type="checkbox" class="rec-dia" value="4"> Jueves</label>
+          <label><input type="checkbox" class="rec-dia" value="5"> Viernes</label>
+          <label><input type="checkbox" class="rec-dia" value="6"> Sábado</label>
+          <label><input type="checkbox" class="rec-dia" value="0"> Domingo</label>
+        </div>
+
+        <div id="cont-rango-mes" class="hidden flex items-center gap-2 text-xs font-semibold text-blue-950 pt-1">
+          <span>Desde el día:</span>
+          <input type="number" id="rec-dia-desde" min="1" max="31" value="15" class="border p-1 rounded w-16 text-center font-bold bg-white">
+          <span>hasta el día:</span>
+          <input type="number" id="rec-dia-hasta" min="1" max="31" value="2" class="border p-1 rounded w-16 text-center font-bold bg-white">
+        </div>
+
+        <div class="overflow-x-auto bg-white rounded border mt-2">
+          <table class="w-full text-left text-xs">
+            <thead>
+              <tr class="bg-blue-100 text-blue-950 border-b font-bold">
+                <th class="p-1.5">Cliente</th>
+                <th class="p-1.5">Producto</th>
+                <th class="p-1.5">Cant.</th>
+                <th class="p-1.5">Frecuencia / Regla</th>
+                <th class="p-1.5 text-center">Acción</th>
+              </tr>
+            </thead>
+            <tbody id="tabla-pedidos-recurrentes"></tbody>
+          </table>
         </div>
       </div>
 
@@ -179,7 +172,7 @@
           <h2 class="text-base font-bold text-gray-800">Planilla Detallada de Reparto</h2>
           <div class="flex items-center gap-2">
             <span id="label-fecha-reparto" class="text-xs bg-amber-100 text-amber-900 px-2 py-1 rounded font-bold"></span>
-            <button type="button" onclick="imprimirReparto()" class="text-xs bg-amber-800 text-white p-1.5 px-3 rounded font-semibold hover:bg-amber-900 shadow">🖨️ Imprimir / Descargar PDF</button>
+            <button type="button" onclick="imprimirReparto()" class="text-xs bg-amber-800 text-white p-1.5 px-3 rounded font-semibold hover:bg-amber-900 shadow">🖨️ Imprimir / Guardar PDF</button>
           </div>
         </div>
         <div class="overflow-x-auto">
@@ -215,7 +208,7 @@
             <h2 class="text-lg font-bold text-gray-800">📋 Producción Consolidada (Solo Cuadra)</h2>
             <p id="label-fecha-cuadra" class="text-xs text-gray-500 font-semibold"></p>
           </div>
-          <button type="button" onclick="imprimirCuadra()" class="text-xs bg-amber-800 text-white p-2 rounded font-semibold hover:bg-amber-900 shadow">🖨️ Imprimir / Descargar PDF</button>
+          <button type="button" onclick="imprimirCuadra()" class="text-xs bg-amber-800 text-white p-2 rounded font-semibold hover:bg-amber-900 shadow">🖨️ Imprimir / Guardar PDF Cuadra</button>
         </div>
         <div id="totales-panificados" class="grid grid-cols-1 gap-2"></div>
       </div>
@@ -230,7 +223,7 @@
       </div>
     </section>
 
-    <!-- 3. MÓDULO CLIENTES Y CUENTA CORRIENTE -->
+    <!-- 3. CLIENTES Y CUENTA CORRIENTE -->
     <section id="sec-clientes" class="hidden space-y-4">
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div class="bg-white p-4 rounded-xl shadow border md:col-span-1">
@@ -242,7 +235,7 @@
             <input type="text" id="cli-telefono" placeholder="Teléfono / WhatsApp" class="border p-2 rounded w-full text-sm">
             <input type="email" id="cli-email" placeholder="Correo electrónico (Opcional)" class="border p-2 rounded w-full text-sm">
           </div>
-          <button type="button" onclick="window.guardarCliente()" class="bg-amber-700 text-white font-bold px-4 py-2 rounded text-sm hover:bg-amber-800 w-full">Registrar Cliente</button>
+          <button type="button" onclick="guardarCliente()" class="bg-amber-700 text-white font-bold px-4 py-2 rounded text-sm hover:bg-amber-800 w-full">Registrar Cliente</button>
         </div>
 
         <div class="bg-white p-4 rounded-xl shadow border md:col-span-2 space-y-3">
@@ -252,7 +245,6 @@
               <option value="">-- Buscar / Elegir Cliente --</option>
             </select>
           </div>
-          <p class="text-xs text-gray-500">Selecciona un cliente del desplegable superior para desplegar su ficha de cuenta corriente de forma limpia sin saturar la pantalla.</p>
           
           <div class="bg-gray-50 p-3 rounded-lg border">
             <h3 class="text-xs font-bold text-gray-700 mb-2">Resumen General de Clientes con Deuda Pendiente</h3>
@@ -278,11 +270,25 @@
             <h2 id="historial-nombre-cliente" class="text-lg font-bold text-amber-900"></h2>
             <p id="historial-contacto-cliente" class="text-xs text-gray-600"></p>
           </div>
+          <!-- BOTONES ENVÍO WHATSAPP Y EMAIL -->
           <div class="flex flex-wrap items-center gap-2">
-            <button type="button" onclick="compartirCtaCteWhatsApp()" class="bg-green-600 text-white text-xs px-3 py-2 rounded font-bold hover:bg-green-700">📲 WhatsApp</button>
-            <button type="button" onclick="compartirCtaCteEmail()" class="bg-blue-600 text-white text-xs px-3 py-2 rounded font-bold hover:bg-blue-700">✉️ Mail</button>
-            <button type="button" onclick="imprimirCtaCteCliente()" class="bg-gray-700 text-white text-xs px-3 py-2 rounded font-bold hover:bg-gray-800">🖨️ Imprimir</button>
-            <button type="button" onclick="window.cerrarHistorialCliente()" class="bg-gray-300 text-gray-800 text-xs px-3 py-2 rounded font-bold">✕ Cerrar Ficha</button>
+            <button type="button" onclick="enviarResumenWhatsAppCliente()" class="bg-green-600 hover:bg-green-700 text-white text-xs px-3 py-2 rounded font-bold shadow flex items-center gap-1">📱 Enviar WhatsApp</button>
+            <button type="button" onclick="enviarResumenEmailCliente()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-2 rounded font-bold shadow flex items-center gap-1">✉️ Enviar Mail</button>
+            <button type="button" onclick="cerrarHistorialCliente()" class="bg-gray-300 text-gray-800 text-xs px-3 py-2 rounded font-bold">✕ Cerrar Ficha</button>
+          </div>
+        </div>
+
+        <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 space-y-2">
+          <h3 class="text-xs font-bold text-gray-700">✏️ Editar Datos del Cliente</h3>
+          <div class="grid grid-cols-1 md:grid-cols-5 gap-2">
+            <input type="text" id="edit-cli-nombre" placeholder="Nombre" class="border p-1.5 rounded text-xs bg-white">
+            <input type="text" id="edit-cli-cuit" placeholder="CUIT / DNI" class="border p-1.5 rounded text-xs bg-white">
+            <input type="text" id="edit-cli-direccion" placeholder="Dirección" class="border p-1.5 rounded text-xs bg-white">
+            <input type="text" id="edit-cli-telefono" placeholder="Teléfono" class="border p-1.5 rounded text-xs bg-white">
+            <input type="email" id="edit-cli-email" placeholder="Email" class="border p-1.5 rounded text-xs bg-white">
+          </div>
+          <div class="flex justify-end gap-2 pt-1">
+            <button type="button" onclick="guardarEdicionCliente()" class="bg-amber-700 text-white font-bold px-3 py-1.5 rounded text-xs hover:bg-amber-800">Guardar Cambios</button>
           </div>
         </div>
 
@@ -297,7 +303,7 @@
               <option value="Mercado Pago">Mercado Pago</option>
               <option value="Cheque">Cheque</option>
             </select>
-            <button type="button" onclick="window.registrarPagoCliente()" class="bg-green-700 text-white font-bold px-3 py-2 rounded text-xs hover:bg-green-800">Cargar Pago</button>
+            <button type="button" onclick="registrarPagoCliente()" class="bg-green-700 text-white font-bold px-3 py-2 rounded text-xs hover:bg-green-800">Cargar Pago</button>
           </div>
         </div>
 
@@ -310,7 +316,7 @@
                 <th class="p-2 text-right">Débito</th>
                 <th class="p-2 text-right">Crédito</th>
                 <th class="p-2 text-right">Saldo Acumulado</th>
-                <th class="p-2 text-center">Editar</th>
+                <th class="p-2 text-center">Acción</th>
               </tr>
             </thead>
             <tbody id="tabla-historial-cliente"></tbody>
@@ -319,7 +325,7 @@
       </div>
     </section>
 
-    <!-- 4. MÓDULO PROVEEDORES Y FACTURACIÓN -->
+    <!-- 4. PROVEEDORES Y FACTURACIÓN -->
     <section id="sec-proveedores" class="hidden space-y-4">
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div class="bg-white p-4 rounded-xl shadow border md:col-span-1">
@@ -328,19 +334,18 @@
             <input type="text" id="prov-nombre" placeholder="Razón Social / Proveedor" class="border p-2 rounded w-full text-sm">
             <input type="text" id="prov-cuit" placeholder="CUIT" class="border p-2 rounded w-full text-sm">
             <input type="text" id="prov-telefono" placeholder="Teléfono" class="border p-2 rounded w-full text-sm">
-            <input type="text" id="prov-rubro" placeholder="Rubro (Harinas, Grasas, Insumos)" class="border p-2 rounded w-full text-sm">
+            <input type="text" id="prov-rubro" placeholder="Rubro" class="border p-2 rounded w-full text-sm">
           </div>
-          <button type="button" onclick="window.guardarProveedor()" class="bg-amber-700 text-white font-bold px-4 py-2 rounded text-sm hover:bg-amber-800 w-full">Registrar Proveedor</button>
+          <button type="button" onclick="guardarProveedor()" class="bg-amber-700 text-white font-bold px-4 py-2 rounded text-sm hover:bg-amber-800 w-full">Registrar Proveedor</button>
         </div>
 
         <div class="bg-white p-4 rounded-xl shadow border md:col-span-2 space-y-3">
           <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
-            <h2 class="text-base font-bold text-gray-800">Seleccionar Proveedor a Pagar</h2>
+            <h2 class="text-base font-bold text-gray-800">Seleccionar Proveedor</h2>
             <select id="select-buscador-proveedor" onchange="seleccionarProveedorDesdeBuscador(this.value)" class="border p-2 rounded text-sm font-semibold bg-amber-50 text-amber-950 w-full md:w-64">
               <option value="">-- Buscar / Elegir Proveedor --</option>
             </select>
           </div>
-          <p class="text-xs text-gray-500">Selecciona un proveedor para gestionar sus facturas y pagos pendientes.</p>
           
           <div class="bg-gray-50 p-3 rounded-lg border">
             <h3 class="text-xs font-bold text-gray-700 mb-2">Resumen General de Proveedores con Deuda</h3>
@@ -363,7 +368,25 @@
       <div id="módulo-historial-proveedor" class="bg-white p-4 rounded-xl shadow border border-amber-500 space-y-4 hidden">
         <div class="flex justify-between items-center border-b pb-2">
           <h2 id="historial-nombre-proveedor" class="text-lg font-bold text-amber-900"></h2>
-          <button type="button" onclick="window.cerrarHistorialProveedor()" class="bg-gray-300 text-gray-800 text-xs px-3 py-2 rounded font-bold">✕ Cerrar Ficha</button>
+          <!-- BOTONES ENVÍO WHATSAPP Y EMAIL PROVEEDOR -->
+          <div class="flex flex-wrap items-center gap-2">
+            <button type="button" onclick="enviarResumenWhatsAppProveedor()" class="bg-green-600 hover:bg-green-700 text-white text-xs px-3 py-2 rounded font-bold shadow flex items-center gap-1">📱 Enviar WhatsApp</button>
+            <button type="button" onclick="enviarResumenEmailProveedor()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-2 rounded font-bold shadow flex items-center gap-1">✉️ Enviar Mail</button>
+            <button type="button" onclick="cerrarHistorialProveedor()" class="bg-gray-300 text-gray-800 text-xs px-3 py-2 rounded font-bold">✕ Cerrar Ficha</button>
+          </div>
+        </div>
+
+        <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 space-y-2">
+          <h3 class="text-xs font-bold text-gray-700">✏️ Editar Datos del Proveedor</h3>
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
+            <input type="text" id="edit-prov-nombre" placeholder="Razón Social" class="border p-1.5 rounded text-xs bg-white">
+            <input type="text" id="edit-prov-cuit" placeholder="CUIT" class="border p-1.5 rounded text-xs bg-white">
+            <input type="text" id="edit-prov-telefono" placeholder="Teléfono" class="border p-1.5 rounded text-xs bg-white">
+            <input type="text" id="edit-prov-rubro" placeholder="Rubro" class="border p-1.5 rounded text-xs bg-white">
+          </div>
+          <div class="flex justify-end gap-2 pt-1">
+            <button type="button" onclick="guardarEdicionProveedor()" class="bg-amber-700 text-white font-bold px-3 py-1.5 rounded text-xs hover:bg-amber-800">Guardar Cambios</button>
+          </div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -371,28 +394,28 @@
             <h3 class="text-xs font-bold text-amber-900">🧾 Cargar Factura de Compra</h3>
             <div class="grid grid-cols-2 gap-2">
               <input type="date" id="fact-fecha" class="border p-2 rounded text-xs bg-white">
-              <input type="text" id="fact-nro" placeholder="N° Factura (Ej: F-0001-123)" class="border p-2 rounded text-xs bg-white">
+              <input type="text" id="fact-nro" placeholder="N° Factura" class="border p-2 rounded text-xs bg-white">
             </div>
             <div class="grid grid-cols-3 gap-1">
               <select id="fact-insumo" class="border p-2 rounded text-xs bg-white col-span-1"></select>
               <input type="number" id="fact-cant" placeholder="Cant." class="border p-2 rounded text-xs bg-white">
               <input type="number" id="fact-precio" placeholder="Precio Un." class="border p-2 rounded text-xs bg-white">
             </div>
-            <button type="button" onclick="window.cargarFacturaProveedor()" class="bg-amber-800 text-white font-bold px-3 py-2 rounded text-xs hover:bg-amber-900 w-full">Ingresar Factura y Actualizar Stock</button>
+            <button type="button" onclick="cargarFacturaProveedor()" class="bg-amber-800 text-white font-bold px-3 py-2 rounded text-xs hover:bg-amber-900 w-full">Ingresar Factura y Stock</button>
           </div>
 
           <div class="bg-green-50 p-3 rounded-lg border border-green-200 space-y-2">
             <h3 class="text-xs font-bold text-green-900">💸 Registrar Pago a Proveedor</h3>
             <div class="grid grid-cols-2 gap-2">
               <input type="date" id="pago-prov-fecha" class="border p-2 rounded text-xs bg-white">
-              <input type="number" id="pago-prov-monto" placeholder="Monto Abonado ($)" class="border p-2 rounded text-xs bg-white">
+              <input type="number" id="pago-prov-monto" placeholder="Monto ($)" class="border p-2 rounded text-xs bg-white">
             </div>
             <select id="pago-prov-medio" class="border p-2 rounded text-xs bg-white w-full">
               <option value="Efectivo">Efectivo</option>
               <option value="Transferencia">Transferencia</option>
               <option value="Cheque">Cheque</option>
             </select>
-            <button type="button" onclick="window.registrarPagoProveedor()" class="bg-green-700 text-white font-bold px-3 py-2 rounded text-xs hover:bg-green-800 w-full">Registrar Pago</button>
+            <button type="button" onclick="registrarPagoProveedor()" class="bg-green-700 text-white font-bold px-3 py-2 rounded text-xs hover:bg-green-800 w-full">Registrar Pago</button>
           </div>
         </div>
 
@@ -402,10 +425,10 @@
               <tr class="bg-amber-100 border-b text-amber-900 font-bold">
                 <th class="p-2">Fecha</th>
                 <th class="p-2">Detalle / N° Factura</th>
-                <th class="p-2 text-right">Facturado (Deuda)</th>
+                <th class="p-2 text-right">Facturado</th>
                 <th class="p-2 text-right">Pagado</th>
-                <th class="p-2 text-right">Saldo Deuda Acumulado</th>
-                <th class="p-2 text-center">Editar</th>
+                <th class="p-2 text-right">Saldo Deuda</th>
+                <th class="p-2 text-center">Acción</th>
               </tr>
             </thead>
             <tbody id="tabla-historial-proveedor"></tbody>
@@ -414,21 +437,21 @@
       </div>
     </section>
 
-    <!-- 5. MÓDULO CONTROL DE STOCK E INSUMOS -->
+    <!-- 5. CONTROL DE STOCK E INSUMOS -->
     <section id="sec-stock" class="hidden space-y-4">
       <div class="bg-white p-4 rounded-xl shadow border">
         <h2 class="text-base font-bold text-gray-800 mb-3">➕ Alta / Configuración de Insumo Individual</h2>
         <div class="grid grid-cols-1 md:grid-cols-4 gap-2 mb-2">
-          <input type="text" id="ins-nombre" placeholder="Nombre (Ej: Harina 0000 50kg)" class="border p-2 rounded text-sm">
+          <input type="text" id="ins-nombre" placeholder="Nombre" class="border p-2 rounded text-sm">
           <input type="number" id="ins-stock" placeholder="Stock Inicial" step="0.1" class="border p-2 rounded text-sm">
-          <input type="number" id="ins-minimo" placeholder="Stock Mínimo Alerta" step="0.1" class="border p-2 rounded text-sm">
-          <input type="text" id="ins-unidad" placeholder="Unidad (Kg, Bolsas, Unid)" class="border p-2 rounded text-sm">
+          <input type="number" id="ins-minimo" placeholder="Stock Mínimo" step="0.1" class="border p-2 rounded text-sm">
+          <input type="text" id="ins-unidad" placeholder="Unidad (Kg, Bolsas)" class="border p-2 rounded text-sm">
         </div>
-        <button type="button" onclick="window.guardarInsumo()" class="bg-amber-700 text-white font-bold px-4 py-2 rounded text-sm hover:bg-amber-800 w-full">Guardar Insumo</button>
+        <button type="button" onclick="guardarInsumo()" class="bg-amber-700 text-white font-bold px-4 py-2 rounded text-sm hover:bg-amber-800 w-full">Guardar Insumo</button>
       </div>
 
       <div class="bg-amber-50 p-4 rounded-xl shadow border border-amber-300 space-y-3">
-        <h2 class="text-base font-bold text-amber-900">📉 Registrar Movimiento / Consumo Manual de Insumo</h2>
+        <h2 class="text-base font-bold text-amber-900">📉 Registrar Movimiento / Consumo Manual</h2>
         <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
           <select id="mov-stock-insumo" class="border p-2 rounded text-xs bg-white font-semibold"></select>
           <select id="mov-stock-tipo" class="border p-2 rounded text-xs bg-white font-semibold">
@@ -442,18 +465,10 @@
 
       <div class="bg-white p-4 rounded-xl shadow border border-gray-200">
         <h3 class="text-base font-bold text-amber-700 mb-1">Carga Masiva de Insumos</h3>
-        <p class="text-xs text-gray-600 mb-3">
-          Pega las líneas de tu lista o Excel. Formato recomendado por fila:<br>
-          <code class="bg-gray-100 px-1 py-0.5 rounded text-amber-800">Nombre, Stock Inicial, Stock Mínimo, Unidad</code>
-        </p>
-        <textarea 
-          id="ins-masivo-texto" 
-          rows="4" 
-          class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-amber-500 font-mono text-sm"
-          placeholder="Ejemplo:&#10;Harina 000, 50, 10, Kg&#10;Azúcar, 20, 5, Kg&#10;Levadura, 100, 20, Unid"
-        ></textarea>
+        <p class="text-xs text-gray-600 mb-3">Formato recomendado: <code>Nombre, Stock Inicial, Stock Mínimo, Unidad</code></p>
+        <textarea id="ins-masivo-texto" rows="4" class="w-full p-2 border border-gray-300 rounded text-sm" placeholder="Harina 000, 50, 10, Kg&#10;Azúcar, 20, 5, Kg"></textarea>
         <div class="mt-3 flex justify-end">
-          <button type="button" onclick="window.guardarInsumosMasivo()" class="bg-amber-600 hover:bg-amber-700 text-white font-semibold py-2 px-4 rounded shadow text-sm transition duration-200">Cargar Insumos Masivamente</button>
+          <button type="button" onclick="guardarInsumosMasivo()" class="bg-amber-600 hover:bg-amber-700 text-white font-semibold py-2 px-4 rounded text-sm">Cargar Insumos</button>
         </div>
       </div>
 
@@ -466,7 +481,7 @@
                 <th class="p-2">Insumo</th>
                 <th class="p-2">Stock Actual</th>
                 <th class="p-2">Stock Mínimo</th>
-                <th class="p-2 text-center">Estado Alerta</th>
+                <th class="p-2 text-center">Estado</th>
                 <th class="p-2 text-center">Acción</th>
               </tr>
             </thead>
@@ -476,15 +491,15 @@
       </div>
     </section>
 
-    <!-- 6. MÓDULO CAJAS INDEPENDIENTES, EGRESOS Y REPORTES -->
+    <!-- 6. CAJAS INDEPENDIENTES Y REPORTES -->
     <section id="sec-caja" class="hidden space-y-4">
       <div id="grid-cajas-diarias" class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div id="box-caja-reparto" class="bg-white p-4 rounded-xl shadow border border-amber-300 space-y-2">
           <h2 class="text-base font-bold text-amber-900 mb-1">🚚 Caja Reparto / Logística</h2>
           <div class="space-y-1 text-xs md:text-sm">
-            <div class="flex justify-between"><span>Efectivo Cobrado:</span> <span id="caja-rep-efectivo" class="font-bold text-green-700">$0</span></div>
+            <div class="flex justify-between"><span>Efectivo:</span> <span id="caja-rep-efectivo" class="font-bold text-green-700">$0</span></div>
             <div class="flex justify-between"><span>Transferencias:</span> <span id="caja-rep-transf" class="font-bold text-blue-700">$0</span></div>
-            <div class="flex justify-between border-t pt-1 font-bold"><span>Total Reparto:</span> <span id="caja-rep-total" class="text-amber-900">$0</span></div>
+            <div class="flex justify-between border-t pt-1 font-bold"><span>Total:</span> <span id="caja-rep-total" class="text-amber-900">$0</span></div>
           </div>
         </div>
 
@@ -495,9 +510,9 @@
               <span class="text-xs font-bold text-amber-900">🌅 Turno Mañana</span>
               <span id="st-alem-manana" class="text-[10px] bg-green-200 text-green-800 px-2 py-0.5 rounded font-bold">🟢 Abierto</span>
             </div>
-            <div class="grid grid-cols-2 gap-2 text-xs">
-              <div><label class="text-gray-600">Efectivo</label><input type="number" id="alem-m-efectivo" onchange="guardarDatosCajaDiaria()" class="border p-1 rounded w-full font-bold"></div>
-              <div><label class="text-gray-600">Digital</label><input type="number" id="alem-m-digital" onchange="guardarDatosCajaDiaria()" class="border p-1 rounded w-full font-bold text-blue-700"></div>
+            <div class="grid grid-cols-2 gap-2 text-sm">
+              <div><label class="text-xs text-gray-600 block">Efectivo</label><input type="number" id="alem-m-efectivo" onchange="guardarDatosCajaDiaria()" class="border p-1.5 rounded w-full font-bold text-sm"></div>
+              <div><label class="text-xs text-gray-600 block">Digital</label><input type="number" id="alem-m-digital" onchange="guardarDatosCajaDiaria()" class="border p-1.5 rounded w-full font-bold text-blue-700 text-sm"></div>
             </div>
             <button type="button" onclick="cerrarTurnoParcial('alem', 'manana')" class="w-full mt-1 bg-amber-800 text-white text-xs py-1 rounded font-bold hover:bg-amber-900 shadow">Cerrar Turno Mañana</button>
           </div>
@@ -507,9 +522,9 @@
               <span class="text-xs font-bold text-orange-900">🌆 Turno Tarde</span>
               <span id="st-alem-tarde" class="text-[10px] bg-green-200 text-green-800 px-2 py-0.5 rounded font-bold">🟢 Abierto</span>
             </div>
-            <div class="grid grid-cols-2 gap-2 text-xs">
-              <div><label class="text-gray-600">Efectivo</label><input type="number" id="alem-t-efectivo" onchange="guardarDatosCajaDiaria()" class="border p-1 rounded w-full font-bold"></div>
-              <div><label class="text-gray-600">Digital</label><input type="number" id="alem-t-digital" onchange="guardarDatosCajaDiaria()" class="border p-1 rounded w-full font-bold text-blue-700"></div>
+            <div class="grid grid-cols-2 gap-2 text-sm">
+              <div><label class="text-xs text-gray-600 block">Efectivo</label><input type="number" id="alem-t-efectivo" onchange="guardarDatosCajaDiaria()" class="border p-1.5 rounded w-full font-bold text-sm"></div>
+              <div><label class="text-xs text-gray-600 block">Digital</label><input type="number" id="alem-t-digital" onchange="guardarDatosCajaDiaria()" class="border p-1.5 rounded w-full font-bold text-blue-700 text-sm"></div>
             </div>
             <button type="button" onclick="cerrarTurnoParcial('alem', 'tarde')" class="w-full mt-1 bg-orange-800 text-white text-xs py-1 rounded font-bold hover:bg-orange-900 shadow">Cerrar Turno Tarde</button>
           </div>
@@ -522,9 +537,9 @@
               <span class="text-xs font-bold text-amber-900">🌅 Turno Mañana</span>
               <span id="st-espiga-manana" class="text-[10px] bg-green-200 text-green-800 px-2 py-0.5 rounded font-bold">🟢 Abierto</span>
             </div>
-            <div class="grid grid-cols-2 gap-2 text-xs">
-              <div><label class="text-gray-600">Efectivo</label><input type="number" id="espiga-m-efectivo" onchange="guardarDatosCajaDiaria()" class="border p-1 rounded w-full font-bold"></div>
-              <div><label class="text-gray-600">Digital</label><input type="number" id="espiga-m-digital" onchange="guardarDatosCajaDiaria()" class="border p-1 rounded w-full font-bold text-blue-700"></div>
+            <div class="grid grid-cols-2 gap-2 text-sm">
+              <div><label class="text-xs text-gray-600 block">Efectivo</label><input type="number" id="espiga-m-efectivo" onchange="guardarDatosCajaDiaria()" class="border p-1.5 rounded w-full font-bold text-sm"></div>
+              <div><label class="text-xs text-gray-600 block">Digital</label><input type="number" id="espiga-m-digital" onchange="guardarDatosCajaDiaria()" class="border p-1.5 rounded w-full font-bold text-blue-700 text-sm"></div>
             </div>
             <button type="button" onclick="cerrarTurnoParcial('espiga', 'manana')" class="w-full mt-1 bg-amber-800 text-white text-xs py-1 rounded font-bold hover:bg-amber-900 shadow">Cerrar Turno Mañana</button>
           </div>
@@ -534,9 +549,9 @@
               <span class="text-xs font-bold text-orange-900">🌆 Turno Tarde</span>
               <span id="st-espiga-tarde" class="text-[10px] bg-green-200 text-green-800 px-2 py-0.5 rounded font-bold">🟢 Abierto</span>
             </div>
-            <div class="grid grid-cols-2 gap-2 text-xs">
-              <div><label class="text-gray-600">Efectivo</label><input type="number" id="espiga-t-efectivo" onchange="guardarDatosCajaDiaria()" class="border p-1 rounded w-full font-bold"></div>
-              <div><label class="text-gray-600">Digital</label><input type="number" id="espiga-t-digital" onchange="guardarDatosCajaDiaria()" class="border p-1 rounded w-full font-bold text-blue-700"></div>
+            <div class="grid grid-cols-2 gap-2 text-sm">
+              <div><label class="text-xs text-gray-600 block">Efectivo</label><input type="number" id="espiga-t-efectivo" onchange="guardarDatosCajaDiaria()" class="border p-1.5 rounded w-full font-bold text-sm"></div>
+              <div><label class="text-xs text-gray-600 block">Digital</label><input type="number" id="espiga-t-digital" onchange="guardarDatosCajaDiaria()" class="border p-1.5 rounded w-full font-bold text-blue-700 text-sm"></div>
             </div>
             <button type="button" onclick="cerrarTurnoParcial('espiga', 'tarde')" class="w-full mt-1 bg-orange-800 text-white text-xs py-1 rounded font-bold hover:bg-orange-900 shadow">Cerrar Turno Tarde</button>
           </div>
@@ -544,14 +559,14 @@
       </div>
 
       <div class="bg-red-50 p-4 rounded-xl shadow border border-red-200 space-y-3">
-        <h2 class="text-base font-bold text-red-900 flex items-center gap-1">💸 Registro de Egresos y Gastos Menores por Caja</h2>
+        <h2 class="text-base font-bold text-red-900 flex items-center gap-1">💸 Registro de Egresos y Gastos Menores</h2>
         <div class="grid grid-cols-1 md:grid-cols-5 gap-2">
           <select id="egreso-origen" class="border p-2 rounded text-xs bg-white font-semibold">
             <option value="La Casa del Pan">La Casa del Pan</option>
             <option value="La Espiga de Oro">La Espiga de Oro</option>
             <option value="Reparto">Reparto</option>
           </select>
-          <input type="text" id="egreso-concepto" placeholder="Concepto (Ej: Viáticos, Limpieza)" class="border p-2 rounded text-xs bg-white md:col-span-2">
+          <input type="text" id="egreso-concepto" placeholder="Concepto" class="border p-2 rounded text-xs bg-white md:col-span-2">
           <input type="number" id="egreso-monto" placeholder="Monto ($)" class="border p-2 rounded text-xs bg-white font-bold">
           <button type="button" onclick="registrarEgresoCaja()" class="bg-red-700 hover:bg-red-800 text-white font-bold px-3 py-2 rounded text-xs shadow">Cargar Egreso</button>
         </div>
@@ -589,7 +604,10 @@
         </div>
 
         <div class="space-y-2">
-          <h3 class="text-xs font-bold text-amber-900 bg-amber-100 p-2 rounded">1. Reporte de Ventas Mensuales (Día a Día)</h3>
+          <div class="flex justify-between items-center bg-amber-100 p-2 rounded">
+            <h3 class="text-xs font-bold text-amber-900">1. Reporte de Ventas Mensuales</h3>
+            <span id="contenedor-btn-admin-edicion-caja"></span>
+          </div>
           <div class="overflow-x-auto">
             <table class="w-full text-left text-xs border">
               <thead id="thead-reporte-ventas"></thead>
@@ -600,7 +618,7 @@
         </div>
 
         <div class="space-y-2 pt-2">
-          <h3 class="text-xs font-bold text-red-900 bg-red-100 p-2 rounded">2. Flujo Completo de Egresos Mensuales (Gastos de Caja + Proveedores)</h3>
+          <h3 class="text-xs font-bold text-red-900 bg-red-100 p-2 rounded">2. Flujo Completo de Egresos Mensuales</h3>
           <div class="overflow-x-auto">
             <table class="w-full text-left text-xs border">
               <thead>
@@ -619,15 +637,15 @@
       </div>
     </section>
 
-    <!-- 7. MÓDULO GESTIÓN DE CATÁLOGO DESPACHO Y PRODUCTOS PANIFICADOS -->
+    <!-- 7. CATÁLOGO Y PRECIOS -->
     <section id="sec-precios" class="hidden space-y-6">
       <div class="bg-amber-50 p-4 rounded-xl shadow border border-amber-300 space-y-4">
-        <h2 class="text-base font-bold text-amber-900">🍞 Productos Panificados (Mínimos x Paquete y Precios Editables)</h2>
+        <h2 class="text-base font-bold text-amber-900">🍞 Productos Panificados</h2>
         <div class="bg-white p-3 rounded-lg border border-amber-200 space-y-2">
           <h3 class="text-xs font-bold text-gray-700">➕ Agregar Nuevo Panificado</h3>
           <div class="grid grid-cols-1 md:grid-cols-5 gap-2">
-            <input type="text" id="nuevo-panificado-nombre" placeholder="Nombre (Ej: Pebete)" class="border p-2 rounded text-xs md:col-span-1">
-            <input type="number" id="nuevo-panificado-unidades" placeholder="Mín. x Paq (Ej: 24)" class="border p-2 rounded text-xs">
+            <input type="text" id="nuevo-panificado-nombre" placeholder="Nombre" class="border p-2 rounded text-xs md:col-span-1">
+            <input type="number" id="nuevo-panificado-unidades" placeholder="Mín. x Paq" class="border p-2 rounded text-xs">
             <input type="number" id="nuevo-panificado-menor" placeholder="Precio Minorista ($)" class="border p-2 rounded text-xs">
             <input type="number" id="nuevo-panificado-mayor" placeholder="Precio Mayorista ($)" class="border p-2 rounded text-xs">
             <button type="button" onclick="agregarNuevoPanificado()" class="bg-amber-800 text-white font-bold px-3 py-2 rounded text-xs hover:bg-amber-900">Guardar Panificado</button>
@@ -651,9 +669,9 @@
       </div>
 
       <div class="bg-white p-4 rounded-xl shadow border space-y-4">
-        <h2 class="text-base font-bold text-gray-800">📋 Catálogo Despacho (Mostrador y Re-Venta Editables)</h2>
+        <h2 class="text-base font-bold text-gray-800">📋 Catálogo Despacho</h2>
         <div class="bg-amber-50 p-3 rounded-lg border border-amber-300 space-y-2">
-          <h3 class="text-xs font-bold text-amber-900 flex items-center gap-1">📈 Ajuste Masivo de Precios por Porcentaje (Solo Administrador)</h3>
+          <h3 class="text-xs font-bold text-amber-900">📈 Ajuste Masivo por Porcentaje</h3>
           <div class="flex flex-wrap items-center gap-2">
             <select id="ajuste-columna-precio" class="border p-1.5 rounded text-xs bg-white font-medium">
               <option value="todos">Todos los precios</option>
@@ -662,7 +680,7 @@
               <option value="unOcuarto">Solo Unidad o 1/4</option>
             </select>
             <div class="flex items-center gap-1 bg-white border p-1 rounded">
-              <input type="number" id="ajuste-porcentaje-valor" placeholder="Ej: 10 o -5" step="0.5" class="w-20 text-xs p-0.5 border-none text-right font-bold">
+              <input type="number" id="ajuste-porcentaje-valor" placeholder="10 o -5" step="0.5" class="w-20 text-xs p-0.5 border-none text-right font-bold">
               <span class="text-xs font-bold text-gray-600">%</span>
             </div>
             <button type="button" onclick="aplicarAumentoPorcentaje()" class="bg-amber-800 text-white font-bold text-xs px-3 py-1.5 rounded hover:bg-amber-900 shadow">Aplicar Porcentaje</button>
@@ -670,26 +688,26 @@
         </div>
 
         <div class="p-3 bg-gray-50 rounded-lg border space-y-2">
-          <h3 class="text-xs font-bold text-gray-700">➕ Añadir Producto a Catálogo Despacho</h3>
+          <h3 class="text-xs font-bold text-gray-700">➕ Añadir Producto a Catálogo</h3>
           <div class="grid grid-cols-1 md:grid-cols-5 gap-2">
             <input type="text" id="nuevo-prod-nombre" placeholder="Nombre Producto" class="border p-2 rounded text-xs md:col-span-2">
             <input type="number" id="nuevo-prod-mostrador" placeholder="Precio Mostrador ($)" class="border p-2 rounded text-xs">
             <input type="number" id="nuevo-prod-reparto" placeholder="Precio Reparto ($)" class="border p-2 rounded text-xs">
             <input type="number" id="nuevo-prod-unOcuarto" placeholder="Unidad o 1/4 ($)" class="border p-2 rounded text-xs">
           </div>
-          <button type="button" onclick="agregarNuevoProducto()" class="bg-amber-700 text-white font-bold px-4 py-2 rounded text-xs hover:bg-amber-800 w-full">Guardar Producto en Catálogo Despacho</button>
+          <button type="button" onclick="agregarNuevoProducto()" class="bg-amber-700 text-white font-bold px-4 py-2 rounded text-xs hover:bg-amber-800 w-full">Guardar Producto</button>
         </div>
 
         <div>
           <div class="flex justify-between items-center mb-3">
-            <h3 class="text-xs font-bold text-gray-600">Listado Catálogo Despacho (Edición Directa)</h3>
-            <input type="text" id="buscar-producto" onkeyup="filtrarTablaPrecios()" placeholder="🔍 Buscar producto..." class="border rounded p-1 text-xs w-48">
+            <h3 class="text-xs font-bold text-gray-600">Listado Catálogo Despacho</h3>
+            <input type="text" id="buscar-producto" onkeyup="filtrarTablaPrecios()" placeholder="🔍 Buscar..." class="border rounded p-1 text-xs w-48">
           </div>
           <div class="overflow-x-auto">
             <table class="w-full text-left text-xs md:text-sm" id="tabla-catalogo-main">
               <thead>
                 <tr class="bg-amber-100 text-amber-950 border-b">
-                  <th class="p-2">Producto / Nombre</th>
+                  <th class="p-2">Producto</th>
                   <th class="p-2">Precio Mostrador ($)</th>
                   <th class="p-2">Re-Venta / Reparto ($)</th>
                   <th class="p-2">Unidad o 1/4 ($)</th>
@@ -703,30 +721,30 @@
       </div>
     </section>
 
-    <!-- 8. MÓDULO ROLES, USUARIOS Y BACKUPS -->
+    <!-- 8. USUARIOS Y BACKUPS -->
     <section id="sec-usuarios" class="hidden space-y-4">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div class="bg-amber-50 p-4 rounded-xl shadow border border-amber-300 space-y-3">
           <h2 class="text-base font-bold text-amber-900 border-b border-amber-200 pb-2">🔑 Mi Perfil / Cambiar PIN</h2>
           <div>
-            <label class="text-xs font-semibold text-gray-600 block mb-1">PIN / Contraseña Actual</label>
+            <label class="text-xs font-semibold text-gray-600 block mb-1">PIN Actual</label>
             <input type="password" id="pin-actual" placeholder="****" class="border p-2 rounded w-full text-sm bg-white">
           </div>
           <div>
-            <label class="text-xs font-semibold text-gray-600 block mb-1">Nuevo PIN / Contraseña</label>
+            <label class="text-xs font-semibold text-gray-600 block mb-1">Nuevo PIN</label>
             <input type="password" id="pin-nuevo" placeholder="****" class="border p-2 rounded w-full text-sm bg-white">
           </div>
-          <button type="button" onclick="cambiarPinUsuarioActivo()" class="bg-amber-800 text-white font-bold px-4 py-2 rounded text-sm hover:bg-amber-900 w-full shadow">Actualizar mi PIN</button>
+          <button type="button" onclick="cambiarPinUsuarioActivo()" class="bg-amber-800 text-white font-bold px-4 py-2 rounded text-sm hover:bg-amber-900 w-full shadow">Actualizar PIN</button>
         </div>
 
         <div class="bg-blue-50 p-4 rounded-xl shadow border border-blue-300 space-y-3">
-          <h2 class="text-base font-bold text-blue-900 border-b border-blue-200 pb-2">🛡️ Copias de Seguridad (Backups)</h2>
-          <p class="text-xs text-blue-800">El sistema realiza respaldos automáticos diarios conservando los últimos 30 días. Puedes descargar o restaurar el estado completo a cualquier fecha.</p>
+          <h2 class="text-base font-bold text-blue-900 border-b border-blue-200 pb-2">🛡️ Copias de Seguridad</h2>
+          <p class="text-xs text-blue-800">Respaldos automáticos diarios.</p>
 
           <div class="flex flex-col gap-2">
-            <button type="button" onclick="descargarBackupManual()" class="bg-blue-700 hover:bg-blue-800 text-white font-bold text-xs p-2 rounded shadow">📥 Descargar Respaldo Actual (JSON)</button>
+            <button type="button" onclick="descargarBackupManual()" class="bg-blue-700 hover:bg-blue-800 text-white font-bold text-xs p-2 rounded shadow">📥 Descargar Respaldo JSON</button>
             <hr class="border-blue-200">
-            <label class="text-xs font-bold text-blue-900 block">Restaurar a una fecha guardada:</label>
+            <label class="text-xs font-bold text-blue-900 block">Restaurar a fecha guardada:</label>
             <div class="flex gap-2">
               <select id="select-backups-historial" class="border p-1.5 rounded text-xs bg-white flex-1 font-semibold"></select>
               <button type="button" onclick="restaurarFechaSeleccionada()" class="bg-amber-700 hover:bg-amber-800 text-white font-bold text-xs px-3 py-1.5 rounded shadow">Restaurar</button>
@@ -739,11 +757,11 @@
         <div class="bg-white p-4 rounded-xl shadow border md:col-span-1 space-y-3">
           <h2 class="text-base font-bold text-gray-800 border-b pb-2">➕ Registrar Usuario</h2>
           <div>
-            <label class="text-xs font-semibold text-gray-600 block mb-1">Nombre Completo / Usuario</label>
-            <input type="text" id="usr-nombre" placeholder="Ej: Juan Pérez" class="border p-2 rounded w-full text-sm">
+            <label class="text-xs font-semibold text-gray-600 block mb-1">Nombre Completo</label>
+            <input type="text" id="usr-nombre" placeholder="Nombre" class="border p-2 rounded w-full text-sm">
           </div>
           <div>
-            <label class="text-xs font-semibold text-gray-600 block mb-1">Asignar Rol</label>
+            <label class="text-xs font-semibold text-gray-600 block mb-1">Rol</label>
             <select id="usr-rol" class="border p-2 rounded w-full text-sm">
               <option value="admin">Administrador / Dueño</option>
               <option value="produccion">Panadero / Cuadra</option>
@@ -752,18 +770,18 @@
             </select>
           </div>
           <div>
-            <label class="text-xs font-semibold text-amber-900 font-bold block mb-1">🏢 Asignar Sucursal / Ámbito</label>
+            <label class="text-xs font-semibold text-amber-900 font-bold block mb-1">🏢 Sucursal / Ámbito</label>
             <select id="usr-sucursal" class="border p-2 rounded w-full text-sm bg-amber-50 border-amber-300 font-bold">
-              <option value="todas">General / Ambas Panaderías + Reparto</option>
+              <option value="todas">General / Ambas Panaderías</option>
               <option value="alem">La Casa del Pan (Alem)</option>
-              <option value="espiga">La Espiga de Oro (Solo Espiga)</option>
+              <option value="espiga">La Espiga de Oro</option>
             </select>
           </div>
           <button type="button" onclick="guardarUsuario()" class="bg-amber-700 text-white font-bold px-4 py-2 rounded text-sm hover:bg-amber-800 w-full">Guardar Usuario</button>
         </div>
 
         <div class="bg-white p-4 rounded-xl shadow border md:col-span-2">
-          <h2 class="text-base font-bold text-gray-800 mb-2">Usuarios Registrados y Permisos</h2>
+          <h2 class="text-base font-bold text-gray-800 mb-2">Usuarios Registrados</h2>
           <div class="overflow-x-auto">
             <table class="w-full text-left text-xs md:text-sm">
               <thead>
@@ -783,9 +801,33 @@
 
   </main>
 
-  <!-- ZONAS DE IMPRESIÓN Y MODALES -->
-  <div id="print-zona-reparto" class="p-2 bg-white"></div>
-  <div id="print-zona-cuadra" class="p-2 bg-white"></div>
+  <!-- CONTENEDOR PARA IMPRESIÓN DIRECTA / PDF (OCULTO EN APK Y PANTALLA POR DEFECTO) -->
+  <div id="area-impresion"></div>
+
+  <!-- MODAL EDITAR CAJA ADMIN -->
+  <div id="modal-editar-caja-admin" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white p-5 rounded-xl shadow-xl max-w-md w-full space-y-3">
+      <h3 class="text-base font-bold text-amber-900">🛠️ Corrección Administrativa de Caja</h3>
+      <div class="space-y-2 text-xs">
+        <div>
+          <label class="font-bold text-gray-700 block">Fecha a Editar:</label>
+          <input type="date" id="admin-edit-caja-fecha" class="border p-2 rounded w-full font-bold bg-gray-50">
+        </div>
+        <div>
+          <label class="font-bold text-gray-700 block">La Casa del Pan (Alem) ($):</label>
+          <input type="number" id="admin-edit-alem" class="border p-2 rounded w-full font-bold">
+        </div>
+        <div>
+          <label class="font-bold text-gray-700 block">La Espiga de Oro ($):</label>
+          <input type="number" id="admin-edit-espiga" class="border p-2 rounded w-full font-bold">
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button type="button" onclick="cerrarModalEditarCajaAdmin()" class="bg-gray-300 text-gray-800 text-xs px-3 py-2 rounded font-bold">Cancelar</button>
+        <button type="button" onclick="guardarCorreccionCajaAdmin()" class="bg-amber-800 text-white text-xs px-4 py-2 rounded font-bold hover:bg-amber-900">Guardar Corrección</button>
+      </div>
+    </div>
+  </div>
 
   <script>
     const firebaseConfig = {
@@ -860,14 +902,15 @@
               rtdb.ref(key).set(fallback);
             }
             if (key === 'db_repartos') { dbRepartos = val || fallback; renderizarPlanillaReparto(); renderizarCuadra(); }
-            if (key === 'db_clientes') { dbClientes = val || fallback; renderizarTablaClientes(); cargarSelectorClientesReparto(); cargarBuscadorClientes(); }
+            if (key === 'db_clientes') { dbClientes = val || fallback; renderizarTablaClientes(); cargarSelectorClientesReparto(); cargarBuscadorClientes(); cargarSelectorClientesRecurrentes(); }
             if (key === 'db_proveedores') { dbProveedores = val || fallback; renderizarTablaProveedores(); cargarBuscadorProveedores(); }
             if (key === 'db_insumos') { dbInsumos = val || fallback; renderizarStockInsumos(); cargarSelectorInsumosFactura(); cargarSelectorInsumosMovimiento(); }
-            if (key === 'db_panificados') { dbPanificados = val || fallback; renderizarTablaPanificados(); cargarSelectorPanificadosReparto(); }
-            if (key === 'db_productos') { dbProductos = val || fallback; renderizarTablaCatalogo(); cargarSelectorDespachoReparto(); }
+            if (key === 'db_panificados') { dbPanificados = val || fallback; renderizarTablaPanificados(); cargarSelectorPanificadosReparto(); cargarSelectorProductosRecurrentes(); }
+            if (key === 'db_productos') { dbProductos = val || fallback; renderizarTablaCatalogo(); cargarSelectorDespachoReparto(); cargarSelectorProductosRecurrentes(); }
             if (key === 'db_usuarios') { dbUsuarios = val || fallback; renderizarTablaUsuarios(); renderizarUsuariosSelect(); }
             if (key === 'db_cajas_diarias') { dbCajasDiarias = val || fallback; cargarCajasHoyUI(); renderizarReportesMensuales(); }
             if (key === 'db_egresos_caja') { dbEgresosCaja = val || fallback; renderizarTablaEgresosHoy(); renderizarReportesMensuales(); }
+            if (key === 'db_recurrentes') { dbRecurrentes = val || fallback; renderizarTablaRecurrentes(); }
           });
         } catch (e) { console.warn("Firebase Offline"); }
       }
@@ -886,6 +929,7 @@
     let dbProveedores = cargarDB('db_proveedores', {});
     let dbInsumos = cargarDB('db_insumos', {});
     let dbRepartos = cargarDB('db_repartos', {});
+    let dbRecurrentes = cargarDB('db_recurrentes', {});
     let dbNotasMostrador = cargarDB('db_notas_mostrador', {});
     let dbHistorialClientes = cargarDB('db_historial_clientes', {});
     let dbHistorialProveedores = cargarDB('db_historial_proveedores', {});
@@ -908,6 +952,9 @@
       cargarSelectorClientesReparto();
       cargarSelectorPanificadosReparto();
       cargarSelectorDespachoReparto();
+      cargarSelectorClientesRecurrentes();
+      cargarSelectorProductosRecurrentes();
+      procesarPedidosRecurrentesAutomaticos();
       renderizarPlanillaReparto();
       renderizarCuadra();
       renderizarTablaClientes();
@@ -916,6 +963,7 @@
       renderizarTablaPanificados();
       renderizarTablaCatalogo();
       renderizarTablaUsuarios();
+      renderizarTablaRecurrentes();
       cargarSelectorInsumosFactura();
       cargarSelectorInsumosMovimiento();
       cargarBuscadorClientes();
@@ -946,11 +994,200 @@
       if (input && input.value) {
         fechaActual = input.value;
         actualizarEtiquetasFecha();
+        procesarPedidosRecurrentesAutomaticos();
         renderizarPlanillaReparto();
         renderizarCuadra();
         cargarCajasHoyUI();
         renderizarTablaEgresosHoy();
       }
+    }
+
+    // PEDIDOS RECURRENTES
+    function cargarSelectorClientesRecurrentes() {
+      const sel = document.getElementById('rec-cliente');
+      if (!sel) return;
+      sel.innerHTML = '<option value="">-- Cliente --</option>';
+      Object.values(dbClientes).sort((a, b) => a.nombre.localeCompare(b.nombre)).forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.id; opt.textContent = c.nombre; sel.appendChild(opt);
+      });
+    }
+
+    function cargarSelectorProductosRecurrentes() {
+      const sel = document.getElementById('rec-producto');
+      if (!sel) return;
+      sel.innerHTML = '<option value="">-- Producto --</option>';
+      
+      const grupoPan = document.createElement('optgroup'); grupoPan.label = "Panificados / Cuadra";
+      Object.keys(dbPanificados).forEach(p => {
+        const opt = document.createElement('option'); opt.value = `panificado|${p}`; opt.textContent = p; grupoPan.appendChild(opt);
+      });
+      sel.appendChild(grupoPan);
+
+      const grupoDesp = document.createElement('optgroup'); grupoDesp.label = "Catálogo Despacho";
+      Object.keys(dbProductos).forEach(p => {
+        const opt = document.createElement('option'); opt.value = `despacho|${p}`; opt.textContent = p; grupoDesp.appendChild(opt);
+      });
+      sel.appendChild(grupoDesp);
+    }
+
+    function cambiarTipoFrecuenciaUI(tipo) {
+      const contDias = document.getElementById('cont-dias-semana');
+      const contRango = document.getElementById('cont-rango-mes');
+      if (tipo === 'dias_semana') {
+        contDias.classList.remove('hidden');
+        contRango.classList.add('hidden');
+      } else if (tipo === 'rango_mes') {
+        contDias.classList.add('hidden');
+        contRango.classList.remove('hidden');
+      } else {
+        contDias.classList.add('hidden');
+        contRango.classList.add('hidden');
+      }
+    }
+
+    function guardarPedidoRecurrente() {
+      const cliId = document.getElementById('rec-cliente').value;
+      const prodValor = document.getElementById('rec-producto').value;
+      const cant = parseInt(document.getElementById('rec-cantidad').value);
+      const tipoFreq = document.getElementById('rec-tipo-frecuencia').value;
+
+      if (!cliId || !prodValor || isNaN(cant) || cant <= 0) {
+        alert("Complete cliente, producto y cantidad válidos.");
+        return;
+      }
+
+      const [origenTipo, prodNombre] = prodValor.split('|');
+      let diasSeleccionados = [];
+      let rangoDesde = 0, rangoHasta = 0;
+
+      if (tipoFreq === 'dias_semana') {
+        document.querySelectorAll('.rec-dia:checked').forEach(cb => diasSeleccionados.push(parseInt(cb.value)));
+        if (diasSeleccionados.length === 0) {
+          alert("Seleccione al menos un día de la semana.");
+          return;
+        }
+      } else if (tipoFreq === 'rango_mes') {
+        rangoDesde = parseInt(document.getElementById('rec-dia-desde').value) || 1;
+        rangoHasta = parseInt(document.getElementById('rec-dia-hasta').value) || 1;
+      }
+
+      const id = generarID('REC');
+      dbRecurrentes[id] = {
+        id, clienteId: cliId, clienteNombre: dbClientes[cliId]?.nombre || 'Cliente',
+        producto: prodNombre, origenTipo, cantidad: cant, tipoFreq, diasSemana: diasSeleccionados, rangoDesde, rangoHasta
+      };
+
+      guardarDB('db_recurrentes', dbRecurrentes);
+      document.getElementById('rec-cantidad').value = '';
+      renderizarTablaRecurrentes();
+      procesarPedidosRecurrentesAutomaticos();
+      alert("¡Regla recurrente guardada con éxito!");
+    }
+
+    function renderizarTablaRecurrentes() {
+      const tbody = document.getElementById('tabla-pedidos-recurrentes');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      const diasNombres = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+
+      Object.values(dbRecurrentes).forEach(r => {
+        let detalleFreq = "";
+        if (r.tipoFreq === 'dias_semana') {
+          detalleFreq = `Días: ${r.diasSemana.map(d => diasNombres[d]).join(', ')}`;
+        } else if (r.tipoFreq === 'rango_mes') {
+          detalleFreq = `Del día ${r.rangoDesde} al ${r.rangoHasta} del mes`;
+        } else {
+          detalleFreq = `Todos los días`;
+        }
+
+        const tr = document.createElement('tr');
+        tr.className = "border-b hover:bg-gray-50";
+        tr.innerHTML = `
+          <td class="p-1.5 font-bold">${r.clienteNombre}</td>
+          <td class="p-1.5">${r.producto} <span class="text-[10px] text-gray-500">(${r.origenTipo})</span></td>
+          <td class="p-1.5 font-bold text-blue-900">${r.cantidad} un.</td>
+          <td class="p-1.5">${detalleFreq}</td>
+          <td class="p-1.5 text-center"><button onclick="eliminarRecurrente('${r.id}')" class="bg-red-600 text-white text-xs px-2 py-0.5 rounded font-bold">✕ Eliminar</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      if (tbody.innerHTML === '') {
+        tbody.innerHTML = '<tr><td colspan="5" class="p-2 text-center text-gray-400 italic">No hay pedidos recurrentes configurados.</td></tr>';
+      }
+    }
+
+    function eliminarRecurrente(id) {
+      if (confirm("¿Desea eliminar esta regla de pedido recurrente?")) {
+        delete dbRecurrentes[id];
+        guardarDB('db_recurrentes', dbRecurrentes);
+        renderizarTablaRecurrentes();
+      }
+    }
+
+    function procesarPedidosRecurrentesAutomaticos() {
+      if (!dbRepartos[fechaActual]) dbRepartos[fechaActual] = [];
+      const [anio, mes, dia] = fechaActual.split('-').map(Number);
+      const fechaObj = new Date(anio, mes - 1, dia);
+      const diaSemanaActual = fechaObj.getDay();
+
+      Object.values(dbRecurrentes).forEach(r => {
+        let cumpleCondicion = false;
+
+        if (r.tipoFreq === 'todos_dias') {
+          cumpleCondicion = true;
+        } else if (r.tipoFreq === 'dias_semana') {
+          if (r.diasSemana.includes(diaSemanaActual)) cumpleCondicion = true;
+        } else if (r.tipoFreq === 'rango_mes') {
+          const dDesde = r.rangoDesde;
+          const dHasta = r.rangoHasta;
+          if (dDesde <= dHasta) {
+            if (dia >= dDesde && dia <= dHasta) cumpleCondicion = true;
+          } else {
+            if (dia >= dDesde || dia <= dHasta) cumpleCondicion = true;
+          }
+        }
+
+        if (cumpleCondicion) {
+          const yaExiste = dbRepartos[fechaActual].some(p => p.clienteId === r.clienteId && p.producto === r.producto && p.origenAuto);
+          if (!yaExiste) {
+            let precioUnit = 0;
+            let unidPaq = 1;
+
+            if (r.origenTipo === 'panificado') {
+              const pan = dbPanificados[r.producto];
+              if (pan) {
+                precioUnit = (r.cantidad >= pan.unidPorPaq) ? pan.mayor : pan.menor;
+                unidPaq = pan.unidPorPaq;
+              }
+            } else {
+              const prod = dbProductos[r.producto];
+              if (prod) {
+                precioUnit = prod.reparto || prod.mostrador || 0;
+              }
+            }
+
+            dbRepartos[fechaActual].push({
+              id: generarID('AUTO'),
+              clienteId: r.clienteId,
+              clienteNombre: r.clienteNombre,
+              producto: r.producto,
+              unidades: r.cantidad,
+              unidPorPaq: unidPaq,
+              precioUnitario: precioUnit,
+              monto: r.cantidad * precioUnit,
+              origen: r.origenTipo === 'panificado' ? 'cuadra' : 'despacho',
+              origenAuto: true,
+              pagado: false,
+              medioPago: "Pendiente"
+            });
+          }
+        }
+      });
+
+      guardarDB('db_repartos', dbRepartos);
     }
 
     function renderizarUsuariosSelect() {
@@ -982,7 +1219,7 @@
       const pinActualInput = document.getElementById('pin-actual').value.trim();
       const pinNuevoInput = document.getElementById('pin-nuevo').value.trim();
 
-      if (!pinActualInput || !pinNuevoInput) { alert("Complete los campos de contraseña."); return; }
+      if (!pinActualInput || !pinNuevoInput) { alert("Complete los campos."); return; }
       if (pinActualInput !== (usr.pin || '1234')) { alert("PIN actual incorrecto."); return; }
 
       usr.pin = pinNuevoInput;
@@ -1177,7 +1414,7 @@
 
         const tr = document.createElement('tr'); tr.className = "border-b hover:bg-gray-50 text-xs md:text-sm";
         tr.innerHTML = `
-          <td class="p-2 font-semibold text-gray-800">${p.clienteNombre}</td>
+          <td class="p-2 font-semibold text-gray-800">${p.clienteNombre} ${p.origenAuto ? '<span class="text-[9px] bg-blue-100 text-blue-800 px-1 rounded font-bold">Auto</span>' : ''}</td>
           <td class="p-2">${p.producto}</td>
           <td class="p-2">${p.origen === 'despacho' ? `<span class="bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded text-[10px] font-bold">Despacho</span>` : `<span class="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded text-[10px] font-bold">Cuadra</span>`}</td>
           <td class="p-2">${p.unidades} un.</td>
@@ -1186,7 +1423,7 @@
           <td class="p-2">${p.pagado ? `<span class="bg-green-100 text-green-800 px-2 py-0.5 rounded text-[11px] font-bold">Cobrado (${p.medioPago})</span>` : `<span class="bg-red-100 text-red-800 px-2 py-0.5 rounded text-[11px] font-bold">Pendiente</span>`}</td>
           <td class="p-2 text-center flex items-center justify-center gap-1">
             ${!p.pagado ? `<select onchange="marcarPedidoCobrado('${p.id}', this.value)" class="border rounded text-xs p-1"><option value="">-- Pago --</option><option value="Efectivo">Efectivo</option><option value="Transferencia">Transferencia</option></select>` : `<button onclick="deshacerCobroPedido('${p.id}')" class="text-xs text-amber-700 underline font-bold">Cambiar</button>`}
-            <button onclick="eliminarPedidoReparto('${p.id}')" class="bg-red-600 text-white text-xs px-2 py-1 rounded font-bold">✕</button>
+            <button onclick="eliminarPedidoReparto('${p.id}', '${p.producto}')" class="bg-red-600 text-white text-xs px-2 py-1 rounded font-bold">✕</button>
           </td>
         `;
         tbody.appendChild(tr);
@@ -1221,96 +1458,20 @@
       if (pedido) { pedido.pagado = false; pedido.medioPago = "Pendiente"; guardarDB('db_repartos', dbRepartos); renderizarPlanillaReparto(); renderizarReportesMensuales(); }
     }
 
-    function eliminarPedidoReparto(pedidoId) {
-      if (dbRepartos[fechaActual]) {
-        dbRepartos[fechaActual] = dbRepartos[fechaActual].filter(p => p.id !== pedidoId);
-        guardarDB('db_repartos', dbRepartos); renderizarPlanillaReparto(); renderizarCuadra(); renderizarReportesMensuales();
+    function eliminarPedidoReparto(pedidoId, productoNombre) {
+      if (confirm(`⚠️ ¿Desea eliminar el pedido de "${productoNombre}"?`)) {
+        if (dbRepartos[fechaActual]) {
+          dbRepartos[fechaActual] = dbRepartos[fechaActual].filter(p => p.id !== pedidoId);
+          guardarDB('db_repartos', dbRepartos); 
+          renderizarPlanillaReparto(); 
+          renderizarCuadra(); 
+          renderizarReportesMensuales();
+        }
       }
     }
 
-    // --- FORMATO OPTIMIZADO DE IMPRESIÓN REPARTO (LÍNEAS SÓLIDAS Y SALTOS DE PÁGINA) ---
-    function generarHTMLImpresionReparto() {
-      const fechaFormateada = obtenerFechaConDia(fechaActual);
-      const pedidosHoy = dbRepartos[fechaActual] || [];
-      const agrupadoClientes = {};
-      let totalMonto = 0, totalEfectivo = 0, totalCtaCte = 0;
-
-      pedidosHoy.forEach(p => {
-        totalMonto += p.monto;
-        if (p.pagado && p.medioPago === 'Efectivo') totalEfectivo += p.monto;
-        else if (!p.pagado) totalCtaCte += p.monto;
-
-        if (!agrupadoClientes[p.clienteNombre]) agrupadoClientes[p.clienteNombre] = { items: [], total: 0 };
-        agrupadoClientes[p.clienteNombre].items.push(p);
-        agrupadoClientes[p.clienteNombre].total += p.monto;
-      });
-
-      let clientesHtml = '';
-      Object.keys(agrupadoClientes).sort().forEach(cliNombre => {
-        const datos = agrupadoClientes[cliNombre];
-        let itemsHtml = '';
-        datos.items.forEach(it => {
-          itemsHtml += `
-            <tr>
-              <td style="border: 1px solid #333; padding: 4px 6px; text-align: left;">${it.producto}</td>
-              <td style="border: 1px solid #333; padding: 4px 6px; text-align: center;">${it.origen === 'despacho' ? 'Despacho' : 'Cuadra'}</td>
-              <td style="border: 1px solid #333; padding: 4px 6px; text-align: center; font-weight: bold;">${it.unidades} un.</td>
-              <td style="border: 1px solid #333; padding: 4px 6px; text-align: right;">$${it.precioUnitario.toLocaleString()}</td>
-              <td style="border: 1px solid #333; padding: 4px 6px; text-align: right; font-weight: bold;">$${it.monto.toLocaleString()}</td>
-            </tr>
-          `;
-        });
-
-        clientesHtml += `
-          <div class="print-card-box" style="border: 1px solid #000; padding: 8px 10px; margin-bottom: 12px; page-break-inside: avoid; break-inside: avoid; background-color: #fff;">
-            <div class="print-client-row" style="display: flex; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 4px; margin-bottom: 6px; font-weight: bold; font-size: 11pt;">
-              <span>CLIENTE: ${cliNombre.toUpperCase()}</span>
-              <span>TOTAL A COBRAR: $${datos.total.toLocaleString()}</span>
-            </div>
-            <table class="print-item-table" style="width: 100%; border-collapse: collapse; margin-top: 4px;">
-              <thead>
-                <tr style="background-color: #e5e7eb;">
-                  <th style="border: 1px solid #333; padding: 4px 6px; text-align: left;">PRODUCTO / DESCRIPCIÓN</th>
-                  <th style="border: 1px solid #333; width: 15%; padding: 4px 6px; text-align: center;">ORIGEN</th>
-                  <th style="border: 1px solid #333; width: 15%; padding: 4px 6px; text-align: center;">CANTIDAD</th>
-                  <th style="border: 1px solid #333; width: 18%; padding: 4px 6px; text-align: right;">P. UNIT ($)</th>
-                  <th style="border: 1px solid #333; width: 20%; padding: 4px 6px; text-align: right;">IMPORTE ($)</th>
-                </tr>
-              </thead>
-              <tbody>${itemsHtml}</tbody>
-            </table>
-          </div>
-        `;
-      });
-
-      if (pedidosHoy.length === 0) {
-        clientesHtml = '<p style="color: #666; font-style: italic;">No hay pedidos de reparto cargados para el día de la fecha.</p>';
-      }
-
-      const contenedor = document.getElementById('print-zona-reparto');
-      if (contenedor) {
-        contenedor.innerHTML = `
-          <div style="font-family: Arial, sans-serif; color: #000; width: 100%;">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding-bottom: 6px; margin-bottom: 12px;">
-              <div>
-                <h2 style="font-size: 16pt; font-weight: bold; margin: 0;">Planilla Diaria de Reparto (Hoja de Ruta)</h2>
-                <span style="font-size: 9.5pt; color: #333;">La Casa del Pan & La Espiga de Oro</span>
-              </div>
-              <span style="font-size: 11pt; font-weight: bold;">Fecha: ${fechaFormateada}</span>
-            </div>
-            <div style="margin-bottom: 15px;">${clientesHtml}</div>
-            <div style="margin-top: 15px; padding: 10px; border: 2px solid #000; font-size: 11pt; font-weight: bold; display: flex; justify-content: space-between; page-break-inside: avoid; break-inside: avoid; background-color: #f9fafb;">
-              <div>Total General Reparto: $${totalMonto.toLocaleString()}</div>
-              <div>Cobrado Efectivo: $${totalEfectivo.toLocaleString()}</div>
-              <div>Pendiente Cta. Cte.: $${totalCtaCte.toLocaleString()}</div>
-            </div>
-          </div>
-        `;
-      }
-    }
-
-    // --- FORMATO EXACTO ORIGINAL DE IMPRESIÓN CUADRA ---
-    function generarHTMLImpresionCuadra() {
+    // --- IMPRESIÓN DIRECTA / IMPRESIÓN PDF NATIVA ---
+    function imprimirCuadra() {
       const fechaFormateada = obtenerFechaConDia(fechaActual);
       const pedidosHoy = dbRepartos[fechaActual] || [];
       const consolidados = {};
@@ -1324,87 +1485,143 @@
       const lista = Object.entries(consolidados).sort((a, b) => a[0].localeCompare(b[0]));
       
       if (lista.length === 0) {
-        produccionHtml = '<p style="color: #6b7280; font-style: italic;">No hay pedidos de cuadra cargados para la fecha seleccionada.</p>';
+        produccionHtml = '<tr><td colspan="2" style="padding: 12px; text-align: center; color: #6b7280; font-style: italic; border-bottom: 1px solid #e5e7eb;">Sin pedidos de cuadra cargados.</td></tr>';
       } else {
         lista.forEach(([prodNombre, cantUnidades]) => {
           produccionHtml += `
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border: 1px solid #000; border-radius: 4px; margin-bottom: 6px;">
-              <span style="font-weight: bold; color: #000; font-size: 11pt;">${prodNombre}</span>
-              <span style="font-size: 12pt; font-weight: bold; color: #000;">${cantUnidades} un.</span>
-            </div>
+            <tr style="border-bottom: 1px solid #e5e7eb;">
+              <td style="padding: 10px 14px; font-size: 13px; font-weight: 600; color: #1f2937; text-align: left;">${prodNombre}</td>
+              <td style="padding: 10px 14px; text-align: center; font-size: 14px; font-weight: 800; color: #78350f; background-color: #fef3c7; width: 140px;">${cantUnidades} un.</td>
+            </tr>
           `;
         });
       }
 
       let notasHtml = '';
       const notasHoy = dbNotasMostrador[fechaActual] || [];
-      notasHoy.forEach(nota => {
-        notasHtml += `<li style="margin-bottom: 4px;">${nota}</li>`;
+      notasHoy.forEach((nota) => {
+        notasHtml += `<li style="margin-bottom: 6px; font-size: 12px; color: #374151; font-weight: 500;">${nota}</li>`;
       });
-      if (notasHoy.length === 0) notasHtml = '<p style="color: #6b7280; font-style: italic; margin: 0;">No hay pedidos especiales cargados.</p>';
+      if (notasHoy.length === 0) {
+        notasHtml = '<p style="color: #9ca3af; font-style: italic; margin: 0; font-size: 12px;">Sin notas ni pedidos especiales registrados.</p>';
+      }
 
-      const contenedor = document.getElementById('print-zona-cuadra');
-      if (contenedor) {
-        contenedor.innerHTML = `
-          <div style="font-family: Arial, sans-serif;">
-            <div class="print-card-box mb-3" style="border: 1px dashed #000; padding: 8px 10px; margin-bottom: 10px;">
-              <h2 style="font-size: 16pt; font-weight: bold; margin: 0 0 4px 0;">Producción Consolidada (Solo Cuadra)</h2>
-              <p style="font-size: 10pt; color: #333; font-weight: bold; margin: 0 0 10px 0;">Fecha: ${fechaFormateada}</p>
-              <div style="display: flex; flex-direction: column; gap: 8px;">${produccionHtml}</div>
+      const areaImp = document.getElementById('area-impresion');
+      areaImp.innerHTML = `
+        <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; color: #111827;">
+          <div style="border-bottom: 3px solid #78350f; padding-bottom: 12px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-end;">
+            <div>
+              <h1 style="font-size: 20px; font-weight: 800; margin: 0; color: #78350f; text-transform: uppercase;">La Casa del Pan & La Espiga de Oro</h1>
+              <p style="font-size: 13px; margin: 4px 0 0 0; color: #4b5563; font-weight: 600;">Planilla de Producción Consolidada (Cuadra)</p>
             </div>
-            <div class="print-card-box" style="border: 1px dashed #000; padding: 8px 10px;">
-              <h3 style="font-size: 12pt; font-weight: bold; margin: 0 0 6px 0;">Pedidos Especiales y Mostrador</h3>
-              <ul style="padding-left: 20px; font-size: 10pt; line-height: 1.4;">${notasHtml}</ul>
+            <div style="text-align: right; background-color: #fef3c7; border: 1px solid #fde68a; padding: 8px 14px; border-radius: 6px;">
+              <span style="font-size: 10px; color: #92400e; font-weight: 700; display: block; text-transform: uppercase;">Fecha Operativa</span>
+              <span style="font-size: 12px; font-weight: 800; color: #78350f;">${fechaFormateada}</span>
             </div>
           </div>
-        `;
-      }
+
+          <div style="margin-bottom: 28px;">
+            <h2 style="font-size: 13px; font-weight: 700; color: #374151; margin: 0 0 10px 0; text-transform: uppercase;">1. Totales a Producir</h2>
+            <table style="width: 100%; border-collapse: collapse; border: 1px solid #d1d5db;">
+              <thead>
+                <tr style="background-color: #78350f; color: #ffffff;">
+                  <th style="padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase;">Producto / Panificado</th>
+                  <th style="padding: 10px 14px; text-align: center; font-size: 11px; font-weight: 700; text-transform: uppercase; width: 140px;">Cantidad Total</th>
+                </tr>
+              </thead>
+              <tbody>${produccionHtml}</tbody>
+            </table>
+          </div>
+
+          <div style="border: 1px solid #d1d5db; border-radius: 6px; padding: 18px; background-color: #fafafa;">
+            <h2 style="font-size: 13px; font-weight: 700; color: #374151; margin: 0 0 12px 0; text-transform: uppercase;">2. Pedidos Especiales y Mostrador</h2>
+            <ul style="padding-left: 20px; margin: 0;">${notasHtml}</ul>
+          </div>
+        </div>
+      `;
+
+      window.print();
     }
 
     function imprimirReparto() {
-      generarHTMLImpresionReparto();
-      const divZonaRep = document.getElementById('print-zona-reparto');
-      if (!divZonaRep) return;
+      const fechaFormateada = obtenerFechaConDia(fechaActual);
+      const pedidosHoy = dbRepartos[fechaActual] || [];
+      
+      if (pedidosHoy.length === 0) {
+        alert("No hay pedidos cargados para la fecha actual.");
+        return;
+      }
 
-      const opt = {
-        margin:       10,
-        filename:     `Hoja_de_Ruta_${fechaActual}.pdf`,
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2, logging: false, useCORS: true },
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-      };
+      const agrupadoClientes = {};
+      let totalGeneral = 0;
 
-      divZonaRep.setAttribute('style', 'display: block !important; background: white !important; padding: 10px !important;');
-
-      html2pdf().set(opt).from(divZonaRep).save().then(() => {
-        divZonaRep.removeAttribute('style');
-      }).catch(err => {
-        console.warn("Error al generar PDF:", err);
-        divZonaRep.removeAttribute('style');
+      pedidosHoy.forEach(p => {
+        totalGeneral += p.monto;
+        if (!agrupadoClientes[p.clienteNombre]) agrupadoClientes[p.clienteNombre] = { items: [], total: 0 };
+        agrupadoClientes[p.clienteNombre].items.push(p);
+        agrupadoClientes[p.clienteNombre].total += p.monto;
       });
-    }
 
-    function imprimirCuadra() {
-      generarHTMLImpresionCuadra();
-      const divZonaCua = document.getElementById('print-zona-cuadra');
-      if (!divZonaCua) return;
+      let clientesHtml = '';
+      Object.keys(agrupadoClientes).sort().forEach(cliNombre => {
+        const datos = agrupadoClientes[cliNombre];
+        let itemsHtml = '';
+        datos.items.forEach(it => {
+          itemsHtml += `
+            <tr style="border-bottom: 1px solid #e5e7eb;">
+              <td style="padding: 8px 10px; font-size: 12px; font-weight: 600; color: #111827;">${it.producto}</td>
+              <td style="width: 15%; padding: 8px 10px; text-align: center; font-size: 11px; font-weight: 700; color: #4b5563;">${it.origen === 'despacho' ? 'Despacho' : 'Cuadra'}</td>
+              <td style="width: 15%; padding: 8px 10px; text-align: center; font-size: 13px; font-weight: 800; color: #1e3a8a;">${it.unidades} un.</td>
+              <td style="width: 18%; padding: 8px 10px; text-align: right; font-size: 12px; color: #374151;">$${it.precioUnitario.toLocaleString()}</td>
+              <td style="width: 20%; padding: 8px 10px; text-align: right; font-size: 13px; font-weight: 800; color: #78350f;">$${it.monto.toLocaleString()}</td>
+            </tr>
+          `;
+        });
 
-      const opt = {
-        margin:       10,
-        filename:     `Produccion_Cuadra_${fechaActual}.pdf`,
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2, logging: false, useCORS: true },
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-      };
-
-      divZonaCua.setAttribute('style', 'display: block !important; background: white !important; padding: 10px !important;');
-
-      html2pdf().set(opt).from(divZonaCua).save().then(() => {
-        divZonaCua.removeAttribute('style');
-      }).catch(err => {
-        console.warn("Error al generar PDF:", err);
-        divZonaCua.removeAttribute('style');
+        clientesHtml += `
+          <div style="margin-bottom: 18px; page-break-inside: avoid; border: 1px solid #d1d5db; border-radius: 6px; overflow: hidden;">
+            <div style="background-color: #f3f4f6; padding: 8px 12px; border-bottom: 1px solid #d1d5db; display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 13px; font-weight: 800; color: #111827; text-transform: uppercase;">CLIENTE: ${cliNombre}</span>
+              <span style="font-size: 12px; font-weight: 800; color: #92400e; background-color: #fef3c7; padding: 3px 8px; border-radius: 4px; border: 1px solid #fde68a;">TOTAL: $${datos.total.toLocaleString()}</span>
+            </div>
+            <table style="width: 100%; border-collapse: collapse; background-color: #ffffff;">
+              <thead>
+                <tr style="background-color: #f9fafb; color: #6b7280; border-bottom: 1px solid #e5e7eb;">
+                  <th style="padding: 6px 10px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase;">Descripción</th>
+                  <th style="width: 15%; padding: 6px 10px; text-align: center; font-size: 11px; font-weight: 700; text-transform: uppercase;">Origen</th>
+                  <th style="width: 15%; padding: 6px 10px; text-align: center; font-size: 11px; font-weight: 700; text-transform: uppercase;">Cantidad</th>
+                  <th style="width: 18%; padding: 6px 10px; text-align: right; font-size: 11px; font-weight: 700; text-transform: uppercase;">P. Unit ($)</th>
+                  <th style="width: 20%; padding: 6px 10px; text-align: right; font-size: 11px; font-weight: 700; text-transform: uppercase;">Importe ($)</th>
+                </tr>
+              </thead>
+              <tbody>${itemsHtml}</tbody>
+            </table>
+          </div>
+        `;
       });
+
+      const areaImp = document.getElementById('area-impresion');
+      areaImp.innerHTML = `
+        <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; color: #111827;">
+          <div style="border-bottom: 3px solid #78350f; padding-bottom: 12px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-end;">
+            <div>
+              <h1 style="font-size: 20px; font-weight: 800; margin: 0; color: #78350f; text-transform: uppercase;">La Casa del Pan & La Espiga de Oro</h1>
+              <p style="font-size: 13px; margin: 4px 0 0 0; color: #4b5563; font-weight: 600;">Planilla Diaria de Reparto y Logística</p>
+            </div>
+            <div style="text-align: right; background-color: #fef3c7; border: 1px solid #fde68a; padding: 6px 12px; border-radius: 6px;">
+              <span style="font-size: 10px; color: #92400e; font-weight: 700; display: block; text-transform: uppercase;">Fecha Operativa</span>
+              <span style="font-size: 13px; font-weight: 800; color: #78350f;">${fechaFormateada}</span>
+            </div>
+          </div>
+          <div>${clientesHtml}</div>
+          <div style="margin-top: 20px; padding: 12px; background-color: #78350f; color: #ffffff; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 13px; font-weight: 700; text-transform: uppercase;">Total General de la Hoja de Ruta:</span>
+            <span style="font-size: 16px; font-weight: 800;">$${totalGeneral.toLocaleString()}</span>
+          </div>
+        </div>
+      `;
+
+      window.print();
     }
 
     // 2. PRODUCCIÓN / CUADRA
@@ -1481,6 +1698,7 @@
       if(document.getElementById('cli-telefono')) document.getElementById('cli-telefono').value = '';
       if(document.getElementById('cli-email')) document.getElementById('cli-email').value = '';
       cargarSelectorClientesReparto(); 
+      cargarSelectorClientesRecurrentes();
       renderizarTablaClientes();
       cargarBuscadorClientes();
     }
@@ -1520,8 +1738,7 @@
           <td class="p-1.5 font-bold text-gray-800">${cli.nombre}</td>
           <td class="p-1.5 text-right font-bold text-red-600">$${saldo.toLocaleString()}</td>
           <td class="p-1.5 text-center flex justify-center gap-1">
-            <button onclick="verHistorialCliente('${cli.id}')" class="bg-amber-700 text-white text-[10px] px-2 py-1 rounded font-bold">Ver Cta.</button>
-            <button onclick="eliminarCliente('${cli.id}')" class="bg-red-600 text-white text-[10px] px-1.5 py-1 rounded font-bold">✕</button>
+            <button onclick="verHistorialCliente('${cli.id}')" class="bg-amber-700 text-white text-[10px] px-2 py-1 rounded font-bold">Ver Cta. / Ficha</button>
           </td>
         `;
         tbody.appendChild(tr);
@@ -1532,8 +1749,19 @@
       cargarBuscadorClientes();
     }
 
-    function eliminarCliente(cliId) {
-      if (confirm("¿Eliminar cliente?")) { delete dbClientes[cliId]; guardarDB('db_clientes', dbClientes); renderizarTablaClientes(); cargarSelectorClientesReparto(); cerrarHistorialCliente(); }
+    function eliminarClienteActual() {
+      if (!clienteSeleccionadoId) return;
+      const cli = dbClientes[clienteSeleccionadoId];
+      const nombreCli = cli ? cli.nombre : 'este cliente';
+      if (confirm(`⚠️ ¿Está completamente seguro que desea borrar al cliente "${nombreCli}"?`)) {
+        delete dbClientes[clienteSeleccionadoId];
+        guardarDB('db_clientes', dbClientes);
+        renderizarTablaClientes();
+        cargarSelectorClientesReparto();
+        cargarSelectorClientesRecurrentes();
+        cerrarHistorialCliente();
+        alert("Cliente eliminado correctamente.");
+      }
     }
 
     function verHistorialCliente(cliId) {
@@ -1541,10 +1769,38 @@
       document.getElementById('historial-nombre-cliente').textContent = cli.nombre;
       const saldoActual = calcularSaldoCliente(cliId);
       document.getElementById('historial-contacto-cliente').textContent = `Tel: ${cli.telefono || 'S/D'} | Email: ${cli.email || 'S/D'} | Saldo Actual: $${saldoActual.toLocaleString()}`;
+      
+      document.getElementById('edit-cli-nombre').value = cli.nombre || '';
+      document.getElementById('edit-cli-cuit').value = cli.cuit || '';
+      document.getElementById('edit-cli-direccion').value = cli.direccion || '';
+      document.getElementById('edit-cli-telefono').value = cli.telefono || '';
+      document.getElementById('edit-cli-email').value = cli.email || '';
+
       document.getElementById('módulo-historial-cliente').classList.remove('hidden');
       const selBuscador = document.getElementById('select-buscador-cliente');
       if (selBuscador) selBuscador.value = cliId;
       renderizarTablaHistorialCliente();
+    }
+
+    function guardarEdicionCliente() {
+      if (!clienteSeleccionadoId || !dbClientes[clienteSeleccionadoId]) return;
+      const cli = dbClientes[clienteSeleccionadoId];
+
+      const nuevoNombre = document.getElementById('edit-cli-nombre').value.trim();
+      if (!nuevoNombre) { alert("El nombre del cliente no puede estar vacío."); return; }
+
+      cli.nombre = nuevoNombre;
+      cli.cuit = document.getElementById('edit-cli-cuit').value.trim();
+      cli.direccion = document.getElementById('edit-cli-direccion').value.trim();
+      cli.telefono = document.getElementById('edit-cli-telefono').value.trim();
+      cli.email = document.getElementById('edit-cli-email').value.trim();
+
+      guardarDB('db_clientes', dbClientes);
+      renderizarTablaClientes();
+      cargarSelectorClientesReparto();
+      cargarSelectorClientesRecurrentes();
+      verHistorialCliente(clienteSeleccionadoId);
+      alert("¡Datos actualizados con éxito!");
     }
 
     function cerrarHistorialCliente() { 
@@ -1569,6 +1825,14 @@
         tr.innerHTML = `<td class="p-2">${m.fecha}</td><td class="p-2">${m.concepto}</td><td class="p-2 text-right text-red-600">${m.debito > 0 ? '$' + m.debito.toLocaleString() : '-'}</td><td class="p-2 text-right text-green-700">${m.credito > 0 ? '$' + m.credito.toLocaleString() : '-'}</td><td class="p-2 text-right font-bold text-red-600">$${acumulado.toLocaleString()}</td><td class="p-2 text-center">-</td>`;
         tbody.appendChild(tr);
       });
+
+      const trBorrar = document.createElement('tr');
+      trBorrar.innerHTML = `
+        <td colspan="6" class="p-3 text-right bg-gray-50 border-t">
+          <button type="button" onclick="eliminarClienteActual()" class="bg-red-600 text-white text-xs px-3 py-1.5 rounded font-bold hover:bg-red-700">🗑️ Borrar este Cliente</button>
+        </td>
+      `;
+      tbody.appendChild(trBorrar);
     }
 
     function registrarPagoCliente() {
@@ -1579,59 +1843,79 @@
       guardarDB('db_historial_clientes', dbHistorialClientes); document.getElementById('pago-monto').value = ''; renderizarTablaHistorialCliente(); renderizarTablaClientes(); verHistorialCliente(clienteSeleccionadoId);
     }
 
-    function compartirCtaCteWhatsApp() {
+    // --- ENVIAR RESUMEN A CLIENTES (WHATSAPP & MAIL) ---
+    function enviarResumenWhatsAppCliente() {
       if (!clienteSeleccionadoId) return;
       const cli = dbClientes[clienteSeleccionadoId];
+      if (!cli) return;
+
       const saldo = calcularSaldoCliente(clienteSeleccionadoId);
-      const telefono = cli.telefono ? cli.telefono.replace(/\D/g, '') : '';
-      const mensaje = encodeURIComponent(`Hola ${cli.nombre}, te escribimos de La Casa del Pan & La Espiga de Oro. Tu saldo actual pendiente en cuenta corriente es de $${saldo.toLocaleString()}. ¡Muchas gracias!`);
-      if (telefono) {
-        window.open(`https://wa.me/${telefono}?text=${mensaje}`, '_blank');
+      let mensaje = `Hola *${cli.nombre}*, te enviamos el resumen de tu Cuenta Corriente:\n\n`;
+
+      const movs = [];
+      Object.entries(dbRepartos).forEach(([fecha, pDia]) => {
+        pDia.forEach(p => {
+          if (p.clienteId === clienteSeleccionadoId && !p.pagado) {
+            movs.push({ fecha, concepto: `${p.producto} (${p.unidades} un.)`, monto: p.monto, tipo: '+' });
+          }
+        });
+      });
+      (dbHistorialClientes[clienteSeleccionadoId] || []).forEach(p => {
+        movs.push({ fecha: p.fecha, concepto: `Pago (${p.medio})`, monto: p.monto, tipo: '-' });
+      });
+      movs.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+
+      if (movs.length === 0) {
+        mensaje += `Actualmente no presentás saldo pendiente. ¡Muchas gracias!\n`;
       } else {
-        alert(`El cliente ${cli.nombre} no tiene cargado un número de teléfono válido.`);
+        mensaje += `*Detalle de movimientos pendientes:*\n`;
+        movs.forEach(m => {
+          mensaje += `• ${m.fecha}: ${m.concepto} -> ${m.tipo}$${m.monto.toLocaleString()}\n`;
+        });
+        mensaje += `\n*SALDO TOTAL A PAGAR: $${saldo.toLocaleString()}*\n\n`;
+        mensaje += `Muchas gracias por tu compra. La Casa del Pan & La Espiga de Oro.`;
       }
+
+      let tel = (cli.telefono || '').replace(/\D/g, '');
+      const url = tel ? `https://api.whatsapp.com/send?phone=${tel}&text=${encodeURIComponent(mensaje)}` : `https://api.whatsapp.com/send?text=${encodeURIComponent(mensaje)}`;
+      window.open(url, '_blank');
     }
 
-    function compartirCtaCteEmail() {
+    function enviarResumenEmailCliente() {
       if (!clienteSeleccionadoId) return;
       const cli = dbClientes[clienteSeleccionadoId];
+      if (!cli) return;
+
       const saldo = calcularSaldoCliente(clienteSeleccionadoId);
-      const asunto = encodeURIComponent("Resumen de Cuenta Corriente - Panadería");
-      const cuerpo = encodeURIComponent(`Hola ${cli.nombre},\n\nLe acercamos el estado de su cuenta corriente en La Casa del Pan & La Espiga de Oro.\nSaldo pendiente actual: $${saldo.toLocaleString()}\n\nAtentamente,\nAdministración.`);
-      if (cli.email) {
-        window.location.href = `mailto:${cli.email}?subject=${asunto}&body=${cuerpo}`;
+      const asunto = `Resumen de Cuenta Corriente - ${cli.nombre}`;
+      let cuerpo = `Hola ${cli.nombre},\n\nAdjuntamos el detalle de tu Cuenta Corriente:\n\n`;
+
+      const movs = [];
+      Object.entries(dbRepartos).forEach(([fecha, pDia]) => {
+        pDia.forEach(p => {
+          if (p.clienteId === clienteSeleccionadoId && !p.pagado) {
+            movs.push({ fecha, concepto: `${p.producto} (${p.unidades} un.)`, monto: p.monto, tipo: '+' });
+          }
+        });
+      });
+      (dbHistorialClientes[clienteSeleccionadoId] || []).forEach(p => {
+        movs.push({ fecha: p.fecha, concepto: `Pago (${p.medio})`, monto: p.monto, tipo: '-' });
+      });
+      movs.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+
+      if (movs.length === 0) {
+        cuerpo += `Actualmente no presentás saldo pendiente. ¡Muchas gracias!\n`;
       } else {
-        const emailManual = prompt(`El cliente no tiene email registrado. Ingrese una dirección de correo:`);
-        if (emailManual) {
-          window.location.href = `mailto:${emailManual}?subject=${asunto}&body=${cuerpo}`;
-        }
+        cuerpo += `Detalle de movimientos pendientes:\n`;
+        movs.forEach(m => {
+          cuerpo += `- ${m.fecha}: ${m.concepto} -> ${m.tipo}$${m.monto.toLocaleString()}\n`;
+        });
+        cuerpo += `\nSALDO TOTAL A PAGAR: $${saldo.toLocaleString()}\n\n`;
+        cuerpo += `Saludos cordiales,\nLa Casa del Pan & La Espiga de Oro`;
       }
-    }
 
-    function imprimirCtaCteCliente() {
-      if (!clienteSeleccionadoId) return;
-      const cli = dbClientes[clienteSeleccionadoId];
-      const saldo = calcularSaldoCliente(clienteSeleccionadoId);
-      
-      let htmlContenido = `
-        <div style="padding: 20px; font-family: Arial, sans-serif; color: #000;">
-          <h2 style="font-size: 16pt; font-weight: bold; border-bottom: 2px solid #000; padding-bottom: 5px; margin-bottom: 10px;">Cuenta Corriente - ${cli.nombre}</h2>
-          <p style="font-size: 10pt; margin-bottom: 5px;"><strong>CUIT/DNI:</strong> ${cli.cuit || 'S/D'} | <strong>Tel:</strong> ${cli.telefono || 'S/D'}</p>
-          <p style="font-size: 11pt; font-weight: bold; margin-top: 10px; margin-bottom: 15px;">Saldo Actual Pendiente: $${saldo.toLocaleString()}</p>
-          <hr style="border: 1px solid #ccc; margin: 15px 0;">
-          <p style="font-size: 9pt; color: #555;">La Casa del Pan & La Espiga de Oro - Fecha: ${fechaActual}</p>
-        </div>
-      `;
-
-      const opt = {
-        margin:       10,
-        filename:     `CtaCte_${cli.nombre.replace(/\s+/g, '_')}_${fechaActual}.pdf`,
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2 },
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-      };
-
-      html2pdf().from(htmlContenido).set(opt).save();
+      const emailDestino = cli.email || '';
+      window.location.href = `mailto:${emailDestino}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`;
     }
 
     // 4. PROVEEDORES Y FACTURACIÓN
@@ -1674,7 +1958,7 @@
         tr.innerHTML = `
           <td class="p-1.5 font-bold">${prv.nombre}</td>
           <td class="p-1.5 text-right font-bold text-red-600">$${saldo.toLocaleString()}</td>
-          <td class="p-1.5 text-center"><button onclick="verHistorialProveedor('${prv.id}')" class="bg-amber-700 text-white text-[10px] px-2 py-1 rounded font-bold">Ver Cta.</button></td>
+          <td class="p-1.5 text-center"><button onclick="verHistorialProveedor('${prv.id}')" class="bg-amber-700 text-white text-[10px] px-2 py-1 rounded font-bold">Ver Cta. / Ficha</button></td>
         `;
         tbody.appendChild(tr);
       });
@@ -1684,13 +1968,50 @@
       cargarBuscadorProveedores();
     }
 
+    function eliminarProveedorActual() {
+      if (!proveedorSeleccionadoId) return;
+      const prv = dbProveedores[proveedorSeleccionadoId];
+      const nombrePrv = prv ? prv.nombre : 'este proveedor';
+      if (confirm(`⚠️ ¿Está completamente seguro que desea borrar al proveedor "${nombrePrv}"?`)) {
+        delete dbProveedores[proveedorSeleccionadoId];
+        guardarDB('db_proveedores', dbProveedores);
+        renderizarTablaProveedores();
+        cerrarHistorialProveedor();
+        alert("Proveedor eliminado correctamente.");
+      }
+    }
+
     function verHistorialProveedor(provId) {
       proveedorSeleccionadoId = provId; const prv = dbProveedores[provId]; if (!prv) return;
       document.getElementById('historial-nombre-proveedor').textContent = prv.nombre;
+      
+      document.getElementById('edit-prov-nombre').value = prv.nombre || '';
+      document.getElementById('edit-prov-cuit').value = prv.cuit || '';
+      document.getElementById('edit-prov-telefono').value = prv.telefono || '';
+      document.getElementById('edit-prov-rubro').value = prv.rubro || '';
+
       document.getElementById('módulo-historial-proveedor').classList.remove('hidden');
       const selBuscador = document.getElementById('select-buscador-proveedor');
       if (selBuscador) selBuscador.value = provId;
       renderizarTablaHistorialProveedor();
+    }
+
+    function guardarEdicionProveedor() {
+      if (!proveedorSeleccionadoId || !dbProveedores[proveedorSeleccionadoId]) return;
+      const prv = dbProveedores[proveedorSeleccionadoId];
+
+      const nuevoNombre = document.getElementById('edit-prov-nombre').value.trim();
+      if (!nuevoNombre) { alert("El nombre del proveedor no puede estar vacío."); return; }
+
+      prv.nombre = nuevoNombre;
+      prv.cuit = document.getElementById('edit-prov-cuit').value.trim();
+      prv.telefono = document.getElementById('edit-prov-telefono').value.trim();
+      prv.rubro = document.getElementById('edit-prov-rubro').value.trim();
+
+      guardarDB('db_proveedores', dbProveedores);
+      renderizarTablaProveedores();
+      verHistorialProveedor(proveedorSeleccionadoId);
+      alert("¡Datos actualizados con éxito!");
     }
 
     function cerrarHistorialProveedor() { 
@@ -1698,45 +2019,6 @@
       document.getElementById('módulo-historial-proveedor').classList.add('hidden'); 
       const selBuscador = document.getElementById('select-buscador-proveedor');
       if (selBuscador) selBuscador.value = "";
-    }
-
-    function compartirCtaCteProveedorWhatsApp() {
-      if (!proveedorSeleccionadoId) return;
-      const prv = dbProveedores[proveedorSeleccionadoId];
-      const saldo = calcularSaldoProveedor(proveedorSeleccionadoId);
-      const telefono = prv.telefono ? prv.telefono.replace(/\D/g, '') : '';
-      const mensaje = encodeURIComponent(`Hola ${prv.nombre}, nos comunicamos de La Casa del Pan & La Espiga de Oro para coordinar el estado de cuenta y pagos pendientes. Saldo actual de deuda: $${saldo.toLocaleString()}. ¡Muchas gracias!`);
-      if (telefono) {
-        window.open(`https://wa.me/${telefono}?text=${mensaje}`, '_blank');
-      } else {
-        alert(`El proveedor ${prv.nombre} no tiene cargado un número de teléfono válido.`);
-      }
-    }
-
-    function imprimirCtaCteProveedor() {
-      if (!proveedorSeleccionadoId) return;
-      const prv = dbProveedores[proveedorSeleccionadoId];
-      const saldo = calcularSaldoProveedor(proveedorSeleccionadoId);
-
-      let htmlContenido = `
-        <div style="padding: 20px; font-family: Arial, sans-serif; color: #000;">
-          <h2 style="font-size: 16pt; font-weight: bold; border-bottom: 2px solid #000; padding-bottom: 5px; margin-bottom: 10px;">Estado de Cuenta - Proveedor: ${prv.nombre}</h2>
-          <p style="font-size: 10pt; margin-bottom: 5px;"><strong>CUIT:</strong> ${prv.cuit || 'S/D'} | <strong>Rubro:</strong> ${prv.rubro || 'S/D'}</p>
-          <p style="font-size: 11pt; font-weight: bold; margin-top: 10px; margin-bottom: 15px;">Saldo Deuda Acumulado: $${saldo.toLocaleString()}</p>
-          <hr style="border: 1px solid #ccc; margin: 15px 0;">
-          <p style="font-size: 9pt; color: #555;">La Casa del Pan & La Espiga de Oro - Fecha: ${fechaActual}</p>
-        </div>
-      `;
-
-      const opt = {
-        margin:       10,
-        filename:     `Proveedor_${prv.nombre.replace(/\s+/g, '_')}_${fechaActual}.pdf`,
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2 },
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-      };
-
-      html2pdf().from(htmlContenido).set(opt).save();
     }
 
     function cargarFacturaProveedor() {
@@ -1789,6 +2071,68 @@
         tr.innerHTML = `<td class="p-2">${m.fecha}</td><td class="p-2">${m.tipo === 'factura' ? 'Factura N° ' + m.nroFactura : 'Pago (' + m.medio + ')'}</td><td class="p-2 text-right text-red-600">${m.tipo === 'factura' ? '$' + m.monto.toLocaleString() : '-'}</td><td class="p-2 text-right text-green-700">${m.tipo === 'pago' ? '$' + m.monto.toLocaleString() : '-'}</td><td class="p-2 text-right font-bold text-red-600">$${acumulado.toLocaleString()}</td><td class="p-2 text-center">-</td>`;
         tbody.appendChild(tr);
       });
+
+      const trBorrar = document.createElement('tr');
+      trBorrar.innerHTML = `
+        <td colspan="6" class="p-3 text-right bg-gray-50 border-t">
+          <button type="button" onclick="eliminarProveedorActual()" class="bg-red-600 text-white text-xs px-3 py-1.5 rounded font-bold hover:bg-red-700">🗑️ Borrar este Proveedor</button>
+        </td>
+      `;
+      tbody.appendChild(trBorrar);
+    }
+
+    // --- ENVIAR RESUMEN A PROVEEDORES (WHATSAPP & MAIL) ---
+    function enviarResumenWhatsAppProveedor() {
+      if (!proveedorSeleccionadoId) return;
+      const prv = dbProveedores[proveedorSeleccionadoId];
+      if (!prv) return;
+
+      const saldo = calcularSaldoProveedor(proveedorSeleccionadoId);
+      let mensaje = `Estimados *${prv.nombre}*, enviamos la conciliación de estado de cuenta:\n\n`;
+
+      const movs = dbHistorialProveedores[proveedorSeleccionadoId] || [];
+      movs.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+
+      if (movs.length === 0) {
+        mensaje += `No registramos comprobantes pendientes.\n`;
+      } else {
+        mensaje += `*Detalle de comprobantes y pagos:*\n`;
+        movs.forEach(m => {
+          mensaje += `• ${m.fecha}: ${m.tipo === 'factura' ? 'Factura N° ' + m.nroFactura : 'Pago (' + m.medio + ')'} -> $${m.monto.toLocaleString()}\n`;
+        });
+        mensaje += `\n*SALDO DEUDA ACUMULADO: $${saldo.toLocaleString()}*\n\n`;
+        mensaje += `La Casa del Pan & La Espiga de Oro.`;
+      }
+
+      let tel = (prv.telefono || '').replace(/\D/g, '');
+      const url = tel ? `https://api.whatsapp.com/send?phone=${tel}&text=${encodeURIComponent(mensaje)}` : `https://api.whatsapp.com/send?text=${encodeURIComponent(mensaje)}`;
+      window.open(url, '_blank');
+    }
+
+    function enviarResumenEmailProveedor() {
+      if (!proveedorSeleccionadoId) return;
+      const prv = dbProveedores[proveedorSeleccionadoId];
+      if (!prv) return;
+
+      const saldo = calcularSaldoProveedor(proveedorSeleccionadoId);
+      const asunto = `Estado de Cuenta Corriente Proveedor - ${prv.nombre}`;
+      let cuerpo = `Estimados ${prv.nombre},\n\nAdjuntamos la conciliación de estado de cuenta:\n\n`;
+
+      const movs = dbHistorialProveedores[proveedorSeleccionadoId] || [];
+      movs.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+
+      if (movs.length === 0) {
+        cuerpo += `No registramos comprobantes pendientes.\n`;
+      } else {
+        cuerpo += `Detalle de movimientos:\n`;
+        movs.forEach(m => {
+          cuerpo += `- ${m.fecha}: ${m.tipo === 'factura' ? 'Factura N° ' + m.nroFactura : 'Pago (' + m.medio + ')'} -> $${m.monto.toLocaleString()}\n`;
+        });
+        cuerpo += `\nSALDO DEUDA ACUMULADO: $${saldo.toLocaleString()}\n\n`;
+        cuerpo += `Saludos cordiales,\nLa Casa del Pan & La Espiga de Oro`;
+      }
+
+      window.location.href = `mailto:?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`;
     }
 
     // 5. CONTROL DE STOCK E INSUMOS
@@ -1843,7 +2187,7 @@
         renderizarStockInsumos();
         cargarSelectorInsumosFactura();
         cargarSelectorInsumosMovimiento();
-        alert(`¡Se cargaron ${contador} insumos exitosamente al stock!`);
+        alert(`¡Se cargaron ${contador} insumos exitosamente!`);
       } else {
         alert("No se pudieron procesar las líneas. Verifique el formato.");
       }
@@ -1872,12 +2216,15 @@
     }
 
     function eliminarInsumoStock(id) {
-      if (confirm("¿Estás seguro de eliminar este insumo del stock?")) {
+      const ins = dbInsumos[id];
+      const nombreIns = ins ? ins.nombre : 'este insumo';
+      if (confirm(`⚠️ ¿Desea eliminar "${nombreIns}" del stock?`)) {
         delete dbInsumos[id];
         guardarDB('db_insumos', dbInsumos);
         renderizarStockInsumos();
         cargarSelectorInsumosFactura();
         cargarSelectorInsumosMovimiento();
+        alert("Insumo eliminado correctamente.");
       }
     }
 
@@ -1896,7 +2243,7 @@
       });
     }
 
-    // 6. CAJAS INDEPENDIENTES, EGRESOS Y REPORTES
+    // 6. CAJAS INDEPENDIENTES Y REPORTES
     function cargarCajasHoyUI() {
       const usr = dbUsuarios[usuarioActivoId];
       const boxRep = document.getElementById('box-caja-reparto');
@@ -1993,7 +2340,7 @@
         return;
       }
 
-      if (confirm(`¿Confirmar cierre parcial del turno ${turno.toUpperCase()} para ${sucursal.toUpperCase()}?`)) {
+      if (confirm(`¿Confirmar cierre del turno ${turno.toUpperCase()} para ${sucursal.toUpperCase()}?`)) {
         c.cerrado = true;
         c.usuario = usr?.nombre || 'Usuario';
         guardarDB('db_cajas_diarias', dbCajasDiarias);
@@ -2046,7 +2393,68 @@
 
     function guardarYReiniciarDia() {
       guardarDatosCajaDiaria();
-      alert(`¡Cierre Operativo Diario registrado para la fecha ${fechaActual}!`);
+      alert(`¡Cierre Operativo Diario registrado para ${fechaActual}!`);
+    }
+
+    function abrirModalEditarCajaAdmin(fechaStr) {
+      const usr = dbUsuarios[usuarioActivoId];
+      if (!usr || usr.rol !== 'admin') {
+        alert("Acceso restringido al Administrador General.");
+        return;
+      }
+      
+      document.getElementById('admin-edit-caja-fecha').value = fechaStr;
+      const cDia = dbCajasDiarias[fechaStr] || {};
+      
+      let vAlem = 0;
+      if (cDia.alem) {
+        vAlem = ((cDia.alem.manana?.efectivo || 0) + (cDia.alem.manana?.digital || 0)) +
+                ((cDia.alem.tarde?.efectivo || 0) + (cDia.alem.tarde?.digital || 0));
+      }
+
+      let vEspiga = 0;
+      if (cDia.espiga) {
+        vEspiga = ((cDia.espiga.manana?.efectivo || 0) + (cDia.espiga.manana?.digital || 0)) +
+                  ((cDia.espiga.tarde?.efectivo || 0) + (cDia.espiga.tarde?.digital || 0));
+      }
+
+      document.getElementById('admin-edit-alem').value = vAlem;
+      document.getElementById('admin-edit-espiga').value = vEspiga;
+      document.getElementById('modal-editar-caja-admin').classList.remove('hidden');
+    }
+
+    function cerrarModalEditarCajaAdmin() {
+      document.getElementById('modal-editar-caja-admin').classList.add('hidden');
+    }
+
+    function guardarCorreccionCajaAdmin() {
+      const fechaStr = document.getElementById('admin-edit-caja-fecha').value;
+      const nuevoAlem = parseFloat(document.getElementById('admin-edit-alem').value) || 0;
+      const nuevoEspiga = parseFloat(document.getElementById('admin-edit-espiga').value) || 0;
+
+      if (!fechaStr) return;
+
+      if (!dbCajasDiarias[fechaStr]) {
+        dbCajasDiarias[fechaStr] = {
+          alem: { manana: { efectivo: 0, digital: 0, cerrado: true }, tarde: { efectivo: 0, digital: 0, cerrado: true } },
+          espiga: { manana: { efectivo: 0, digital: 0, cerrado: true }, tarde: { efectivo: 0, digital: 0, cerrado: true } }
+        };
+      }
+
+      dbCajasDiarias[fechaStr].alem = {
+        manana: { efectivo: nuevoAlem, digital: 0, cerrado: true, usuario: "Admin (Corr.)" },
+        tarde: { efectivo: 0, digital: 0, cerrado: true }
+      };
+
+      dbCajasDiarias[fechaStr].espiga = {
+        manana: { efectivo: nuevoEspiga, digital: 0, cerrado: true, usuario: "Admin (Corr.)" },
+        tarde: { efectivo: 0, digital: 0, cerrado: true }
+      };
+
+      guardarDB('db_cajas_diarias', dbCajasDiarias);
+      cerrarModalEditarCajaAdmin();
+      renderizarReportesMensuales();
+      alert("¡Montos corregidos con éxito!");
     }
 
     function renderizarReportesMensuales() {
@@ -2063,6 +2471,16 @@
 
       const usr = dbUsuarios[usuarioActivoId];
       const esEspiga = (usr && usr.sucursal === 'espiga' && usr.rol !== 'admin');
+      const esAdminGeneral = (usr && usr.rol === 'admin');
+
+      const contenedorBtnAdmin = document.getElementById('contenedor-btn-admin-edicion-caja');
+      if (contenedorBtnAdmin) {
+        if (esAdminGeneral) {
+          contenedorBtnAdmin.innerHTML = `<button type="button" onclick="abrirModalEditarCajaAdmin('${fechaActual}')" class="bg-amber-800 text-white text-[10px] px-2.5 py-1 rounded font-bold hover:bg-amber-900 shadow">✏️ Editar Montos de Hoy</button>`;
+        } else {
+          contenedorBtnAdmin.innerHTML = '';
+        }
+      }
 
       if (esEspiga) {
         theadVentas.innerHTML = `
@@ -2070,6 +2488,7 @@
             <th class="p-2">Día / Fecha</th>
             <th class="p-2 text-right">La Espiga de Oro ($)</th>
             <th class="p-2 text-right font-bold bg-amber-50">Total Día ($)</th>
+            ${esAdminGeneral ? '<th class="p-2 text-center">Acción Admin</th>' : ''}
           </tr>
         `;
       } else {
@@ -2080,6 +2499,7 @@
             <th class="p-2 text-right">La Espiga de Oro ($)</th>
             <th class="p-2 text-right">Reparto ($)</th>
             <th class="p-2 text-right font-bold bg-amber-50">Total Día ($)</th>
+            ${esAdminGeneral ? '<th class="p-2 text-center">Acción Admin</th>' : ''}
           </tr>
         `;
       }
@@ -2116,11 +2536,14 @@
         sumAlem += vAlem; sumEspiga += vEspiga; sumReparto += vReparto; sumTotalVentas += totalDiaVentas;
 
         const trV = document.createElement('tr'); trV.className = "border-b hover:bg-gray-50";
+        const btnAccionAdmin = esAdminGeneral ? `<td class="p-1.5 text-center"><button onclick="abrirModalEditarCajaAdmin('${diaStr}')" class="bg-amber-700 text-white text-[10px] px-2 py-0.5 rounded font-bold">Editar</button></td>` : '';
+
         if (esEspiga) {
           trV.innerHTML = `
             <td class="p-1.5 font-medium">${diaStr}</td>
             <td class="p-1.5 text-right">$${vEspiga.toLocaleString()}</td>
             <td class="p-1.5 text-right font-bold bg-amber-50">$${totalDiaVentas.toLocaleString()}</td>
+            ${btnAccionAdmin}
           `;
         } else {
           trV.innerHTML = `
@@ -2129,6 +2552,7 @@
             <td class="p-1.5 text-right">$${vEspiga.toLocaleString()}</td>
             <td class="p-1.5 text-right">$${vReparto.toLocaleString()}</td>
             <td class="p-1.5 text-right font-bold bg-amber-50">$${totalDiaVentas.toLocaleString()}</td>
+            ${btnAccionAdmin}
           `;
         }
         tbodyVentas.appendChild(trV);
@@ -2160,16 +2584,20 @@
       }
 
       const promVentas = diasConVentas > 0 ? (sumTotalVentas / diasConVentas) : 0;
+      const colspanProm = esEspiga ? 2 : 4;
+
       if (esEspiga) {
         tfootVentas.innerHTML = `
           <tr>
             <td class="p-2">TOTAL MENSUAL</td>
             <td class="p-2 text-right">$${sumEspiga.toLocaleString()}</td>
             <td class="p-2 text-right font-bold">$${sumTotalVentas.toLocaleString()}</td>
+            ${esAdminGeneral ? '<td></td>' : ''}
           </tr>
           <tr class="bg-amber-200">
-            <td class="p-2 text-amber-950" colspan="2">PROMEDIO DIARIO VENTAS (${diasConVentas} días activos)</td>
+            <td class="p-2 text-amber-950" colspan="${colspanProm}">PROMEDIO DIARIO VENTAS (${diasConVentas} días)</td>
             <td class="p-2 text-right font-extrabold text-amber-950">$${Math.round(promVentas).toLocaleString()}</td>
+            ${esAdminGeneral ? '<td></td>' : ''}
           </tr>
         `;
       } else {
@@ -2180,10 +2608,12 @@
             <td class="p-2 text-right">$${sumEspiga.toLocaleString()}</td>
             <td class="p-2 text-right">$${sumReparto.toLocaleString()}</td>
             <td class="p-2 text-right font-bold">$${sumTotalVentas.toLocaleString()}</td>
+            ${esAdminGeneral ? '<td></td>' : ''}
           </tr>
           <tr class="bg-amber-200">
-            <td class="p-2 text-amber-950" colspan="4">PROMEDIO DIARIO VENTAS (${diasConVentas} días activos)</td>
+            <td class="p-2 text-amber-950" colspan="${colspanProm}">PROMEDIO DIARIO VENTAS (${diasConVentas} días)</td>
             <td class="p-2 text-right font-extrabold text-amber-950">$${Math.round(promVentas).toLocaleString()}</td>
+            ${esAdminGeneral ? '<td></td>' : ''}
           </tr>
         `;
       }
@@ -2198,7 +2628,7 @@
       `;
     }
 
-    // 7. CATALOGO Y PRECIOS
+    // 7. CATÁLOGO Y PRECIOS
     function agregarNuevoPanificado() {
       const nombre = document.getElementById('nuevo-panificado-nombre').value.trim();
       const unid = parseInt(document.getElementById('nuevo-panificado-unidades').value);
@@ -2214,6 +2644,7 @@
       document.getElementById('nuevo-panificado-mayor').value = '';
       renderizarTablaPanificados(); 
       cargarSelectorPanificadosReparto();
+      cargarSelectorProductosRecurrentes();
     }
 
     function editarPanificadoDirecto(nombre, campo, valor) {
@@ -2240,7 +2671,15 @@
       });
     }
 
-    function eliminarPanificado(nombre) { delete dbPanificados[nombre]; guardarDB('db_panificados', dbPanificados); renderizarTablaPanificados(); cargarSelectorPanificadosReparto(); }
+    function eliminarPanificado(nombre) { 
+      if (confirm(`⚠️ ¿Desea eliminar "${nombre}"?`)) {
+        delete dbPanificados[nombre]; 
+        guardarDB('db_panificados', dbPanificados); 
+        renderizarTablaPanificados(); 
+        cargarSelectorPanificadosReparto();
+        cargarSelectorProductosRecurrentes();
+      }
+    }
 
     function aplicarAumentoPorcentaje() {
       if (dbUsuarios[usuarioActivoId]?.rol !== 'admin') { alert("Acceso restringido al Administrador."); return; }
@@ -2271,11 +2710,12 @@
       document.getElementById('nuevo-prod-unOcuarto').value = '';
       renderizarTablaCatalogo(); 
       cargarSelectorDespachoReparto();
+      cargarSelectorProductosRecurrentes();
     }
 
     function editarProductoCatalogoDirecto(nombre, campo, valor) {
       if (!dbProductos[nombre]) return;
-      const valNum = parseFloat(valor);
+      let valNum = parseFloat(valor);
       if (isNaN(valNum)) return;
       dbProductos[nombre][campo] = valNum;
       guardarDB('db_productos', dbProductos);
@@ -2297,8 +2737,20 @@
       });
     }
 
-    function eliminarProductoCatalogo(nombre) { delete dbProductos[nombre]; guardarDB('db_productos', dbProductos); renderizarTablaCatalogo(); cargarSelectorDespachoReparto(); }
-    function filtrarTablaPrecios() { const b = document.getElementById('buscar-producto').value.toLowerCase(); document.querySelectorAll('#tabla-catalogo-precios tr').forEach(f => f.style.display = f.innerText.toLowerCase().includes(b) ? '' : 'none'); }
+    function eliminarProductoCatalogo(nombre) { 
+      if (confirm(`⚠️ ¿Desea eliminar "${nombre}" del Catálogo?`)) {
+        delete dbProductos[nombre]; 
+        guardarDB('db_productos', dbProductos); 
+        renderizarTablaCatalogo(); 
+        cargarSelectorDespachoReparto();
+        cargarSelectorProductosRecurrentes();
+      }
+    }
+
+    function filtrarTablaPrecios() { 
+      const b = document.getElementById('buscar-producto').value.toLowerCase(); 
+      document.querySelectorAll('#tabla-catalogo-precios tr').forEach(f => f.style.display = f.innerText.toLowerCase().includes(b) ? '' : 'none'); 
+    }
 
     // 8. USUARIOS Y BACKUPS
     function guardarUsuario() {
@@ -2337,7 +2789,7 @@
         dbBackupsDiarios[hoy] = {
           fechaBackup: hoy,
           timestamp: Date.now(),
-          datos: { dbUsuarios, dbPanificados, dbProductos, dbClientes, dbProveedores, dbInsumos, dbRepartos, dbNotasMostrador, dbHistorialClientes, dbHistorialProveedores, dbCajasDiarias, dbEgresosCaja }
+          datos: { dbUsuarios, dbPanificados, dbProductos, dbClientes, dbProveedores, dbInsumos, dbRepartos, dbRecurrentes, dbNotasMostrador, dbHistorialClientes, dbHistorialProveedores, dbCajasDiarias, dbEgresosCaja }
         };
 
         const fechasGuardadas = Object.keys(dbBackupsDiarios).sort();
@@ -2373,9 +2825,9 @@
 
     function restaurarFechaSeleccionada() {
       const fSel = document.getElementById('select-backups-historial').value;
-      if (!fSel || !dbBackupsDiarios[fSel]) { alert("Seleccione una fecha de backup válida."); return; }
+      if (!fSel || !dbBackupsDiarios[fSel]) { alert("Seleccione una fecha válida."); return; }
 
-      if (confirm(`⚠️ ¿Desea restaurar el estado completo del sistema a la fecha ${fSel}? Se sobrescribirán los datos actuales.`)) {
+      if (confirm(`⚠️ ¿Desea restaurar el estado completo a la fecha ${fSel}?`)) {
         const bkp = dbBackupsDiarios[fSel].datos;
         guardarDB('db_usuarios', bkp.dbUsuarios);
         guardarDB('db_panificados', bkp.dbPanificados);
@@ -2384,13 +2836,14 @@
         guardarDB('db_proveedores', bkp.dbProveedores);
         guardarDB('db_insumos', bkp.dbInsumos);
         guardarDB('db_repartos', bkp.dbRepartos);
+        guardarDB('db_recurrentes', bkp.dbRecurrentes || {});
         guardarDB('db_notas_mostrador', bkp.dbNotasMostrador);
         guardarDB('db_historial_clientes', bkp.dbHistorialClientes);
         guardarDB('db_historial_proveedores', bkp.dbHistorialProveedores);
         guardarDB('db_cajas_diarias', bkp.dbCajasDiarias);
         guardarDB('db_egresos_caja', bkp.dbEgresosCaja);
 
-        alert("¡Sistema restaurado correctamente! La página se recargará.");
+        alert("¡Sistema restaurado correctamente!");
         window.location.reload();
       }
     }
