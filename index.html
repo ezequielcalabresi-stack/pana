@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+	<!DOCTYPE html>
 <html lang="es">
 <head>
   <link rel="manifest" href="manifest.json">
@@ -90,6 +90,7 @@
 
     <!-- 1. MÓDULO REPARTO Y LOGÍSTICA -->
     <section id="sec-reparto" class="space-y-4">
+      <!-- MANTIENE SU LÓGICA ORIGINAL (PRECIO UNITARIO) -->
       <div class="bg-white p-4 rounded-xl shadow border border-amber-300 space-y-3">
         <h2 class="text-base font-bold text-amber-900 flex items-center gap-1">🍞 Cargar Pedido Principal (Panificados / Cuadra)</h2>
         <div class="grid grid-cols-1 md:grid-cols-5 gap-2 text-sm">
@@ -104,6 +105,7 @@
         </div>
       </div>
 
+      <!-- MODIFICADO PARA QUE MUESTRE Y CALCULE EL MONTO TOTAL -->
       <div class="bg-purple-50 p-4 rounded-xl shadow border border-purple-200 space-y-3">
         <h2 class="text-sm font-bold text-purple-900 flex items-center gap-1">🏪 Cargar Adicional de Despacho / Re-Venta (Opcional)</h2>
         <div class="grid grid-cols-1 md:grid-cols-5 gap-2 text-sm">
@@ -112,7 +114,7 @@
           <input type="number" id="rep-despacho-cantidad" placeholder="Cant." step="0.01" min="0.01" oninput="actualizarPrecioSugeridoDespacho()" class="border p-2 rounded w-full text-sm md:col-span-1">
           <div class="flex items-center border rounded px-2 bg-white border-purple-300 md:col-span-1">
             <span class="text-sm font-bold text-purple-900 mr-1">$</span>
-            <input type="number" id="rep-despacho-precio-unitario" placeholder="P. Unit." step="0.01" class="w-full bg-transparent text-sm font-bold text-purple-950 focus:outline-none">
+            <input type="number" id="rep-despacho-precio-unitario" placeholder="Total ($)" step="0.01" class="w-full bg-transparent text-sm font-bold text-purple-950 focus:outline-none">
           </div>
           <button type="button" onclick="agregarPedidoDespacho()" class="bg-purple-700 text-white font-bold px-4 py-2 rounded text-sm hover:bg-purple-800 w-full md:col-span-5 shadow">Cargar Ítem de Despacho</button>
         </div>
@@ -452,15 +454,14 @@
     <!-- 5. CONTROL DE STOCK E INSUMOS -->
     <section id="sec-stock" class="hidden space-y-4">
       <div class="bg-white p-4 rounded-xl shadow border">
-        <h2 class="text-base font-bold text-gray-800 mb-3">➕ Alta / Configuración de Insumo Individual</h2>
-        <input type="hidden" id="ins-id-editando" value="">
+        <h2 class="text-base font-bold text-gray-800 mb-3">➕ Alta de Nuevo Insumo</h2>
         <div class="grid grid-cols-1 md:grid-cols-4 gap-2 mb-2">
-          <input type="text" id="ins-nombre" placeholder="Nombre" class="border p-2 rounded text-sm">
-          <input type="number" id="ins-stock" placeholder="Stock Inicial" step="0.1" class="border p-2 rounded text-sm">
-          <input type="number" id="ins-minimo" placeholder="Stock Mínimo" step="0.1" class="border p-2 rounded text-sm">
-          <input type="text" id="ins-unidad" placeholder="Unidad (Kg, Bolsas)" class="border p-2 rounded text-sm">
+          <div><label class="text-xs text-gray-600 font-bold">Nombre del Insumo</label><input type="text" id="ins-nombre" placeholder="Ej: Harina" class="border p-2 rounded w-full text-sm"></div>
+          <div><label class="text-xs text-gray-600 font-bold">Stock Inicial</label><input type="number" id="ins-stock" placeholder="0" step="0.1" class="border p-2 rounded w-full text-sm"></div>
+          <div><label class="text-xs text-gray-600 font-bold">Stock Mínimo</label><input type="number" id="ins-minimo" placeholder="0" step="0.1" class="border p-2 rounded w-full text-sm"></div>
+          <div><label class="text-xs text-gray-600 font-bold">Unidad de Medida</label><input type="text" id="ins-unidad" placeholder="Kg, Bolsas, etc." class="border p-2 rounded w-full text-sm"></div>
         </div>
-        <button type="button" onclick="guardarInsumo()" class="bg-amber-700 text-white font-bold px-4 py-2 rounded text-sm hover:bg-amber-800 w-full">Guardar Insumo</button>
+        <button type="button" onclick="guardarNuevoInsumo()" class="bg-amber-700 text-white font-bold px-4 py-2 rounded text-sm hover:bg-amber-800 w-full">Registrar Nuevo Insumo</button>
       </div>
 
       <div class="bg-amber-50 p-4 rounded-xl shadow border border-amber-300 space-y-3">
@@ -867,6 +868,85 @@
     </div>
   </div>
 
+  <!-- NUEVO: MODAL EDITAR MOVIMIENTO CLIENTE -->
+  <div id="modal-editar-mov-cliente" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white p-5 rounded-xl shadow-xl max-w-md w-full space-y-3">
+      <h3 class="text-base font-bold text-amber-900 border-b pb-2">✏️ Editar Movimiento de Cuenta</h3>
+      <div class="space-y-3 text-sm">
+        <div>
+          <label class="font-bold text-gray-700 block mb-1">Fecha:</label>
+          <input type="date" id="mod-cli-fecha" class="border p-2 rounded w-full bg-white">
+        </div>
+        <div>
+          <label id="mod-cli-concepto-lbl" class="font-bold text-gray-700 block mb-1">Concepto:</label>
+          <input type="text" id="mod-cli-concepto" class="border p-2 rounded w-full bg-white">
+        </div>
+        <div>
+          <label id="mod-cli-monto-lbl" class="font-bold text-gray-700 block mb-1">Monto ($):</label>
+          <input type="number" step="0.01" id="mod-cli-monto" class="border p-2 rounded w-full font-bold bg-white text-amber-900">
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button type="button" onclick="cerrarModalEditarMovCliente()" class="bg-gray-300 text-gray-800 text-xs px-3 py-2 rounded font-bold hover:bg-gray-400">Cancelar</button>
+        <button type="button" onclick="guardarEdicionMovCliente()" class="bg-amber-800 text-white text-xs px-4 py-2 rounded font-bold hover:bg-amber-900">Guardar Cambios</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- NUEVO: MODAL EDITAR MOVIMIENTO PROVEEDOR -->
+  <div id="modal-editar-mov-proveedor" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white p-5 rounded-xl shadow-xl max-w-md w-full space-y-3">
+      <h3 class="text-base font-bold text-amber-900 border-b pb-2">✏️ Editar Registro de Proveedor</h3>
+      <div class="space-y-3 text-sm">
+        <div>
+          <label class="font-bold text-gray-700 block mb-1">Fecha:</label>
+          <input type="date" id="mod-prov-fecha" class="border p-2 rounded w-full bg-white">
+        </div>
+        <div>
+          <label id="mod-prov-concepto-lbl" class="font-bold text-gray-700 block mb-1">Concepto:</label>
+          <input type="text" id="mod-prov-concepto" class="border p-2 rounded w-full bg-white">
+        </div>
+        <div>
+          <label class="font-bold text-gray-700 block mb-1">Monto ($):</label>
+          <input type="number" step="0.01" id="mod-prov-monto" class="border p-2 rounded w-full font-bold bg-white text-amber-900">
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button type="button" onclick="cerrarModalEditarMovProveedor()" class="bg-gray-300 text-gray-800 text-xs px-3 py-2 rounded font-bold hover:bg-gray-400">Cancelar</button>
+        <button type="button" onclick="guardarEdicionMovProveedor()" class="bg-amber-800 text-white text-xs px-4 py-2 rounded font-bold hover:bg-amber-900">Guardar Cambios</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- NUEVO: MODAL EDITAR INSUMO / STOCK -->
+  <div id="modal-editar-insumo" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white p-5 rounded-xl shadow-xl max-w-md w-full space-y-3">
+      <h3 class="text-base font-bold text-amber-900 border-b pb-2">✏️ Editar Insumo / Control de Stock</h3>
+      <div class="space-y-3 text-sm">
+        <div>
+          <label class="font-bold text-gray-700 block mb-1">Nombre del Insumo:</label>
+          <input type="text" id="mod-ins-nombre" class="border p-2 rounded w-full bg-white">
+        </div>
+        <div>
+          <label class="font-bold text-gray-700 block mb-1">Stock Actual:</label>
+          <input type="number" step="0.1" id="mod-ins-stock" class="border p-2 rounded w-full font-bold bg-white text-amber-900">
+        </div>
+        <div>
+          <label class="font-bold text-gray-700 block mb-1">Stock Mínimo (Alerta):</label>
+          <input type="number" step="0.1" id="mod-ins-minimo" class="border p-2 rounded w-full bg-white">
+        </div>
+        <div>
+          <label class="font-bold text-gray-700 block mb-1">Unidad de Medida (Ej: Kg, Bolsas):</label>
+          <input type="text" id="mod-ins-unidad" class="border p-2 rounded w-full bg-white">
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 pt-3">
+        <button type="button" onclick="cerrarModalEditarInsumo()" class="bg-gray-300 text-gray-800 text-xs px-3 py-2 rounded font-bold hover:bg-gray-400">Cancelar</button>
+        <button type="button" onclick="guardarEdicionInsumo()" class="bg-amber-800 text-white text-xs px-4 py-2 rounded font-bold hover:bg-amber-900">Guardar Insumo</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const firebaseConfig = {
       databaseURL: "https://panaderia-sync-281a5-default-rtdb.firebaseio.com/"
@@ -978,6 +1058,11 @@
     let usuarioActivoId = cargarDB('usuario_activo_id', 'USR-1');
     let clienteSeleccionadoId = null;
     let proveedorSeleccionadoId = null;
+    
+    // Variables de estado para los modales de edición
+    let movClienteEditContext = null;
+    let movProvEditContext = null;
+    let insumoEditContext = null;
 
     window.addEventListener('DOMContentLoaded', () => {
       document.getElementById('fecha-operativa').value = fechaActual;
@@ -1438,13 +1523,15 @@
 
     function actualizarPrecioSugeridoDespacho() {
       const prodNombre = document.getElementById('rep-despacho-producto')?.value;
-      const inputPrecio = document.getElementById('rep-despacho-precio-unitario');
+      const inputSubtotal = document.getElementById('rep-despacho-precio-unitario');
       const cantInput = document.getElementById('rep-despacho-cantidad');
-      if (!prodNombre || !inputPrecio) return;
+      if (!prodNombre || !inputSubtotal) return;
       const valCant = cantInput?.value ? parseFloat(cantInput.value) : null;
-      if (valCant === null || isNaN(valCant) || valCant <= 0) { inputPrecio.value = ''; return; }
+      if (valCant === null || isNaN(valCant) || valCant <= 0) { inputSubtotal.value = ''; return; }
       const prodCatalogo = dbProductos[prodNombre];
-      inputPrecio.value = prodCatalogo ? (prodCatalogo.reparto || prodCatalogo.mostrador || 0) : 0;
+      
+      const precioUnit = prodCatalogo ? (prodCatalogo.reparto || prodCatalogo.mostrador || 0) : 0;
+      inputSubtotal.value = Number((precioUnit * valCant).toFixed(2));
     }
 
     function agregarPedidoPanificado() {
@@ -1473,15 +1560,17 @@
       let cliId = document.getElementById('rep-despacho-cliente').value || document.getElementById('rep-cliente').value;
       const prodNombre = document.getElementById('rep-despacho-producto').value;
       const cant = parseFloat(document.getElementById('rep-despacho-cantidad').value);
-      const precioPersonalizado = parseFloat(document.getElementById('rep-despacho-precio-unitario').value);
+      const montoTotal = parseFloat(document.getElementById('rep-despacho-precio-unitario').value);
 
-      if (!cliId || !prodNombre || isNaN(cant) || cant <= 0 || isNaN(precioPersonalizado)) { alert("Verifique los datos del adicional."); return; }
+      if (!cliId || !prodNombre || isNaN(cant) || cant <= 0 || isNaN(montoTotal)) { alert("Verifique los datos del adicional."); return; }
       const cliente = dbClientes[cliId]; if (!cliente) return;
 
       if (!dbRepartos[fechaActual]) dbRepartos[fechaActual] = [];
       dbRepartos[fechaActual].push({
         id: generarID('REP'), clienteId: cliId, clienteNombre: cliente.nombre, producto: prodNombre,
-        unidades: cant, unidPorPaq: 1, precioUnitario: precioPersonalizado, monto: cant * precioPersonalizado,
+        unidades: cant, unidPorPaq: 1, 
+        precioUnitario: (montoTotal / cant), 
+        monto: montoTotal,
         origen: 'despacho', pagado: false, medioPago: "Pendiente"
       });
 
@@ -1490,7 +1579,7 @@
       renderizarPlanillaReparto(); renderizarCuadra(); renderizarReportesMensuales();
     }
 
-function renderizarPlanillaReparto() {
+    function renderizarPlanillaReparto() {
       const tbody = document.getElementById('tabla-reparto');
       if (!tbody) return;
       tbody.innerHTML = '';
@@ -1502,10 +1591,7 @@ function renderizarPlanillaReparto() {
         totalMonto += p.monto;
         if (p.pagado && p.medioPago === 'Efectivo') totalEfectivo += p.monto;
         else if (!p.pagado) totalCtaCte += p.monto;
-
-        // Se eliminó el filtro que ocultaba los automáticos.
         
-        // Agregamos un indicador visual (🤖) para saber cuáles se cargaron solos
         const iconoAuto = p.origenAuto ? '🤖 ' : '';
 
         const tr = document.createElement('tr'); tr.className = "border-b hover:bg-gray-50 text-xs md:text-sm";
@@ -1918,12 +2004,90 @@ function renderizarPlanillaReparto() {
       if (selBuscador) selBuscador.value = "";
     }
 
+    // MODAL EDICION CLIENTE LOGICA
+    function abrirModalEditarMovCliente(id, origen, fechaOriginal) {
+      movClienteEditContext = { id, origen, fechaOriginal };
+      let m = null;
+      if (origen === 'reparto') {
+        if (dbRepartos[fechaOriginal]) m = dbRepartos[fechaOriginal].find(p => p.id === id);
+        if (m) {
+          document.getElementById('mod-cli-fecha').value = fechaOriginal;
+          document.getElementById('mod-cli-concepto-lbl').innerText = "Producto (Pedido):";
+          document.getElementById('mod-cli-concepto').value = m.producto;
+          document.getElementById('mod-cli-monto-lbl').innerText = "Monto Débito ($):";
+          document.getElementById('mod-cli-monto').value = m.monto;
+        }
+      } else {
+        m = dbHistorialClientes[clienteSeleccionadoId].find(p => p.id === id);
+        if (m) {
+          document.getElementById('mod-cli-fecha').value = m.fecha;
+          document.getElementById('mod-cli-concepto-lbl').innerText = "Medio de Pago:";
+          document.getElementById('mod-cli-concepto').value = m.medio;
+          document.getElementById('mod-cli-monto-lbl').innerText = m.tipo === 'debito' ? "Monto Débito ($):" : "Monto Crédito ($):";
+          document.getElementById('mod-cli-monto').value = m.monto;
+        }
+      }
+      document.getElementById('modal-editar-mov-cliente').classList.remove('hidden');
+    }
+
+    function cerrarModalEditarMovCliente() {
+      document.getElementById('modal-editar-mov-cliente').classList.add('hidden');
+      movClienteEditContext = null;
+    }
+
+    function guardarEdicionMovCliente() {
+      if (!movClienteEditContext) return;
+      const valFecha = document.getElementById('mod-cli-fecha').value;
+      const valConcepto = document.getElementById('mod-cli-concepto').value.trim();
+      const valMonto = parseFloat(document.getElementById('mod-cli-monto').value);
+
+      if (!valFecha || isNaN(valMonto) || valMonto < 0) { alert("Complete fecha y monto válido."); return; }
+      
+      const { id, origen, fechaOriginal } = movClienteEditContext;
+
+      if (origen === 'reparto') {
+        let pedido = null;
+        let pIndex = -1;
+        if (dbRepartos[fechaOriginal]) {
+           pIndex = dbRepartos[fechaOriginal].findIndex(p => p.id === id);
+           if (pIndex !== -1) pedido = dbRepartos[fechaOriginal][pIndex];
+        }
+        if (pedido) {
+          pedido.producto = valConcepto;
+          pedido.monto = valMonto;
+          if (pedido.unidades) pedido.precioUnitario = valMonto / pedido.unidades;
+
+          if (valFecha !== fechaOriginal) {
+              dbRepartos[fechaOriginal].splice(pIndex, 1);
+              if (!dbRepartos[valFecha]) dbRepartos[valFecha] = [];
+              dbRepartos[valFecha].push(pedido);
+          }
+          guardarDB('db_repartos', dbRepartos);
+          renderizarPlanillaReparto(); 
+          renderizarCuadra();
+        }
+      } else {
+         let pago = dbHistorialClientes[clienteSeleccionadoId].find(p => p.id === id);
+         if (pago) {
+           pago.fecha = valFecha;
+           pago.medio = valConcepto;
+           pago.monto = valMonto;
+           guardarDB('db_historial_clientes', dbHistorialClientes);
+         }
+      }
+      cerrarModalEditarMovCliente();
+      renderizarTablaHistorialCliente();
+      renderizarTablaClientes();
+      verHistorialCliente(clienteSeleccionadoId); // Para actualizar el saldo superior
+    }
+
     function borrarMovimientoCliente(movId) {
       if(confirm("¿Seguro que querés borrar este movimiento?")) {
         dbHistorialClientes[clienteSeleccionadoId] = dbHistorialClientes[clienteSeleccionadoId].filter(m => m.id !== movId);
         guardarDB('db_historial_clientes', dbHistorialClientes);
         renderizarTablaHistorialCliente();
         renderizarTablaClientes();
+        verHistorialCliente(clienteSeleccionadoId);
       }
     }
 
@@ -1931,17 +2095,32 @@ function renderizarPlanillaReparto() {
       if (!clienteSeleccionadoId) return;
       const tbody = document.getElementById('tabla-historial-cliente'); if (!tbody) return; tbody.innerHTML = '';
       const movs = [];
-      Object.entries(dbRepartos).forEach(([fecha, pDia]) => { pDia.forEach(p => { if (p.clienteId === clienteSeleccionadoId && !p.pagado) movs.push({ id: p.id, fecha, concepto: `Pedido Reparto: ${p.producto} (${p.unidades} un.)`, debito: p.monto, credito: 0 }); }); });
-      (dbHistorialClientes[clienteSeleccionadoId] || []).forEach(p => movs.push({ id: p.id, fecha: p.fecha, concepto: `Pago (${p.medio})`, debito: p.tipo === 'debito' ? p.monto : 0, credito: p.tipo === 'credito' ? p.monto : 0 }));
+      Object.entries(dbRepartos).forEach(([fecha, pDia]) => { 
+        pDia.forEach(p => { 
+          if (p.clienteId === clienteSeleccionadoId && !p.pagado) {
+            movs.push({ id: p.id, origen: 'reparto', fechaOriginal: fecha, fecha, producto: p.producto, unidades: p.unidades, debito: p.monto, credito: 0 }); 
+          } 
+        }); 
+      });
+      (dbHistorialClientes[clienteSeleccionadoId] || []).forEach(p => {
+        movs.push({ id: p.id, origen: 'pago', tipoReal: p.tipo, fechaOriginal: p.fecha, fecha: p.fecha, medio: p.medio, debito: p.tipo === 'debito' ? p.monto : 0, credito: p.tipo === 'credito' ? p.monto : 0 });
+      });
       movs.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
 
       let acumulado = 0;
       movs.forEach(m => {
         acumulado += (m.debito - m.credito);
         const tr = document.createElement('tr'); tr.className = "border-b text-xs md:text-sm hover:bg-gray-50";
-        tr.innerHTML = `<td class="p-2">${m.fecha}</td><td class="p-2">${m.concepto}</td><td class="p-2 text-right text-red-600">${m.debito > 0 ? '$' + m.debito.toLocaleString() : '-'}</td><td class="p-2 text-right text-green-700">${m.credito > 0 ? '$' + m.credito.toLocaleString() : '-'}</td><td class="p-2 text-right font-bold text-red-600">$${acumulado.toLocaleString()}</td>
-        <td class="p-2 text-center">
-          ${m.concepto.includes('Pago') ? `<button onclick="borrarMovimientoCliente('${m.id}')" class="text-[10px] text-red-600 font-bold border border-red-600 px-1 rounded">Borrar</button>` : '-'}
+        
+        const tdFecha = m.fecha;
+        const tdConcepto = m.origen === 'reparto' ? `Pedido: ${m.producto}` : `Pago: ${m.medio}`;
+        const tdDebito = (m.origen === 'reparto' || (m.origen === 'pago' && m.tipoReal === 'debito')) ? `$${m.debito}` : '-';
+        const tdCredito = (m.origen === 'pago' && m.tipoReal === 'credito') ? `$${m.credito}` : '-';
+
+        tr.innerHTML = `<td class="p-2">${tdFecha}</td><td class="p-2">${tdConcepto}</td><td class="p-2 text-right text-red-600">${tdDebito}</td><td class="p-2 text-right text-green-700">${tdCredito}</td><td class="p-2 text-right font-bold text-red-600">$${acumulado.toLocaleString()}</td>
+        <td class="p-2 text-center flex justify-center items-center gap-1">
+          <button onclick="abrirModalEditarMovCliente('${m.id}', '${m.origen}', '${m.fechaOriginal}')" class="text-[10px] text-blue-600 font-bold border border-blue-600 px-2 py-0.5 rounded hover:bg-blue-50">Editar</button>
+          ${m.origen === 'pago' ? `<button onclick="borrarMovimientoCliente('${m.id}')" class="text-[10px] text-red-600 font-bold border border-red-600 px-2 py-0.5 rounded hover:bg-red-50">Borrar</button>` : ''}
         </td>`;
         tbody.appendChild(tr);
       });
@@ -1993,7 +2172,7 @@ function renderizarPlanillaReparto() {
           mensaje += `• ${m.fecha}: ${m.concepto} -> ${m.tipo}$${m.monto.toLocaleString()}\n`;
         });
         mensaje += `\n*SALDO TOTAL A PAGAR: $${saldo.toLocaleString()}*\n\n`;
-        mensaje += `Muchas gracias por tu compra. La Casa del Pan & La Espiga de Oro.`;
+        mensaje += `Muchas gracias por tu compra. La Casa del Pan.`;
       }
 
       let tel = (cli.telefono || '').replace(/\D/g, '');
@@ -2178,12 +2357,58 @@ function renderizarPlanillaReparto() {
       renderizarTablaHistorialProveedor(); renderizarTablaProveedores(); renderizarReportesMensuales();
     }
 
+    // MODAL EDICION PROVEEDOR LOGICA
+    function abrirModalEditarMovProveedor(id) {
+      movProvEditContext = id;
+      const m = dbHistorialProveedores[proveedorSeleccionadoId].find(x => x.id === id);
+      if(m) {
+        document.getElementById('mod-prov-fecha').value = m.fecha;
+        if (m.tipo === 'factura') {
+            document.getElementById('mod-prov-concepto-lbl').innerText = "N° de Factura:";
+            document.getElementById('mod-prov-concepto').value = m.nroFactura || '';
+        } else {
+            document.getElementById('mod-prov-concepto-lbl').innerText = "Medio de Pago:";
+            document.getElementById('mod-prov-concepto').value = m.medio || '';
+        }
+        document.getElementById('mod-prov-monto').value = m.monto;
+        document.getElementById('modal-editar-mov-proveedor').classList.remove('hidden');
+      }
+    }
+
+    function cerrarModalEditarMovProveedor() {
+      document.getElementById('modal-editar-mov-proveedor').classList.add('hidden');
+      movProvEditContext = null;
+    }
+
+    function guardarEdicionMovProveedor() {
+      if (!movProvEditContext) return;
+      const valFecha = document.getElementById('mod-prov-fecha').value;
+      const valConcepto = document.getElementById('mod-prov-concepto').value.trim();
+      const valMonto = parseFloat(document.getElementById('mod-prov-monto').value);
+
+      if (!valFecha || isNaN(valMonto) || valMonto < 0) { alert("Complete fecha y monto válido."); return; }
+
+      let mov = dbHistorialProveedores[proveedorSeleccionadoId].find(m => m.id === movProvEditContext);
+      if (mov) {
+         mov.fecha = valFecha;
+         if (mov.tipo === 'factura') mov.nroFactura = valConcepto;
+         else mov.medio = valConcepto;
+         mov.monto = valMonto;
+         guardarDB('db_historial_proveedores', dbHistorialProveedores);
+      }
+      cerrarModalEditarMovProveedor();
+      renderizarTablaHistorialProveedor();
+      renderizarTablaProveedores();
+      verHistorialProveedor(proveedorSeleccionadoId);
+    }
+
     function borrarMovimientoProveedor(movId) {
       if(confirm("¿Seguro que querés borrar este movimiento?")) {
         dbHistorialProveedores[proveedorSeleccionadoId] = dbHistorialProveedores[proveedorSeleccionadoId].filter(m => m.id !== movId);
         guardarDB('db_historial_proveedores', dbHistorialProveedores);
         renderizarTablaHistorialProveedor();
         renderizarTablaProveedores();
+        verHistorialProveedor(proveedorSeleccionadoId);
       }
     }
 
@@ -2197,9 +2422,16 @@ function renderizarPlanillaReparto() {
       movs.forEach(m => {
         if (m.tipo === 'factura') acumulado += m.monto; if (m.tipo === 'pago') acumulado -= m.monto;
         const tr = document.createElement('tr'); tr.className = "border-b text-xs md:text-sm hover:bg-gray-50";
-        tr.innerHTML = `<td class="p-2">${m.fecha}</td><td class="p-2">${m.tipo === 'factura' ? 'Factura N° ' + m.nroFactura : 'Pago (' + m.medio + ')'}</td><td class="p-2 text-right text-red-600">${m.tipo === 'factura' ? '$' + m.monto.toLocaleString() : '-'}</td><td class="p-2 text-right text-green-700">${m.tipo === 'pago' ? '$' + m.monto.toLocaleString() : '-'}</td><td class="p-2 text-right font-bold text-red-600">$${acumulado.toLocaleString()}</td>
-        <td class="p-2 text-center">
-          <button onclick="borrarMovimientoProveedor('${m.id}')" class="text-[10px] text-red-600 font-bold border border-red-600 px-1 rounded">Borrar</button>
+        
+        const tdFecha = m.fecha;
+        const tdConcepto = m.tipo === 'factura' ? `Fac N° ${m.nroFactura || 'S/N'}` : `Pago: ${m.medio || ''}`;
+        const tdMontoFactura = m.tipo === 'factura' ? `$${m.monto}` : '-';
+        const tdMontoPago = m.tipo === 'pago' ? `$${m.monto}` : '-';
+
+        tr.innerHTML = `<td class="p-2">${tdFecha}</td><td class="p-2">${tdConcepto}</td><td class="p-2 text-right text-red-600">${tdMontoFactura}</td><td class="p-2 text-right text-green-700">${tdMontoPago}</td><td class="p-2 text-right font-bold text-red-600">$${acumulado.toLocaleString()}</td>
+        <td class="p-2 text-center flex justify-center items-center gap-1">
+          <button onclick="abrirModalEditarMovProveedor('${m.id}')" class="text-[10px] text-blue-600 font-bold border border-blue-600 px-2 py-0.5 rounded hover:bg-blue-50">Editar</button>
+          <button onclick="borrarMovimientoProveedor('${m.id}')" class="text-[10px] text-red-600 font-bold border border-red-600 px-2 py-0.5 rounded hover:bg-red-50">Borrar</button>
         </td>`;
         tbody.appendChild(tr);
       });
@@ -2278,19 +2510,9 @@ function renderizarPlanillaReparto() {
       Object.values(dbInsumos).sort((a, b) => a.nombre.localeCompare(b.nombre)).forEach(ins => { const opt = document.createElement('option'); opt.value = ins.id; opt.textContent = `${ins.nombre} (Stock: ${ins.stock} ${ins.unidad})`; sel.appendChild(opt); });
     }
 
-    function editarInsumoUI(id) {
-      const ins = dbInsumos[id];
-      document.getElementById('ins-id-editando').value = id;
-      document.getElementById('ins-nombre').value = ins.nombre;
-      document.getElementById('ins-stock').value = ins.stock;
-      document.getElementById('ins-minimo').value = ins.minimo;
-      document.getElementById('ins-unidad').value = ins.unidad;
-    }
-
-    function guardarInsumo() {
+    function guardarNuevoInsumo() {
       const nombre = document.getElementById('ins-nombre').value.trim(); if (!nombre) return;
-      const editId = document.getElementById('ins-id-editando').value;
-      const id = editId ? editId : generarID('INS');
+      const id = generarID('INS');
       
       dbInsumos[id] = { 
         id, nombre, 
@@ -2300,11 +2522,48 @@ function renderizarPlanillaReparto() {
       };
       
       guardarDB('db_insumos', dbInsumos); 
-      document.getElementById('ins-id-editando').value = '';
       document.getElementById('ins-nombre').value = '';
       document.getElementById('ins-stock').value = '';
       document.getElementById('ins-minimo').value = '';
       document.getElementById('ins-unidad').value = '';
+      renderizarStockInsumos(); 
+      cargarSelectorInsumosFactura();
+      cargarSelectorInsumosMovimiento();
+    }
+
+    // MODAL EDICION INSUMOS LOGICA
+    function abrirModalEditarInsumo(id) {
+      insumoEditContext = id;
+      const ins = dbInsumos[id];
+      if (ins) {
+        document.getElementById('mod-ins-nombre').value = ins.nombre;
+        document.getElementById('mod-ins-stock').value = ins.stock;
+        document.getElementById('mod-ins-minimo').value = ins.minimo;
+        document.getElementById('mod-ins-unidad').value = ins.unidad;
+        document.getElementById('modal-editar-insumo').classList.remove('hidden');
+      }
+    }
+
+    function cerrarModalEditarInsumo() {
+      document.getElementById('modal-editar-insumo').classList.add('hidden');
+      insumoEditContext = null;
+    }
+
+    function guardarEdicionInsumo() {
+      if (!insumoEditContext) return;
+      const nombre = document.getElementById('mod-ins-nombre').value.trim(); 
+      if (!nombre) { alert("El nombre del insumo no puede estar vacío."); return; }
+
+      const ins = dbInsumos[insumoEditContext];
+      if (ins) {
+        ins.nombre = nombre;
+        ins.stock = parseFloat(document.getElementById('mod-ins-stock').value) || 0;
+        ins.minimo = parseFloat(document.getElementById('mod-ins-minimo').value) || 0;
+        ins.unidad = document.getElementById('mod-ins-unidad').value.trim() || 'Unid';
+        guardarDB('db_insumos', dbInsumos);
+      }
+      
+      cerrarModalEditarInsumo();
       renderizarStockInsumos(); 
       cargarSelectorInsumosFactura();
       cargarSelectorInsumosMovimiento();
@@ -2388,8 +2647,8 @@ function renderizarPlanillaReparto() {
           <td class="p-2 text-gray-500">${ins.minimo} ${ins.unidad}</td>
           <td class="p-2 text-center">${ins.stock <= ins.minimo ? `<span class="bg-red-100 text-red-800 text-xs px-2 py-0.5 rounded font-bold">⚠️ Alerta</span>` : `<span class="bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded font-bold">Normal</span>`}</td>
           <td class="p-2 text-center">
-            <button onclick="editarInsumoUI('${ins.id}')" class="bg-blue-600 text-white text-xs px-2 py-1 rounded font-bold mr-1">✏️ Editar</button>
-            <button onclick="eliminarInsumoStock('${ins.id}')" class="bg-red-600 text-white text-xs px-2 py-1 rounded font-bold">✕ Eliminar</button>
+            <button onclick="abrirModalEditarInsumo('${ins.id}')" class="bg-blue-600 text-white text-xs px-2 py-1 rounded font-bold mr-1 hover:bg-blue-700">✏️ Editar</button>
+            <button onclick="eliminarInsumoStock('${ins.id}')" class="bg-red-600 text-white text-xs px-2 py-1 rounded font-bold hover:bg-red-700">✕ Eliminar</button>
           </td>
         `;
         tbody.appendChild(tr);
