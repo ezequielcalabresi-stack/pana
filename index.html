@@ -1,3 +1,1495 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <link rel="manifest" href="manifest.json">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>La Casa del Pan & La Espiga de Oro</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- SDKs Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+  <style>
+    .tab-active {
+      border-bottom: 3px solid #92400e;
+      color: #92400e;
+      background-color: #fef3c7;
+    }
+    .tab-inactive {
+      color: #4b5563;
+      background-color: #ffffff;
+    }
+    .tab-inactive:hover {
+      background-color: #f9fafb;
+    }
+
+    /* OCULTAR ÁREA DE IMPRESIÓN EN LA APLICACIÓN Y APK */
+    #area-impresion {
+      display: none;
+    }
+
+    /* REGLAS EXCLUSIVAS AL MOMENTO DE IMPRIMIR / PDF */
+    @media print {
+      body > *:not(#area-impresion) {
+        display: none !important;
+      }
+      #area-impresion {
+        display: block !important;
+        visibility: visible !important;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        margin: 0;
+        padding: 20px;
+        background: #ffffff !important;
+        color: #000000 !important;
+      }
+      #area-impresion * {
+        visibility: visible !important;
+      }
+    }
+  </style>
+</head>
+<body class="bg-gray-100 font-sans min-h-screen">
+
+  <header class="bg-amber-800 text-white p-4 shadow-lg flex flex-col md:flex-row justify-between items-center gap-2">
+    <div>
+      <h1 class="text-xl font-bold md:text-2xl">La Casa del Pan & La Espiga de Oro</h1>
+      <p class="text-xs text-amber-200 md:text-sm">Sistema Integrado de Producción, Logística, Proveedores, Cajas y Reportes</p>
+    </div>
+    <div class="flex flex-wrap items-center gap-2">
+      <div class="flex items-center gap-1 bg-amber-950 p-2 rounded-lg border border-amber-700">
+        <label class="text-xs font-semibold text-amber-100">👤 Usuario:</label>
+        <select id="select-usuario-activo" onchange="cambiarUsuarioActivo()" class="bg-white text-gray-800 text-xs p-1 rounded font-bold">
+        </select>
+        <span id="badge-rol-activo" class="text-[10px] bg-amber-600 text-white px-2 py-0.5 rounded-full font-bold ml-1"></span>
+      </div>
+
+      <div class="flex items-center gap-2 bg-amber-900 p-2 rounded-lg border border-amber-700">
+        <label class="text-xs font-semibold text-amber-100">Fecha Operativa:</label>
+        <input type="date" id="fecha-operativa" onchange="cambiarFechaOperativa()" class="bg-white text-gray-800 text-sm p-1 rounded font-bold">
+      </div>
+    </div>
+  </header>
+
+  <nav class="flex border-b border-gray-300 bg-white sticky top-0 z-10 text-xs md:text-sm font-semibold overflow-x-auto nav-buttons">
+    <button onclick="verPestaña('reparto')" id="btn-reparto" class="flex-1 py-3 px-2 text-center tab-active whitespace-nowrap">🚚 Reparto y Cobros</button>
+    <button onclick="verPestaña('cuadra')" id="btn-cuadra" class="flex-1 py-3 px-2 text-center tab-inactive whitespace-nowrap">👨‍🍳 Cuadra</button>
+    <button onclick="verPestaña('clientes')" id="btn-clientes" class="flex-1 py-3 px-2 text-center tab-inactive whitespace-nowrap">👥 Clientes / Cta. Cte.</button>
+    <button onclick="verPestaña('proveedores')" id="btn-proveedores" class="flex-1 py-3 px-2 text-center tab-inactive whitespace-nowrap">🏭 Proveedores / Facturas</button>
+    <button onclick="verPestaña('stock')" id="btn-stock" class="flex-1 py-3 px-2 text-center tab-inactive whitespace-nowrap">📦 Control de Stock</button>
+    <button onclick="verPestaña('caja')" id="btn-caja" class="flex-1 py-3 px-2 text-center tab-inactive whitespace-nowrap">💰 Cajas y Reportes</button>
+    <button onclick="verPestaña('precios')" id="btn-precios" class="flex-1 py-3 px-2 text-center tab-inactive whitespace-nowrap">⚙️ Catálogo Despacho</button>
+    <button onclick="verPestaña('usuarios')" id="btn-usuarios" class="flex-1 py-3 px-2 text-center tab-inactive whitespace-nowrap">🔐 Usuarios y Backups</button>
+  </nav>
+
+  <main class="p-3 max-w-5xl mx-auto space-y-4">
+
+    <!-- 1. MÓDULO REPARTO Y LOGÍSTICA -->
+    <section id="sec-reparto" class="space-y-4">
+      <div class="bg-white p-4 rounded-xl shadow border border-amber-300 space-y-3">
+        <h2 class="text-base font-bold text-amber-900 flex items-center gap-1">🍞 Cargar Pedido Principal (Panificados / Cuadra)</h2>
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-2 text-sm">
+          <select id="rep-cliente" class="border p-2 rounded w-full text-sm font-medium text-gray-800 md:col-span-1"><option value="">-- Cliente --</option></select>
+          <select id="rep-producto" onchange="actualizarPrecioSugeridoPanificado()" class="border p-2 rounded w-full text-sm font-bold text-amber-900 md:col-span-2"></select>
+          <input type="number" id="rep-cantidad" placeholder="Cant. (Unid)" step="0.01" min="0.01" oninput="actualizarPrecioSugeridoPanificado()" class="border p-2 rounded w-full text-sm md:col-span-1">
+          <div class="flex items-center border rounded px-2 bg-amber-50 border-amber-300 md:col-span-1">
+            <span class="text-sm font-bold text-amber-900 mr-1">$</span>
+            <input type="number" id="rep-precio-unitario" placeholder="P. Unit." step="0.01" class="w-full bg-transparent text-sm font-bold text-amber-950 focus:outline-none">
+          </div>
+          <button type="button" onclick="agregarPedidoPanificado()" class="bg-amber-800 text-white font-bold px-4 py-2 rounded text-sm hover:bg-amber-900 w-full md:col-span-5 shadow">Cargar Pedido Panificado</button>
+        </div>
+      </div>
+
+      <div class="bg-purple-50 p-4 rounded-xl shadow border border-purple-200 space-y-3">
+        <h2 class="text-sm font-bold text-purple-900 flex items-center gap-1">🏪 Cargar Adicional de Despacho / Re-Venta (Opcional)</h2>
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-2 text-sm">
+          <select id="rep-despacho-cliente" class="border p-2 rounded w-full text-sm font-medium text-gray-800 md:col-span-1"><option value="">-- Mismo Cliente --</option></select>
+          <select id="rep-despacho-producto" onchange="actualizarPrecioSugeridoDespacho()" class="border p-2 rounded w-full text-sm font-bold text-purple-900 md:col-span-2"></select>
+          <input type="number" id="rep-despacho-cantidad" placeholder="Cant." step="0.01" min="0.01" oninput="actualizarPrecioSugeridoDespacho()" class="border p-2 rounded w-full text-sm md:col-span-1">
+          <div class="flex items-center border rounded px-2 bg-white border-purple-300 md:col-span-1">
+            <span class="text-sm font-bold text-purple-900 mr-1">$</span>
+            <input type="number" id="rep-despacho-precio-unitario" placeholder="P. Unit." step="0.01" class="w-full bg-transparent text-sm font-bold text-purple-950 focus:outline-none">
+          </div>
+          <button type="button" onclick="agregarPedidoDespacho()" class="bg-purple-700 text-white font-bold px-4 py-2 rounded text-sm hover:bg-purple-800 w-full md:col-span-5 shadow">Cargar Ítem de Despacho</button>
+        </div>
+      </div>
+
+      <!-- SECCIÓN AUTOMATIZACIÓN (COLAPSABLE) -->
+      <div class="bg-blue-50 p-4 rounded-xl shadow border border-blue-300">
+        <div class="flex justify-between items-center cursor-pointer" onclick="toggleAutomatizacion()">
+          <div>
+            <h2 class="text-sm font-bold text-blue-900 flex items-center gap-1">⚙️ Automatización de Pedidos Recurrentes</h2>
+            <p class="text-xs text-blue-800 mt-1">Configura entregas fijas por días de la semana o por rangos del mes.</p>
+          </div>
+          <button type="button" id="btn-toggle-auto" class="bg-blue-200 text-blue-900 text-xs px-3 py-1.5 rounded font-bold hover:bg-blue-300 shadow-sm border border-blue-300">
+            Mostrar ⬇️
+          </button>
+        </div>
+        
+        <!-- CUERPO DESPLEGABLE (Oculto por defecto) -->
+        <div id="cont-automatizacion-cuerpo" class="hidden space-y-3 mt-3 border-t border-blue-200 pt-3">
+          <div class="grid grid-cols-1 md:grid-cols-6 gap-2 text-xs">
+            <select id="rec-cliente" class="border p-2 rounded bg-white font-semibold md:col-span-1"><option value="">-- Cliente --</option></select>
+            <select id="rec-producto" class="border p-2 rounded bg-white font-semibold md:col-span-2"><option value="">-- Producto --</option></select>
+            <input type="number" id="rec-cantidad" placeholder="Cantidad" step="0.01" min="0.01" class="border p-2 rounded bg-white font-bold md:col-span-1">
+            <select id="rec-tipo-frecuencia" onchange="cambiarTipoFrecuenciaUI(this.value)" class="border p-2 rounded bg-white font-semibold md:col-span-1">
+              <option value="dias_semana">Días de Semana</option>
+              <option value="rango_mes">Rango Días del Mes</option>
+              <option value="todos_dias">Todos los Días</option>
+            </select>
+            <button type="button" onclick="guardarPedidoRecurrente()" class="bg-blue-700 hover:bg-blue-800 text-white font-bold px-3 py-2 rounded shadow md:col-span-1">Guardar Regla</button>
+          </div>
+
+          <div id="cont-dias-semana" class="flex flex-wrap gap-3 pt-1 text-xs font-semibold text-blue-950">
+            <label><input type="checkbox" class="rec-dia" value="1"> Lunes</label>
+            <label><input type="checkbox" class="rec-dia" value="2"> Martes</label>
+            <label><input type="checkbox" class="rec-dia" value="3"> Miércoles</label>
+            <label><input type="checkbox" class="rec-dia" value="4"> Jueves</label>
+            <label><input type="checkbox" class="rec-dia" value="5"> Viernes</label>
+            <label><input type="checkbox" class="rec-dia" value="6"> Sábado</label>
+            <label><input type="checkbox" class="rec-dia" value="0"> Domingo</label>
+          </div>
+
+          <div id="cont-rango-mes" class="hidden flex items-center gap-2 text-xs font-semibold text-blue-950 pt-1">
+            <span>Desde el día:</span>
+            <input type="number" id="rec-dia-desde" min="1" max="31" value="15" class="border p-1 rounded w-16 text-center font-bold bg-white">
+            <span>hasta el día:</span>
+            <input type="number" id="rec-dia-hasta" min="1" max="31" value="2" class="border p-1 rounded w-16 text-center font-bold bg-white">
+          </div>
+
+          <div class="overflow-x-auto bg-white rounded border mt-2">
+            <table class="w-full text-left text-xs">
+              <thead>
+                <tr class="bg-blue-100 text-blue-950 border-b font-bold">
+                  <th class="p-1.5">Cliente</th>
+                  <th class="p-1.5">Producto</th>
+                  <th class="p-1.5">Cant.</th>
+                  <th class="p-1.5">Frecuencia / Regla</th>
+                  <th class="p-1.5 text-center">Acción</th>
+                </tr>
+              </thead>
+              <tbody id="tabla-pedidos-recurrentes"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white p-4 rounded-xl shadow border">
+        <div class="flex justify-between items-center mb-2">
+          <h2 class="text-base font-bold text-gray-800">Planilla Detallada de Reparto</h2>
+          <div class="flex items-center gap-2">
+            <button type="button" onclick="abrirModalPedidosAuto()" class="text-xs bg-blue-600 text-white p-1.5 px-3 rounded font-semibold hover:bg-blue-700 shadow">🤖 Ver Automáticos</button>
+            <span id="label-fecha-reparto" class="text-xs bg-amber-100 text-amber-900 px-2 py-1 rounded font-bold"></span>
+            <button type="button" onclick="imprimirReparto()" class="text-xs bg-amber-800 text-white p-1.5 px-3 rounded font-semibold hover:bg-amber-900 shadow">🖨️ Imprimir / Guardar PDF</button>
+          </div>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs md:text-sm">
+            <thead>
+              <tr class="bg-amber-100 text-amber-900 border-b">
+                <th class="p-2">Cliente</th>
+                <th class="p-2">Producto</th>
+                <th class="p-2">Origen</th>
+                <th class="p-2">Cant / Paq</th>
+                <th class="p-2">P. Unit. ($)</th>
+                <th class="p-2">Monto Total</th>
+                <th class="p-2">Estado</th>
+                <th class="p-2 text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tabla-reparto"></tbody>
+          </table>
+        </div>
+        <div class="mt-3 grid grid-cols-1 md:grid-cols-3 gap-2 text-xs md:text-sm font-bold bg-amber-50 p-3 rounded-lg border border-amber-200">
+          <div>Total Reparto: <span id="tot-rep-monto" class="text-amber-900">$0</span></div>
+          <div>Cobrado Efectivo: <span id="tot-rep-efectivo" class="text-green-700">$0</span></div>
+          <div>Pendiente Cta. Cte.: <span id="tot-rep-ctacte" class="text-red-600">$0</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. MÓDULO PRODUCCIÓN / CUADRA -->
+    <section id="sec-cuadra" class="hidden space-y-4">
+      <div id="box-cuadra-consolidado" class="bg-white p-4 rounded-xl shadow border border-amber-500">
+        <div class="flex justify-between items-center mb-3">
+          <div>
+            <h2 class="text-lg font-bold text-gray-800">📋 Producción Consolidada (Solo Cuadra)</h2>
+            <p id="label-fecha-cuadra" class="text-xs text-gray-500 font-semibold"></p>
+          </div>
+          <button type="button" onclick="imprimirCuadra()" class="text-xs bg-amber-800 text-white p-2 rounded font-semibold hover:bg-amber-900 shadow">🖨️ Imprimir / Guardar PDF Cuadra</button>
+        </div>
+        <div id="totales-panificados" class="grid grid-cols-1 gap-2"></div>
+      </div>
+
+      <div class="bg-white p-4 rounded-xl shadow border">
+        <h2 class="text-base font-bold text-gray-800 mb-2">🏪 Pedidos Especiales y Mostrador</h2>
+        <div class="panel-carga-pedido flex gap-2 mb-3">
+          <input type="text" id="nota-mostrador" placeholder="Ej: 2 Frolas membrillo, 3 docenas medialunas" class="border p-2 rounded w-full text-sm">
+          <button type="button" onclick="agregarNotaMostrador()" class="bg-amber-700 text-white font-bold px-4 rounded text-sm">Añadir</button>
+        </div>
+        <ul id="lista-notas-mostrador" class="list-disc pl-5 text-sm space-y-1 text-gray-700"></ul>
+      </div>
+    </section>
+
+    <!-- 3. CLIENTES Y CUENTA CORRIENTE -->
+    <section id="sec-clientes" class="hidden space-y-4">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-white p-4 rounded-xl shadow border md:col-span-1">
+          <h2 class="text-base font-bold text-gray-800 mb-3">Alta de Cliente</h2>
+          <div class="space-y-2 mb-3">
+            <input type="text" id="cli-nombre" placeholder="Nombre / Razón Social" class="border p-2 rounded w-full text-sm">
+            <input type="text" id="cli-cuit" placeholder="CUIT / DNI" class="border p-2 rounded w-full text-sm">
+            <input type="text" id="cli-direccion" placeholder="Dirección" class="border p-2 rounded w-full text-sm">
+            <input type="text" id="cli-telefono" placeholder="Teléfono / WhatsApp" class="border p-2 rounded w-full text-sm">
+            <input type="email" id="cli-email" placeholder="Correo electrónico (Opcional)" class="border p-2 rounded w-full text-sm">
+          </div>
+          <button type="button" onclick="guardarCliente()" class="bg-amber-700 text-white font-bold px-4 py-2 rounded text-sm hover:bg-amber-800 w-full">Registrar Cliente</button>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl shadow border md:col-span-2 space-y-3">
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
+            <h2 class="text-base font-bold text-gray-800">Seleccionar Cliente para ver Cta. Cte.</h2>
+            <select id="select-buscador-cliente" onchange="seleccionarClienteDesdeBuscador(this.value)" class="border p-2 rounded text-sm font-semibold bg-amber-50 text-amber-950 w-full md:w-64">
+              <option value="">-- Buscar / Elegir Cliente --</option>
+            </select>
+          </div>
+          
+          <div class="bg-gray-50 p-3 rounded-lg border">
+            <h3 class="text-xs font-bold text-gray-700 mb-2">Resumen General de Clientes con Deuda Pendiente</h3>
+            <div class="overflow-x-auto max-h-48 overflow-y-auto">
+              <table class="w-full text-left text-xs">
+                <thead>
+                  <tr class="bg-gray-200 border-b">
+                    <th class="p-1.5">Cliente</th>
+                    <th class="p-1.5 text-right">Saldo Deuda</th>
+                    <th class="p-1.5 text-center">Acción</th>
+                  </tr>
+                </thead>
+                <tbody id="tabla-resumen-clientes-deuda"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="módulo-historial-cliente" class="bg-white p-4 rounded-xl shadow border border-amber-500 space-y-4 hidden">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 border-b pb-2">
+          <div>
+            <h2 id="historial-nombre-cliente" class="text-lg font-bold text-amber-900"></h2>
+            <p id="historial-contacto-cliente" class="text-xs text-gray-600"></p>
+          </div>
+          <!-- BOTONES ENVÍO WHATSAPP Y EMAIL -->
+          <div class="flex flex-wrap items-center gap-2">
+            <button type="button" onclick="enviarResumenWhatsAppCliente()" class="bg-green-600 hover:bg-green-700 text-white text-xs px-3 py-2 rounded font-bold shadow flex items-center gap-1">📱 Enviar WhatsApp</button>
+            <button type="button" onclick="enviarResumenEmailCliente()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-2 rounded font-bold shadow flex items-center gap-1">✉️ Enviar Mail</button>
+            <button type="button" onclick="cerrarHistorialCliente()" class="bg-gray-300 text-gray-800 text-xs px-3 py-2 rounded font-bold">✕ Cerrar Ficha</button>
+          </div>
+        </div>
+
+        <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 space-y-2">
+          <h3 class="text-xs font-bold text-gray-700">✏️ Editar Datos del Cliente</h3>
+          <div class="grid grid-cols-1 md:grid-cols-5 gap-2">
+            <input type="text" id="edit-cli-nombre" placeholder="Nombre" class="border p-1.5 rounded text-xs bg-white">
+            <input type="text" id="edit-cli-cuit" placeholder="CUIT / DNI" class="border p-1.5 rounded text-xs bg-white">
+            <input type="text" id="edit-cli-direccion" placeholder="Dirección" class="border p-1.5 rounded text-xs bg-white">
+            <input type="text" id="edit-cli-telefono" placeholder="Teléfono" class="border p-1.5 rounded text-xs bg-white">
+            <input type="email" id="edit-cli-email" placeholder="Email" class="border p-1.5 rounded text-xs bg-white">
+          </div>
+          <div class="flex justify-end gap-2 pt-1">
+            <button type="button" onclick="guardarEdicionCliente()" class="bg-amber-700 text-white font-bold px-3 py-1.5 rounded text-xs hover:bg-amber-800">Guardar Cambios</button>
+          </div>
+        </div>
+
+        <div class="bg-amber-50 p-3 rounded-lg border border-amber-200">
+          <h3 class="text-xs font-bold text-amber-900 mb-2">💵 Registrar Entrega / Pago de Cliente</h3>
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
+            <input type="date" id="pago-fecha" class="border p-2 rounded text-xs bg-white">
+            <input type="number" id="pago-monto" placeholder="Monto abonado ($)" class="border p-2 rounded text-xs bg-white">
+            <select id="pago-medio" class="border p-2 rounded text-xs bg-white">
+              <option value="Efectivo">Efectivo</option>
+              <option value="Transferencia">Transferencia</option>
+              <option value="Mercado Pago">Mercado Pago</option>
+              <option value="Cheque">Cheque</option>
+            </select>
+            <button type="button" onclick="registrarPagoCliente()" class="bg-green-700 text-white font-bold px-3 py-2 rounded text-xs hover:bg-green-800">Cargar Pago</button>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs md:text-sm">
+            <thead>
+              <tr class="bg-amber-100 border-b text-amber-900 font-bold">
+                <th class="p-2">Fecha</th>
+                <th class="p-2">Concepto / Detalle</th>
+                <th class="p-2 text-right">Débito</th>
+                <th class="p-2 text-right">Crédito</th>
+                <th class="p-2 text-right">Saldo Acumulado</th>
+                <th class="p-2 text-center">Acción</th>
+              </tr>
+            </thead>
+            <tbody id="tabla-historial-cliente"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. PROVEEDORES Y FACTURACIÓN -->
+    <section id="sec-proveedores" class="hidden space-y-4">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-white p-4 rounded-xl shadow border md:col-span-1">
+          <h2 class="text-base font-bold text-gray-800 mb-3">Alta de Proveedor</h2>
+          <div class="space-y-2 mb-3">
+            <input type="text" id="prov-nombre" placeholder="Razón Social / Proveedor" class="border p-2 rounded w-full text-sm">
+            <input type="text" id="prov-cuit" placeholder="CUIT" class="border p-2 rounded w-full text-sm">
+            <input type="text" id="prov-telefono" placeholder="Teléfono" class="border p-2 rounded w-full text-sm">
+            <input type="text" id="prov-rubro" placeholder="Rubro" class="border p-2 rounded w-full text-sm">
+          </div>
+          <button type="button" onclick="guardarProveedor()" class="bg-amber-700 text-white font-bold px-4 py-2 rounded text-sm hover:bg-amber-800 w-full">Registrar Proveedor</button>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl shadow border md:col-span-2 space-y-3">
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
+            <h2 class="text-base font-bold text-gray-800">Seleccionar Proveedor</h2>
+            <select id="select-buscador-proveedor" onchange="seleccionarProveedorDesdeBuscador(this.value)" class="border p-2 rounded text-sm font-semibold bg-amber-50 text-amber-950 w-full md:w-64">
+              <option value="">-- Buscar / Elegir Proveedor --</option>
+            </select>
+          </div>
+          
+          <div class="bg-gray-50 p-3 rounded-lg border">
+            <h3 class="text-xs font-bold text-gray-700 mb-2">Resumen General de Proveedores con Deuda</h3>
+            <div class="overflow-x-auto max-h-48 overflow-y-auto">
+              <table class="w-full text-left text-xs">
+                <thead>
+                  <tr class="bg-gray-200 border-b">
+                    <th class="p-1.5">Proveedor</th>
+                    <th class="p-1.5 text-right">Saldo Deuda</th>
+                    <th class="p-1.5 text-center">Acción</th>
+                  </tr>
+                </thead>
+                <tbody id="tabla-resumen-proveedores-deuda"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="módulo-historial-proveedor" class="bg-white p-4 rounded-xl shadow border border-amber-500 space-y-4 hidden">
+        <div class="flex justify-between items-center border-b pb-2">
+          <h2 id="historial-nombre-proveedor" class="text-lg font-bold text-amber-900"></h2>
+          <!-- BOTONES ENVÍO WHATSAPP Y EMAIL PROVEEDOR -->
+          <div class="flex flex-wrap items-center gap-2">
+            <button type="button" onclick="enviarResumenWhatsAppProveedor()" class="bg-green-600 hover:bg-green-700 text-white text-xs px-3 py-2 rounded font-bold shadow flex items-center gap-1">📱 Enviar WhatsApp</button>
+            <button type="button" onclick="enviarResumenEmailProveedor()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-2 rounded font-bold shadow flex items-center gap-1">✉️ Enviar Mail</button>
+            <button type="button" onclick="cerrarHistorialProveedor()" class="bg-gray-300 text-gray-800 text-xs px-3 py-2 rounded font-bold">✕ Cerrar Ficha</button>
+          </div>
+        </div>
+
+        <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 space-y-2">
+          <h3 class="text-xs font-bold text-gray-700">✏️ Editar Datos del Proveedor</h3>
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
+            <input type="text" id="edit-prov-nombre" placeholder="Razón Social" class="border p-1.5 rounded text-xs bg-white">
+            <input type="text" id="edit-prov-cuit" placeholder="CUIT" class="border p-1.5 rounded text-xs bg-white">
+            <input type="text" id="edit-prov-telefono" placeholder="Teléfono" class="border p-1.5 rounded text-xs bg-white">
+            <input type="text" id="edit-prov-rubro" placeholder="Rubro" class="border p-1.5 rounded text-xs bg-white">
+          </div>
+          <div class="flex justify-end gap-2 pt-1">
+            <button type="button" onclick="guardarEdicionProveedor()" class="bg-amber-700 text-white font-bold px-3 py-1.5 rounded text-xs hover:bg-amber-800">Guardar Cambios</button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="bg-amber-50 p-3 rounded-lg border border-amber-200 space-y-2">
+            <h3 class="text-xs font-bold text-amber-900">🧾 Cargar Factura de Compra</h3>
+            <div class="grid grid-cols-2 gap-2">
+              <input type="date" id="fact-fecha" class="border p-2 rounded text-xs bg-white">
+              <input type="text" id="fact-nro" placeholder="N° Factura" class="border p-2 rounded text-xs bg-white">
+            </div>
+            <div class="grid grid-cols-3 gap-1">
+              <select id="fact-insumo" class="border p-2 rounded text-xs bg-white col-span-1"></select>
+              <input type="number" id="fact-cant" placeholder="Cant." class="border p-2 rounded text-xs bg-white">
+              <input type="number" id="fact-precio" placeholder="Precio Un." class="border p-2 rounded text-xs bg-white">
+            </div>
+            <button type="button" onclick="cargarFacturaProveedor()" class="bg-amber-800 text-white font-bold px-3 py-2 rounded text-xs hover:bg-amber-900 w-full">Ingresar Factura y Stock</button>
+          </div>
+
+          <div class="bg-green-50 p-3 rounded-lg border border-green-200 space-y-2">
+            <h3 class="text-xs font-bold text-green-900">💸 Registrar Pago a Proveedor</h3>
+            <div class="grid grid-cols-2 gap-2">
+              <input type="date" id="pago-prov-fecha" class="border p-2 rounded text-xs bg-white">
+              <input type="number" id="pago-prov-monto" placeholder="Monto ($)" class="border p-2 rounded text-xs bg-white">
+            </div>
+            <select id="pago-prov-medio" class="border p-2 rounded text-xs bg-white w-full">
+              <option value="Efectivo">Efectivo</option>
+              <option value="Transferencia">Transferencia</option>
+              <option value="Cheque">Cheque</option>
+            </select>
+            <button type="button" onclick="registrarPagoProveedor()" class="bg-green-700 text-white font-bold px-3 py-2 rounded text-xs hover:bg-green-800 w-full">Registrar Pago</button>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs md:text-sm">
+            <thead>
+              <tr class="bg-amber-100 border-b text-amber-900 font-bold">
+                <th class="p-2">Fecha</th>
+                <th class="p-2">Detalle / N° Factura</th>
+                <th class="p-2 text-right">Facturado</th>
+                <th class="p-2 text-right">Pagado</th>
+                <th class="p-2 text-right">Saldo Deuda</th>
+                <th class="p-2 text-center">Acción</th>
+              </tr>
+            </thead>
+            <tbody id="tabla-historial-proveedor"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. CONTROL DE STOCK E INSUMOS -->
+    <section id="sec-stock" class="hidden space-y-4">
+      <div class="bg-white p-4 rounded-xl shadow border">
+        <h2 class="text-base font-bold text-gray-800 mb-3">➕ Alta / Configuración de Insumo Individual</h2>
+        <input type="hidden" id="ins-id-editando" value="">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-2 mb-2">
+          <input type="text" id="ins-nombre" placeholder="Nombre" class="border p-2 rounded text-sm">
+          <input type="number" id="ins-stock" placeholder="Stock Inicial" step="0.1" class="border p-2 rounded text-sm">
+          <input type="number" id="ins-minimo" placeholder="Stock Mínimo" step="0.1" class="border p-2 rounded text-sm">
+          <input type="text" id="ins-unidad" placeholder="Unidad (Kg, Bolsas)" class="border p-2 rounded text-sm">
+        </div>
+        <button type="button" onclick="guardarInsumo()" class="bg-amber-700 text-white font-bold px-4 py-2 rounded text-sm hover:bg-amber-800 w-full">Guardar Insumo</button>
+      </div>
+
+      <div class="bg-amber-50 p-4 rounded-xl shadow border border-amber-300 space-y-3">
+        <h2 class="text-base font-bold text-amber-900">📉 Registrar Movimiento / Consumo Manual</h2>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
+          <select id="mov-stock-insumo" class="border p-2 rounded text-xs bg-white font-semibold"></select>
+          <select id="mov-stock-tipo" class="border p-2 rounded text-xs bg-white font-semibold">
+            <option value="salida">➖ Consumo / Salida (Uso en Cuadra)</option>
+            <option value="entrada">➕ Ajuste / Entrada Manual</option>
+          </select>
+          <input type="number" id="mov-stock-cantidad" placeholder="Cantidad" step="0.1" class="border p-2 rounded text-xs bg-white font-bold">
+          <button type="button" onclick="registrarMovimientoManualStock()" class="bg-amber-800 hover:bg-amber-900 text-white font-bold px-3 py-2 rounded text-xs shadow">Aplicar Movimiento</button>
+        </div>
+      </div>
+
+      <div class="bg-white p-4 rounded-xl shadow border border-gray-200">
+        <h3 class="text-base font-bold text-amber-700 mb-1">Carga Masiva de Insumos</h3>
+        <p class="text-xs text-gray-600 mb-3">Formato recomendado: <code>Nombre, Stock Inicial, Stock Mínimo, Unidad</code></p>
+        <textarea id="ins-masivo-texto" rows="4" class="w-full p-2 border border-gray-300 rounded text-sm" placeholder="Harina 000, 50, 10, Kg&#10;Azúcar, 20, 5, Kg"></textarea>
+        <div class="mt-3 flex justify-end">
+          <button type="button" onclick="guardarInsumosMasivo()" class="bg-amber-600 hover:bg-amber-700 text-white font-semibold py-2 px-4 rounded text-sm">Cargar Insumos</button>
+        </div>
+      </div>
+
+      <div class="bg-white p-4 rounded-xl shadow border">
+        <h2 class="text-base font-bold text-gray-800 mb-2">📦 Monitor de Stock e Insumos</h2>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs md:text-sm">
+            <thead>
+              <tr class="bg-gray-100 border-b">
+                <th class="p-2">Insumo</th>
+                <th class="p-2">Stock Actual</th>
+                <th class="p-2">Stock Mínimo</th>
+                <th class="p-2 text-center">Estado</th>
+                <th class="p-2 text-center">Acción</th>
+              </tr>
+            </thead>
+            <tbody id="tabla-stock-insumos"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. CAJAS INDEPENDIENTES Y REPORTES -->
+    <section id="sec-caja" class="hidden space-y-4">
+      <div id="grid-cajas-diarias" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div id="box-caja-reparto" class="bg-white p-4 rounded-xl shadow border border-amber-300 space-y-2">
+          <h2 class="text-base font-bold text-amber-900 mb-1">🚚 Caja Reparto / Logística</h2>
+          <div class="space-y-1 text-xs md:text-sm">
+            <div class="flex justify-between"><span>Efectivo:</span> <span id="caja-rep-efectivo" class="font-bold text-green-700">$0</span></div>
+            <div class="flex justify-between"><span>Transferencias:</span> <span id="caja-rep-transf" class="font-bold text-blue-700">$0</span></div>
+            <div class="flex justify-between border-t pt-1 font-bold"><span>Total:</span> <span id="caja-rep-total" class="text-amber-900">$0</span></div>
+          </div>
+        </div>
+
+        <div id="box-caja-alem" class="bg-white p-4 rounded-xl shadow border space-y-3">
+          <h2 class="text-base font-bold text-gray-800 border-b pb-1">🏪 La Casa del Pan (Alem)</h2>
+          <div class="bg-amber-50 p-2 rounded border border-amber-200 space-y-1">
+            <div class="flex justify-between items-center">
+              <span class="text-xs font-bold text-amber-900">🌅 Turno Mañana</span>
+              <span id="st-alem-manana" class="text-[10px] bg-green-200 text-green-800 px-2 py-0.5 rounded font-bold">🟢 Abierto</span>
+            </div>
+            <div class="grid grid-cols-2 gap-2 text-sm">
+              <div><label class="text-xs text-gray-600 block">Efectivo</label><input type="number" id="alem-m-efectivo" onchange="guardarDatosCajaDiaria()" class="border p-1.5 rounded w-full font-bold text-sm"></div>
+              <div><label class="text-xs text-gray-600 block">Digital</label><input type="number" id="alem-m-digital" onchange="guardarDatosCajaDiaria()" class="border p-1.5 rounded w-full font-bold text-blue-700 text-sm"></div>
+            </div>
+            <button type="button" onclick="cerrarTurnoParcial('alem', 'manana')" class="w-full mt-1 bg-amber-800 text-white text-xs py-1 rounded font-bold hover:bg-amber-900 shadow">Cerrar Turno Mañana</button>
+          </div>
+
+          <div class="bg-orange-50 p-2 rounded border border-orange-200 space-y-1">
+            <div class="flex justify-between items-center">
+              <span class="text-xs font-bold text-orange-900">🌆 Turno Tarde</span>
+              <span id="st-alem-tarde" class="text-[10px] bg-green-200 text-green-800 px-2 py-0.5 rounded font-bold">🟢 Abierto</span>
+            </div>
+            <div class="grid grid-cols-2 gap-2 text-sm">
+              <div><label class="text-xs text-gray-600 block">Efectivo</label><input type="number" id="alem-t-efectivo" onchange="guardarDatosCajaDiaria()" class="border p-1.5 rounded w-full font-bold text-sm"></div>
+              <div><label class="text-xs text-gray-600 block">Digital</label><input type="number" id="alem-t-digital" onchange="guardarDatosCajaDiaria()" class="border p-1.5 rounded w-full font-bold text-blue-700 text-sm"></div>
+            </div>
+            <button type="button" onclick="cerrarTurnoParcial('alem', 'tarde')" class="w-full mt-1 bg-orange-800 text-white text-xs py-1 rounded font-bold hover:bg-orange-900 shadow">Cerrar Turno Tarde</button>
+          </div>
+        </div>
+
+        <div id="box-caja-espiga" class="bg-white p-4 rounded-xl shadow border space-y-3">
+          <h2 class="text-base font-bold text-gray-800 border-b pb-1">🏪 La Espiga de Oro</h2>
+          <div class="bg-amber-50 p-2 rounded border border-amber-200 space-y-1">
+            <div class="flex justify-between items-center">
+              <span class="text-xs font-bold text-amber-900">🌅 Turno Mañana</span>
+              <span id="st-espiga-manana" class="text-[10px] bg-green-200 text-green-800 px-2 py-0.5 rounded font-bold">🟢 Abierto</span>
+            </div>
+            <div class="grid grid-cols-2 gap-2 text-sm">
+              <div><label class="text-xs text-gray-600 block">Efectivo</label><input type="number" id="espiga-m-efectivo" onchange="guardarDatosCajaDiaria()" class="border p-1.5 rounded w-full font-bold text-sm"></div>
+              <div><label class="text-xs text-gray-600 block">Digital</label><input type="number" id="espiga-m-digital" onchange="guardarDatosCajaDiaria()" class="border p-1.5 rounded w-full font-bold text-blue-700 text-sm"></div>
+            </div>
+            <button type="button" onclick="cerrarTurnoParcial('espiga', 'manana')" class="w-full mt-1 bg-amber-800 text-white text-xs py-1 rounded font-bold hover:bg-amber-900 shadow">Cerrar Turno Mañana</button>
+          </div>
+
+          <div class="bg-orange-50 p-2 rounded border border-orange-200 space-y-1">
+            <div class="flex justify-between items-center">
+              <span class="text-xs font-bold text-orange-900">🌆 Turno Tarde</span>
+              <span id="st-espiga-tarde" class="text-[10px] bg-green-200 text-green-800 px-2 py-0.5 rounded font-bold">🟢 Abierto</span>
+            </div>
+            <div class="grid grid-cols-2 gap-2 text-sm">
+              <div><label class="text-xs text-gray-600 block">Efectivo</label><input type="number" id="espiga-t-efectivo" onchange="guardarDatosCajaDiaria()" class="border p-1.5 rounded w-full font-bold text-sm"></div>
+              <div><label class="text-xs text-gray-600 block">Digital</label><input type="number" id="espiga-t-digital" onchange="guardarDatosCajaDiaria()" class="border p-1.5 rounded w-full font-bold text-blue-700 text-sm"></div>
+            </div>
+            <button type="button" onclick="cerrarTurnoParcial('espiga', 'tarde')" class="w-full mt-1 bg-orange-800 text-white text-xs py-1 rounded font-bold hover:bg-orange-900 shadow">Cerrar Turno Tarde</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-red-50 p-4 rounded-xl shadow border border-red-200 space-y-3">
+        <h2 class="text-base font-bold text-red-900 flex items-center gap-1">💸 Registro de Egresos y Gastos Menores</h2>
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-2">
+          <select id="egreso-origen" class="border p-2 rounded text-xs bg-white font-semibold">
+            <option value="La Casa del Pan">La Casa del Pan</option>
+            <option value="La Espiga de Oro">La Espiga de Oro</option>
+            <option value="Reparto">Reparto</option>
+          </select>
+          <input type="text" id="egreso-concepto" placeholder="Concepto" class="border p-2 rounded text-xs bg-white md:col-span-2">
+          <input type="number" id="egreso-monto" placeholder="Monto ($)" class="border p-2 rounded text-xs bg-white font-bold">
+          <button type="button" onclick="registrarEgresoCaja()" class="bg-red-700 hover:bg-red-800 text-white font-bold px-3 py-2 rounded text-xs shadow">Cargar Egreso</button>
+        </div>
+
+        <div class="overflow-x-auto bg-white rounded border">
+          <table class="w-full text-left text-xs">
+            <thead>
+              <tr class="bg-red-100 text-red-950 border-b font-bold">
+                <th class="p-1.5">Origen</th>
+                <th class="p-1.5">Concepto</th>
+                <th class="p-1.5 text-right">Monto</th>
+                <th class="p-1.5 text-center">Acción</th>
+              </tr>
+            </thead>
+            <tbody id="tabla-egresos-hoy"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="bg-amber-900 text-white p-4 rounded-xl shadow flex justify-between items-center">
+        <div>
+          <h3 class="font-bold text-base">Cierre Operativo Diario</h3>
+          <p class="text-xs text-amber-200">Guarda las cifras del día actual en el historial consolidado.</p>
+        </div>
+        <button type="button" onclick="guardarYReiniciarDia()" class="bg-green-600 hover:bg-green-700 text-white font-bold px-4 py-2 rounded text-sm shadow">💾 Guardar Cierre Diario</button>
+      </div>
+
+      <div class="bg-white p-4 rounded-xl shadow border space-y-4">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 border-b pb-2">
+          <h2 class="text-base font-bold text-gray-800">📊 Reportes Operativos Mensuales</h2>
+          <div class="flex items-center gap-2">
+            <label class="text-xs font-bold text-gray-600">Mes:</label>
+            <input type="month" id="reporte-mes-select" onchange="renderizarReportesMensuales()" class="border p-1 rounded text-xs font-bold">
+          </div>
+        </div>
+
+        <div class="space-y-2">
+          <div class="flex justify-between items-center bg-amber-100 p-2 rounded">
+            <h3 class="text-xs font-bold text-amber-900">1. Reporte de Ventas Mensuales</h3>
+            <span id="contenedor-btn-admin-edicion-caja"></span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs border">
+              <thead id="thead-reporte-ventas"></thead>
+              <tbody id="tabla-reporte-ventas"></tbody>
+              <tfoot id="tfoot-reporte-ventas" class="bg-amber-100 font-bold border-t"></tfoot>
+            </table>
+          </div>
+        </div>
+
+        <div class="space-y-2 pt-2">
+          <h3 class="text-xs font-bold text-red-900 bg-red-100 p-2 rounded">2. Flujo Completo de Egresos Mensuales</h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs border">
+              <thead>
+                <tr class="bg-gray-100 border-b">
+                  <th class="p-2">Día / Fecha</th>
+                  <th class="p-2 text-right">Gastos de Caja ($)</th>
+                  <th class="p-2 text-right">Pagos a Proveedores ($)</th>
+                  <th class="p-2 text-right font-bold bg-red-50">Total Egresos ($)</th>
+                </tr>
+              </thead>
+              <tbody id="tabla-reporte-egresos"></tbody>
+              <tfoot id="tfoot-reporte-egresos" class="bg-red-100 font-bold border-t"></tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. CATÁLOGO Y PRECIOS -->
+    <section id="sec-precios" class="hidden space-y-6">
+      <div class="bg-amber-50 p-4 rounded-xl shadow border border-amber-300 space-y-4">
+        <h2 class="text-base font-bold text-amber-900">🍞 Productos Panificados</h2>
+        <div class="bg-white p-3 rounded-lg border border-amber-200 space-y-2">
+          <h3 class="text-xs font-bold text-gray-700">➕ Agregar Nuevo Panificado</h3>
+          <div class="grid grid-cols-1 md:grid-cols-5 gap-2">
+            <input type="text" id="nuevo-panificado-nombre" placeholder="Nombre" class="border p-2 rounded text-xs md:col-span-1">
+            <input type="number" id="nuevo-panificado-unidades" placeholder="Mín. x Paq" class="border p-2 rounded text-xs">
+            <input type="number" id="nuevo-panificado-menor" placeholder="Precio Minorista ($)" class="border p-2 rounded text-xs">
+            <input type="number" id="nuevo-panificado-mayor" placeholder="Precio Mayorista ($)" class="border p-2 rounded text-xs">
+            <button type="button" onclick="agregarNuevoPanificado()" class="bg-amber-800 text-white font-bold px-3 py-2 rounded text-xs hover:bg-amber-900">Guardar Panificado</button>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto bg-white rounded-lg border">
+          <table class="w-full text-left text-xs md:text-sm">
+            <thead>
+              <tr class="bg-amber-100 text-amber-950 border-b">
+                <th class="p-2">Panificado</th>
+                <th class="p-2">Mín. x Paquete</th>
+                <th class="p-2">Precio Minorista ($)</th>
+                <th class="p-2">Precio Mayorista ($)</th>
+                <th class="p-2 text-center">Acción</th>
+              </tr>
+            </thead>
+            <tbody id="tabla-panificados-precios"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="bg-white p-4 rounded-xl shadow border space-y-4">
+        <h2 class="text-base font-bold text-gray-800">📋 Catálogo Despacho</h2>
+        <div class="bg-amber-50 p-3 rounded-lg border border-amber-300 space-y-2">
+          <h3 class="text-xs font-bold text-amber-900">📈 Ajuste Masivo por Porcentaje</h3>
+          <div class="flex flex-wrap items-center gap-2">
+            <select id="ajuste-columna-precio" class="border p-1.5 rounded text-xs bg-white font-medium">
+              <option value="todos">Todos los precios</option>
+              <option value="mostrador">Solo Precio Mostrador</option>
+              <option value="reparto">Solo Precio Re-Venta / Reparto</option>
+              <option value="unOcuarto">Solo Unidad o 1/4</option>
+            </select>
+            <div class="flex items-center gap-1 bg-white border p-1 rounded">
+              <input type="number" id="ajuste-porcentaje-valor" placeholder="10 o -5" step="0.5" class="w-20 text-xs p-0.5 border-none text-right font-bold">
+              <span class="text-xs font-bold text-gray-600">%</span>
+            </div>
+            <button type="button" onclick="aplicarAumentoPorcentaje()" class="bg-amber-800 text-white font-bold text-xs px-3 py-1.5 rounded hover:bg-amber-900 shadow">Aplicar Porcentaje</button>
+          </div>
+        </div>
+
+        <div class="p-3 bg-gray-50 rounded-lg border space-y-2">
+          <h3 class="text-xs font-bold text-gray-700">➕ Añadir Producto a Catálogo</h3>
+          <div class="grid grid-cols-1 md:grid-cols-5 gap-2">
+            <input type="text" id="nuevo-prod-nombre" placeholder="Nombre Producto" class="border p-2 rounded text-xs md:col-span-2">
+            <input type="number" id="nuevo-prod-mostrador" placeholder="Precio Mostrador ($)" class="border p-2 rounded text-xs">
+            <input type="number" id="nuevo-prod-reparto" placeholder="Precio Reparto ($)" class="border p-2 rounded text-xs">
+            <input type="number" id="nuevo-prod-unOcuarto" placeholder="Unidad o 1/4 ($)" class="border p-2 rounded text-xs">
+          </div>
+          <button type="button" onclick="agregarNuevoProducto()" class="bg-amber-700 text-white font-bold px-4 py-2 rounded text-xs hover:bg-amber-800 w-full">Guardar Producto</button>
+        </div>
+
+        <div>
+          <div class="flex justify-between items-center mb-3">
+            <h3 class="text-xs font-bold text-gray-600">Listado Catálogo Despacho</h3>
+            <input type="text" id="buscar-producto" onkeyup="filtrarTablaPrecios()" placeholder="🔍 Buscar..." class="border rounded p-1 text-xs w-48">
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs md:text-sm" id="tabla-catalogo-main">
+              <thead>
+                <tr class="bg-amber-100 text-amber-950 border-b">
+                  <th class="p-2">Producto</th>
+                  <th class="p-2">Precio Mostrador ($)</th>
+                  <th class="p-2">Re-Venta / Reparto ($)</th>
+                  <th class="p-2">Unidad o 1/4 ($)</th>
+                  <th class="p-2 text-center">Acción</th>
+                </tr>
+              </thead>
+              <tbody id="tabla-catalogo-precios"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 8. USUARIOS Y BACKUPS -->
+    <section id="sec-usuarios" class="hidden space-y-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="bg-amber-50 p-4 rounded-xl shadow border border-amber-300 space-y-3">
+          <h2 class="text-base font-bold text-amber-900 border-b border-amber-200 pb-2">🔑 Mi Perfil / Cambiar PIN</h2>
+          <div>
+            <label class="text-xs font-semibold text-gray-600 block mb-1">PIN Actual</label>
+            <input type="password" id="pin-actual" placeholder="****" class="border p-2 rounded w-full text-sm bg-white">
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-gray-600 block mb-1">Nuevo PIN</label>
+            <input type="password" id="pin-nuevo" placeholder="****" class="border p-2 rounded w-full text-sm bg-white">
+          </div>
+          <button type="button" onclick="cambiarPinUsuarioActivo()" class="bg-amber-800 text-white font-bold px-4 py-2 rounded text-sm hover:bg-amber-900 w-full shadow">Actualizar PIN</button>
+        </div>
+
+        <div class="bg-blue-50 p-4 rounded-xl shadow border border-blue-300 space-y-3">
+          <h2 class="text-base font-bold text-blue-900 border-b border-blue-200 pb-2">🛡️ Copias de Seguridad</h2>
+          <p class="text-xs text-blue-800">Respaldos automáticos diarios.</p>
+
+          <div class="flex flex-col gap-2">
+            <button type="button" onclick="descargarBackupManual()" class="bg-blue-700 hover:bg-blue-800 text-white font-bold text-xs p-2 rounded shadow">📥 Descargar Respaldo JSON</button>
+            <hr class="border-blue-200">
+            <label class="text-xs font-bold text-blue-900 block">Restaurar a fecha guardada:</label>
+            <div class="flex gap-2">
+              <select id="select-backups-historial" class="border p-1.5 rounded text-xs bg-white flex-1 font-semibold"></select>
+              <button type="button" onclick="restaurarFechaSeleccionada()" class="bg-amber-700 hover:bg-amber-800 text-white font-bold text-xs px-3 py-1.5 rounded shadow">Restaurar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-white p-4 rounded-xl shadow border md:col-span-1 space-y-3">
+          <h2 class="text-base font-bold text-gray-800 border-b pb-2">➕ Registrar Usuario</h2>
+          <div>
+            <label class="text-xs font-semibold text-gray-600 block mb-1">Nombre Completo</label>
+            <input type="text" id="usr-nombre" placeholder="Nombre" class="border p-2 rounded w-full text-sm">
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-gray-600 block mb-1">Rol</label>
+            <select id="usr-rol" class="border p-2 rounded w-full text-sm">
+              <option value="admin">Administrador / Dueño</option>
+              <option value="produccion">Panadero / Cuadra</option>
+              <option value="repartidor">Repartidor</option>
+              <option value="mostrador">Encargado Mostrador</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-amber-900 font-bold block mb-1">🏢 Sucursal / Ámbito</label>
+            <select id="usr-sucursal" class="border p-2 rounded w-full text-sm bg-amber-50 border-amber-300 font-bold">
+              <option value="todas">General / Ambas Panaderías</option>
+              <option value="alem">La Casa del Pan (Alem)</option>
+              <option value="espiga">La Espiga de Oro</option>
+            </select>
+          </div>
+          <button type="button" onclick="guardarUsuario()" class="bg-amber-700 text-white font-bold px-4 py-2 rounded text-sm hover:bg-amber-800 w-full">Guardar Usuario</button>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl shadow border md:col-span-2">
+          <h2 class="text-base font-bold text-gray-800 mb-2">Usuarios Registrados</h2>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs md:text-sm">
+              <thead>
+                <tr class="bg-gray-100 border-b">
+                  <th class="p-2">Usuario</th>
+                  <th class="p-2">Rol Asignado</th>
+                  <th class="p-2">Sucursal / Ámbito</th>
+                  <th class="p-2 text-center">Acción</th>
+                </tr>
+              </thead>
+              <tbody id="tabla-usuarios"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- CONTENEDOR PARA IMPRESIÓN DIRECTA / PDF (OCULTO EN APK Y PANTALLA POR DEFECTO) -->
+  <div id="area-impresion"></div>
+
+  <!-- MODAL EDITAR CAJA ADMIN -->
+  <div id="modal-editar-caja-admin" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white p-5 rounded-xl shadow-xl max-w-md w-full space-y-3">
+      <h3 class="text-base font-bold text-amber-900">🛠️ Corrección Administrativa de Caja</h3>
+      <div class="space-y-2 text-xs">
+        <div>
+          <label class="font-bold text-gray-700 block">Fecha a Editar:</label>
+          <input type="date" id="admin-edit-caja-fecha" class="border p-2 rounded w-full font-bold bg-gray-50">
+        </div>
+        <div>
+          <label class="font-bold text-gray-700 block">La Casa del Pan (Alem) ($):</label>
+          <input type="number" id="admin-edit-alem" class="border p-2 rounded w-full font-bold">
+        </div>
+        <div>
+          <label class="font-bold text-gray-700 block">La Espiga de Oro ($):</label>
+          <input type="number" id="admin-edit-espiga" class="border p-2 rounded w-full font-bold">
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button type="button" onclick="cerrarModalEditarCajaAdmin()" class="bg-gray-300 text-gray-800 text-xs px-3 py-2 rounded font-bold">Cancelar</button>
+        <button type="button" onclick="guardarCorreccionCajaAdmin()" class="bg-amber-800 text-white text-xs px-4 py-2 rounded font-bold hover:bg-amber-900">Guardar Corrección</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL PEDIDOS AUTOMATIZADOS -->
+  <div id="modal-pedidos-auto" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white p-5 rounded-xl shadow-xl max-w-3xl w-full space-y-3 max-h-[90vh] overflow-y-auto">
+      <h3 class="text-base font-bold text-blue-900 border-b pb-2">🤖 Pedidos Automatizados del Día</h3>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs md:text-sm">
+          <thead>
+            <tr class="bg-blue-100 text-blue-900 border-b">
+              <th class="p-2">Cliente</th>
+              <th class="p-2">Producto</th>
+              <th class="p-2">Cant.</th>
+              <th class="p-2">P. Unit. ($)</th>
+              <th class="p-2">Monto Total</th>
+              <th class="p-2 text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-pedidos-auto"></tbody>
+        </table>
+      </div>
+      <div class="flex justify-end pt-2">
+        <button type="button" onclick="cerrarModalPedidosAuto()" class="bg-gray-300 text-gray-800 text-xs px-4 py-2 rounded font-bold">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      databaseURL: "https://panaderia-sync-281a5-default-rtdb.firebaseio.com/"
+    };
+
+    let rtdb = null;
+    try {
+      if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+      }
+      rtdb = firebase.database();
+    } catch (e) {
+      console.warn("Modo offline detectado.");
+    }
+
+    function generarID(prefijo = 'ID') {
+      return `${prefijo}-${Date.now().toString(36)}-${Math.random().toString(36).substr(2, 5)}`;
+    }
+
+    let fechaActual = new Date().toISOString().split('T')[0];
+
+    const PERMISOS_ROLES = {
+      admin: { nombre: "Administrador / Dueño", pestanas: ['reparto', 'cuadra', 'clientes', 'proveedores', 'stock', 'caja', 'precios', 'usuarios'] },
+      mostrador: { nombre: "Encargado Mostrador", pestanas: ['reparto', 'cuadra', 'clientes', 'proveedores', 'stock', 'caja', 'precios'] },
+      repartidor: { nombre: "Repartidor", pestanas: ['reparto', 'cuadra', 'clientes'] },
+      produccion: { nombre: "Producción / Cuadra", pestanas: ['cuadra', 'stock'] }
+    };
+
+    const ETIQUETAS_SUCURSAL = {
+      todas: "General (Ambas Sucursales)",
+      alem: "La Casa del Pan (Alem)",
+      espiga: "La Espiga de Oro"
+    };
+
+    window.LISTA_USUARIOS_BASE = {
+      "USR-1": { id: "USR-1", nombre: "Administrador General", rol: "admin", sucursal: "todas", pin: "1234" },
+      "USR-2": { id: "USR-2", nombre: "Maira (Mostrador Alem)", rol: "mostrador", sucursal: "alem", pin: "1234" },
+      "USR-3": { id: "USR-3", nombre: "Encargado Espiga de Oro", rol: "mostrador", sucursal: "espiga", pin: "1234" },
+      "USR-4": { id: "USR-4", nombre: "Chofer Reparto", rol: "repartidor", sucursal: "todas", pin: "1234" },
+      "USR-5": { id: "USR-5", nombre: "Maestro Panadero", rol: "produccion", sucursal: "todas", pin: "1234" }
+    };
+
+    window.LISTA_PANIFICADOS_REPARTO_BASE = {
+      "Pebete": { unidPorPaq: 24, menor: 550, mayor: 500 },
+      "Hamburguesas x 5 (c/u)": { unidPorPaq: 5, menor: 600, mayor: 500 },
+      "Hamburguesas x 4 (c/u)": { unidPorPaq: 12, menor: 600, mayor: 500 },
+      "Hamburguesas x 3 (c/u)": { unidPorPaq: 6, menor: 850, mayor: 750 },
+      "Pebete Largo": { unidPorPaq: 20, menor: 650, mayor: 550 },
+      "Super - Pebete": { unidPorPaq: 20, menor: 650, mayor: 550 },
+      "Media Luna grande": { unidPorPaq: 12, menor: 1500, mayor: 1500 }
+    };
+
+    window.LISTA_PRODUCTOS_BASE = {
+      "Pan (Kgs)": { mostrador: 2800, reparto: 2200, unOcuarto: 0 },
+      "Facturas (Docena)": { mostrador: 12000, reparto: 9300, unOcuarto: 1000 },
+      "Pasteles (Docena)": { mostrador: 14000, reparto: 10800, unOcuarto: 1200 },
+      "Pan Rallado (bolsa x 1 Kgs)": { mostrador: 2800, reparto: 1800, unOcuarto: 1400 }
+    };
+
+    function cargarDB(key, fallback) {
+      const data = localStorage.getItem(key);
+      let valorInicial = data ? JSON.parse(data) : fallback;
+      if (rtdb) {
+        try {
+          rtdb.ref(key).on('value', (snapshot) => {
+            const val = snapshot.val();
+            if (val !== null && val !== undefined) {
+              valorInicial = val;
+              localStorage.setItem(key, JSON.stringify(val));
+            } else if (!data) {
+              rtdb.ref(key).set(fallback);
+            }
+            if (key === 'db_repartos') { dbRepartos = val || fallback; renderizarPlanillaReparto(); renderizarCuadra(); }
+            if (key === 'db_clientes') { dbClientes = val || fallback; renderizarTablaClientes(); cargarSelectorClientesReparto(); cargarBuscadorClientes(); cargarSelectorClientesRecurrentes(); }
+            if (key === 'db_proveedores') { dbProveedores = val || fallback; renderizarTablaProveedores(); cargarBuscadorProveedores(); }
+            if (key === 'db_insumos') { dbInsumos = val || fallback; renderizarStockInsumos(); cargarSelectorInsumosFactura(); cargarSelectorInsumosMovimiento(); }
+            if (key === 'db_panificados') { dbPanificados = val || fallback; renderizarTablaPanificados(); cargarSelectorPanificadosReparto(); cargarSelectorProductosRecurrentes(); }
+            if (key === 'db_productos') { dbProductos = val || fallback; renderizarTablaCatalogo(); cargarSelectorDespachoReparto(); cargarSelectorProductosRecurrentes(); }
+            if (key === 'db_usuarios') { dbUsuarios = val || fallback; renderizarTablaUsuarios(); renderizarUsuariosSelect(); }
+            if (key === 'db_cajas_diarias') { dbCajasDiarias = val || fallback; cargarCajasHoyUI(); renderizarReportesMensuales(); }
+            if (key === 'db_egresos_caja') { dbEgresosCaja = val || fallback; renderizarTablaEgresosHoy(); renderizarReportesMensuales(); }
+            if (key === 'db_recurrentes') { dbRecurrentes = val || fallback; renderizarTablaRecurrentes(); }
+          });
+        } catch (e) { console.warn("Firebase Offline"); }
+      }
+      return valorInicial;
+    }
+
+    function guardarDB(key, data) {
+      localStorage.setItem(key, JSON.stringify(data));
+      if (rtdb) rtdb.ref(key).set(data).catch(err => console.warn(err));
+    }
+
+    let dbUsuarios = cargarDB('db_usuarios', window.LISTA_USUARIOS_BASE);
+    let dbPanificados = cargarDB('db_panificados', window.LISTA_PANIFICADOS_REPARTO_BASE);
+    let dbProductos = cargarDB('db_productos', window.LISTA_PRODUCTOS_BASE);
+    let dbClientes = cargarDB('db_clientes', {});
+    let dbProveedores = cargarDB('db_proveedores', {});
+    let dbInsumos = cargarDB('db_insumos', {});
+    let dbRepartos = cargarDB('db_repartos', {});
+    let dbRecurrentes = cargarDB('db_recurrentes', {});
+    let dbNotasMostrador = cargarDB('db_notas_mostrador', {});
+    let dbHistorialClientes = cargarDB('db_historial_clientes', {});
+    let dbHistorialProveedores = cargarDB('db_historial_proveedores', {});
+    let dbCajasDiarias = cargarDB('db_cajas_diarias', {});
+    let dbEgresosCaja = cargarDB('db_egresos_caja', {});
+    let dbBackupsDiarios = cargarDB('db_backups_diarios', {});
+
+    let usuarioActivoId = cargarDB('usuario_activo_id', 'USR-1');
+    let clienteSeleccionadoId = null;
+    let proveedorSeleccionadoId = null;
+
+    window.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('fecha-operativa').value = fechaActual;
+      document.getElementById('reporte-mes-select').value = fechaActual.substring(0, 7);
+      
+      ejecutarBackupDiarioAutomatico();
+      renderizarUsuariosSelect();
+      renderizarMenuNavegacion();
+      actualizarEtiquetasFecha();
+      cargarSelectorClientesReparto();
+      cargarSelectorPanificadosReparto();
+      cargarSelectorDespachoReparto();
+      cargarSelectorClientesRecurrentes();
+      cargarSelectorProductosRecurrentes();
+      procesarPedidosRecurrentesAutomaticos();
+      renderizarPlanillaReparto();
+      renderizarCuadra();
+      renderizarTablaClientes();
+      renderizarTablaProveedores();
+      renderizarStockInsumos();
+      renderizarTablaPanificados();
+      renderizarTablaCatalogo();
+      renderizarTablaUsuarios();
+      renderizarTablaRecurrentes();
+      cargarSelectorInsumosFactura();
+      cargarSelectorInsumosMovimiento();
+      cargarBuscadorClientes();
+      cargarBuscadorProveedores();
+      cargarCajasHoyUI();
+      renderizarTablaEgresosHoy();
+      renderizarReportesMensuales();
+      renderizarSelectorBackups();
+    });
+
+    function obtenerFechaConDia(fechaStr) {
+      if (!fechaStr) return '';
+      const [anio, mes, dia] = fechaStr.split('-').map(Number);
+      const fecha = new Date(anio, mes - 1, dia);
+      const opciones = { weekday: 'long', year: 'numeric', month: 'numeric', day: 'numeric' };
+      const texto = fecha.toLocaleDateString('es-AR', opciones);
+      return texto.charAt(0).toUpperCase() + texto.slice(1);
+    }
+
+    function actualizarEtiquetasFecha() {
+      const fechaFormateada = obtenerFechaConDia(fechaActual);
+      const lblRep = document.getElementById('label-fecha-reparto');
+      if (lblRep) lblRep.innerText = `Fecha: ${fechaFormateada}`;
+    }
+
+    function cambiarFechaOperativa() {
+      const input = document.getElementById('fecha-operativa');
+      if (input && input.value) {
+        fechaActual = input.value;
+        actualizarEtiquetasFecha();
+        procesarPedidosRecurrentesAutomaticos();
+        renderizarPlanillaReparto();
+        renderizarCuadra();
+        cargarCajasHoyUI();
+        renderizarTablaEgresosHoy();
+      }
+    }
+
+    // PEDIDOS RECURRENTES Y AUTOMATIZADOS
+    function cargarSelectorClientesRecurrentes() {
+      const sel = document.getElementById('rec-cliente');
+      if (!sel) return;
+      sel.innerHTML = '<option value="">-- Cliente --</option>';
+      Object.values(dbClientes).sort((a, b) => a.nombre.localeCompare(b.nombre)).forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.id; opt.textContent = c.nombre; sel.appendChild(opt);
+      });
+    }
+
+    function cargarSelectorProductosRecurrentes() {
+      const sel = document.getElementById('rec-producto');
+      if (!sel) return;
+      sel.innerHTML = '<option value="">-- Producto --</option>';
+      
+      const grupoPan = document.createElement('optgroup'); grupoPan.label = "Panificados / Cuadra";
+      Object.keys(dbPanificados).forEach(p => {
+        const opt = document.createElement('option'); opt.value = `panificado|${p}`; opt.textContent = p; grupoPan.appendChild(opt);
+      });
+      sel.appendChild(grupoPan);
+
+      const grupoDesp = document.createElement('optgroup'); grupoDesp.label = "Catálogo Despacho";
+      Object.keys(dbProductos).forEach(p => {
+        const opt = document.createElement('option'); opt.value = `despacho|${p}`; opt.textContent = p; grupoDesp.appendChild(opt);
+      });
+      sel.appendChild(grupoDesp);
+    }
+
+    function cambiarTipoFrecuenciaUI(tipo) {
+      const contDias = document.getElementById('cont-dias-semana');
+      const contRango = document.getElementById('cont-rango-mes');
+      if (tipo === 'dias_semana') {
+        contDias.classList.remove('hidden');
+        contRango.classList.add('hidden');
+      } else if (tipo === 'rango_mes') {
+        contDias.classList.add('hidden');
+        contRango.classList.remove('hidden');
+      } else {
+        contDias.classList.add('hidden');
+        contRango.classList.add('hidden');
+      }
+    }
+
+    function guardarPedidoRecurrente() {
+      const cliId = document.getElementById('rec-cliente').value;
+      const prodValor = document.getElementById('rec-producto').value;
+      const cant = parseFloat(document.getElementById('rec-cantidad').value);
+      const tipoFreq = document.getElementById('rec-tipo-frecuencia').value;
+
+      if (!cliId || !prodValor || isNaN(cant) || cant <= 0) {
+        alert("Complete cliente, producto y cantidad válidos.");
+        return;
+      }
+
+      const [origenTipo, prodNombre] = prodValor.split('|');
+      let diasSeleccionados = [];
+      let rangoDesde = 0, rangoHasta = 0;
+
+      if (tipoFreq === 'dias_semana') {
+        document.querySelectorAll('.rec-dia:checked').forEach(cb => diasSeleccionados.push(parseInt(cb.value)));
+        if (diasSeleccionados.length === 0) {
+          alert("Seleccione al menos un día de la semana.");
+          return;
+        }
+      } else if (tipoFreq === 'rango_mes') {
+        rangoDesde = parseInt(document.getElementById('rec-dia-desde').value) || 1;
+        rangoHasta = parseInt(document.getElementById('rec-dia-hasta').value) || 1;
+      }
+
+      const id = generarID('REC');
+      dbRecurrentes[id] = {
+        id, clienteId: cliId, clienteNombre: dbClientes[cliId]?.nombre || 'Cliente',
+        producto: prodNombre, origenTipo, cantidad: cant, tipoFreq, diasSemana: diasSeleccionados, rangoDesde, rangoHasta
+      };
+
+      guardarDB('db_recurrentes', dbRecurrentes);
+      document.getElementById('rec-cantidad').value = '';
+      renderizarTablaRecurrentes();
+      procesarPedidosRecurrentesAutomaticos();
+      alert("¡Regla recurrente guardada con éxito!");
+    }
+
+    function renderizarTablaRecurrentes() {
+      const tbody = document.getElementById('tabla-pedidos-recurrentes');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      const diasNombres = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+
+      Object.values(dbRecurrentes).forEach(r => {
+        let detalleFreq = "";
+        if (r.tipoFreq === 'dias_semana') {
+          detalleFreq = `Días: ${r.diasSemana.map(d => diasNombres[d]).join(', ')}`;
+        } else if (r.tipoFreq === 'rango_mes') {
+          detalleFreq = `Del día ${r.rangoDesde} al ${r.rangoHasta} del mes`;
+        } else {
+          detalleFreq = `Todos los días`;
+        }
+
+        const tr = document.createElement('tr');
+        tr.className = "border-b hover:bg-gray-50";
+        tr.innerHTML = `
+          <td class="p-1.5 font-bold">${r.clienteNombre}</td>
+          <td class="p-1.5">${r.producto} <span class="text-[10px] text-gray-500">(${r.origenTipo})</span></td>
+          <td class="p-1.5 font-bold text-blue-900">${r.cantidad} un.</td>
+          <td class="p-1.5">${detalleFreq}</td>
+          <td class="p-1.5 text-center"><button onclick="eliminarRecurrente('${r.id}')" class="bg-red-600 text-white text-xs px-2 py-0.5 rounded font-bold">✕ Eliminar</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      if (tbody.innerHTML === '') {
+        tbody.innerHTML = '<tr><td colspan="5" class="p-2 text-center text-gray-400 italic">No hay pedidos recurrentes configurados.</td></tr>';
+      }
+    }
+
+    function eliminarRecurrente(id) {
+      if (confirm("¿Desea eliminar esta regla de pedido recurrente?")) {
+        delete dbRecurrentes[id];
+        guardarDB('db_recurrentes', dbRecurrentes);
+        renderizarTablaRecurrentes();
+      }
+    }
+
+    function procesarPedidosRecurrentesAutomaticos() {
+      if (!dbRepartos[fechaActual]) dbRepartos[fechaActual] = [];
+      const [anio, mes, dia] = fechaActual.split('-').map(Number);
+      const fechaObj = new Date(anio, mes - 1, dia);
+      const diaSemanaActual = fechaObj.getDay();
+
+      Object.values(dbRecurrentes).forEach(r => {
+        let cumpleCondicion = false;
+
+        if (r.tipoFreq === 'todos_dias') {
+          cumpleCondicion = true;
+        } else if (r.tipoFreq === 'dias_semana') {
+          if (r.diasSemana.includes(diaSemanaActual)) cumpleCondicion = true;
+        } else if (r.tipoFreq === 'rango_mes') {
+          const dDesde = r.rangoDesde;
+          const dHasta = r.rangoHasta;
+          if (dDesde <= dHasta) {
+            if (dia >= dDesde && dia <= dHasta) cumpleCondicion = true;
+          } else {
+            if (dia >= dDesde || dia <= dHasta) cumpleCondicion = true;
+          }
+        }
+
+        if (cumpleCondicion) {
+          const yaExiste = dbRepartos[fechaActual].some(p => p.clienteId === r.clienteId && p.producto === r.producto && p.origenAuto);
+          if (!yaExiste) {
+            let precioUnit = 0;
+            let unidPaq = 1;
+
+            if (r.origenTipo === 'panificado') {
+              const pan = dbPanificados[r.producto];
+              if (pan) {
+                precioUnit = (r.cantidad > pan.unidPorPaq) ? pan.mayor : pan.menor;
+                unidPaq = pan.unidPorPaq;
+              }
+            } else {
+              const prod = dbProductos[r.producto];
+              if (prod) {
+                precioUnit = prod.reparto || prod.mostrador || 0;
+              }
+            }
+
+            dbRepartos[fechaActual].push({
+              id: generarID('AUTO'),
+              clienteId: r.clienteId,
+              clienteNombre: r.clienteNombre,
+              producto: r.producto,
+              unidades: r.cantidad,
+              unidPorPaq: unidPaq,
+              precioUnitario: precioUnit,
+              monto: r.cantidad * precioUnit,
+              origen: r.origenTipo === 'panificado' ? 'cuadra' : 'despacho',
+              origenAuto: true,
+              pagado: false,
+              medioPago: "Pendiente"
+            });
+          }
+        }
+      });
+
+      guardarDB('db_repartos', dbRepartos);
+    }
+
+    // MODAL EDITAR AUTOMATIZADOS
+    function abrirModalPedidosAuto() {
+      document.getElementById('modal-pedidos-auto').classList.remove('hidden');
+      renderizarTablaPedidosAuto();
+    }
+
+    function cerrarModalPedidosAuto() {
+      document.getElementById('modal-pedidos-auto').classList.add('hidden');
+    }
+
+    function renderizarTablaPedidosAuto() {
+      const tbody = document.getElementById('tabla-pedidos-auto');
+      tbody.innerHTML = '';
+      const pedidosHoy = dbRepartos[fechaActual] || [];
+      const automaticos = pedidosHoy.filter(p => p.origenAuto);
+
+      if (automaticos.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="p-3 text-center text-gray-500 italic">No hay pedidos automáticos para hoy.</td></tr>';
+        return;
+      }
+
+      automaticos.forEach(p => {
+        const tr = document.createElement('tr');
+        tr.className = "border-b hover:bg-gray-50";
+        tr.innerHTML = `
+          <td class="p-2 font-semibold text-gray-800">${p.clienteNombre}</td>
+          <td class="p-2">${p.producto}</td>
+          <td class="p-2"><input type="number" step="0.01" value="${p.unidades}" onchange="modificarCantidadPedido('${p.id}', this.value)" class="w-16 border rounded p-1 text-xs font-bold text-blue-900"></td>
+          <td class="p-2"><input type="number" step="0.01" value="${p.precioUnitario}" onchange="modificarPrecioPedidoDirecto('${p.id}', this.value)" class="w-20 border rounded p-1 text-xs font-bold"></td>
+          <td class="p-2 font-bold text-amber-900">$${p.monto.toLocaleString()}</td>
+          <td class="p-2 text-center"><button onclick="eliminarPedidoReparto('${p.id}', '${p.producto}');" class="bg-red-600 text-white text-xs px-2 py-1 rounded font-bold">✕ Eliminar</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function modificarCantidadPedido(pedidoId, nuevaCantVal) {
+      const nuevaCant = parseFloat(nuevaCantVal);
+      if (isNaN(nuevaCant) || nuevaCant <= 0) return;
+      const pedido = (dbRepartos[fechaActual] || []).find(p => p.id === pedidoId);
+      if (pedido) { 
+        pedido.unidades = nuevaCant; 
+        pedido.monto = nuevaCant * pedido.precioUnitario; 
+        guardarDB('db_repartos', dbRepartos); 
+        renderizarPlanillaReparto(); 
+        renderizarReportesMensuales(); 
+        if(!document.getElementById('modal-pedidos-auto').classList.contains('hidden')) {
+          renderizarTablaPedidosAuto();
+        }
+      }
+    }
+
+
+    function renderizarUsuariosSelect() {
+      const sel = document.getElementById('select-usuario-activo');
+      if (!sel) return;
+      sel.innerHTML = '';
+      if (!dbUsuarios[usuarioActivoId]) usuarioActivoId = 'USR-1';
+
+      Object.values(dbUsuarios).forEach(u => {
+        const opt = document.createElement('option');
+        opt.value = u.id;
+        opt.textContent = `${u.nombre} (${ETIQUETAS_SUCURSAL[u.sucursal || 'todas']})`;
+        if (u.id === usuarioActivoId) opt.selected = true;
+        sel.appendChild(opt);
+      });
+      actualizarBadgeRol();
+    }
+
+    function actualizarBadgeRol() {
+      const badge = document.getElementById('badge-rol-activo');
+      const usr = dbUsuarios[usuarioActivoId];
+      if (badge && usr) badge.textContent = `${PERMISOS_ROLES[usr.rol]?.nombre || usr.rol} | ${ETIQUETAS_SUCURSAL[usr.sucursal || 'todas']}`;
+    }
+
+    function cambiarPinUsuarioActivo() {
+      const usr = dbUsuarios[usuarioActivoId];
+      if (!usr) return;
+
+      const pinActualInput = document.getElementById('pin-actual').value.trim();
+      const pinNuevoInput = document.getElementById('pin-nuevo').value.trim();
+
+      if (!pinActualInput || !pinNuevoInput) { alert("Complete los campos."); return; }
+      if (pinActualInput !== (usr.pin || '1234')) { alert("PIN actual incorrecto."); return; }
+
+      usr.pin = pinNuevoInput;
+      dbUsuarios[usuarioActivoId] = usr;
+      guardarDB('db_usuarios', dbUsuarios);
+      document.getElementById('pin-actual').value = '';
+      document.getElementById('pin-nuevo').value = '';
+      alert("¡PIN actualizado con éxito!");
+    }
+
+    function cambiarUsuarioActivo() {
+      const sel = document.getElementById('select-usuario-activo');
+      if (!sel) return;
+      const nuevoId = sel.value;
+      const usuarioDestino = dbUsuarios[nuevoId];
+
+      if (usuarioDestino) {
+        const pinIngresado = prompt(`Ingrese el PIN de ${usuarioDestino.nombre}:`);
+        if (pinIngresado !== (usuarioDestino.pin || '1234')) {
+          alert("PIN incorrecto. Acceso denegado.");
+          sel.value = usuarioActivoId; 
+          return;
+        }
+      }
+
+      usuarioActivoId = nuevoId;
+      guardarDB('usuario_activo_id', usuarioActivoId);
+      actualizarBadgeRol();
+      renderizarMenuNavegacion();
+      cargarCajasHoyUI();
+      renderizarTablaEgresosHoy();
+      renderizarReportesMensuales();
+      renderizarCuadra();
+    }
+
+    function renderizarMenuNavegacion() {
+      const usr = dbUsuarios[usuarioActivoId];
+      if (!usr) return;
+      let permisos = PERMISOS_ROLES[usr.rol]?.pestanas || [];
+      const lista = ['reparto', 'cuadra', 'clientes', 'proveedores', 'stock', 'caja', 'precios', 'usuarios'];
+
+      if (usr.sucursal === 'espiga' && usr.rol !== 'admin') {
+        permisos = ['cuadra', 'caja'];
+      }
+
+      lista.forEach(p => {
+        const btn = document.getElementById(`btn-${p}`);
+        const sec = document.getElementById(`sec-${p}`);
+        if (permisos.includes(p)) {
+          if (btn) btn.classList.remove('hidden');
+        } else {
+          if (btn) btn.classList.add('hidden');
+          if (sec) sec.classList.add('hidden');
+        }
+      });
+
+      const pestañaInicial = permisos[0] || 'cuadra';
+      verPestaña(pestañaInicial);
+    }
+
+    function verPestaña(idPestaña) {
+      const lista = ['reparto', 'cuadra', 'clientes', 'proveedores', 'stock', 'caja', 'precios', 'usuarios'];
+      lista.forEach(p => {
+        const btn = document.getElementById(`btn-${p}`);
+        const sec = document.getElementById(`sec-${p}`);
+        if (p === idPestaña) {
+          if (btn) { btn.classList.add('tab-active'); btn.classList.remove('tab-inactive'); }
+          if (sec) sec.classList.remove('hidden');
+        } else {
+          if (btn) { btn.classList.remove('tab-active'); btn.classList.add('tab-inactive'); }
+          if (sec) sec.classList.add('hidden');
+        }
+      });
+    }
+
+    // 1. REPARTO
+    function cargarSelectorClientesReparto() {
+      const selMain = document.getElementById('rep-cliente');
+      const selDesp = document.getElementById('rep-despacho-cliente');
+      if (!selMain) return;
+      selMain.innerHTML = '<option value="">-- Cliente --</option>';
+      if (selDesp) selDesp.innerHTML = '<option value="">-- Mismo Cliente --</option>';
+
+      Object.values(dbClientes).sort((a, b) => a.nombre.localeCompare(b.nombre)).forEach(c => {
+        const opt1 = document.createElement('option');
+        opt1.value = c.id; opt1.textContent = c.nombre; selMain.appendChild(opt1);
+        if (selDesp) { const opt2 = document.createElement('option'); opt2.value = c.id; opt2.textContent = c.nombre; selDesp.appendChild(opt2); }
+      });
+    }
+
+    function cargarSelectorPanificadosReparto() {
+      const sel = document.getElementById('rep-producto');
+      if (!sel) return;
+      sel.innerHTML = '';
+      Object.keys(dbPanificados).sort((a, b) => a.localeCompare(b)).forEach(prod => {
+        const opt = document.createElement('option');
+        opt.value = prod; opt.textContent = prod;
+        if (prod.toLowerCase() === 'pebete') opt.selected = true;
+        sel.appendChild(opt);
+      });
+      actualizarPrecioSugeridoPanificado();
+    }
+
+    function actualizarPrecioSugeridoPanificado() {
+      const prodNombre = document.getElementById('rep-producto')?.value;
+      const inputPrecio = document.getElementById('rep-precio-unitario');
+      const cantInput = document.getElementById('rep-cantidad');
+      if (!prodNombre || !inputPrecio) return;
+      const valCant = cantInput?.value ? parseFloat(cantInput.value) : null;
+      if (valCant === null || isNaN(valCant) || valCant <= 0) { inputPrecio.value = ''; return; }
+      const panificado = dbPanificados[prodNombre];
+      if (!panificado) return;
+      inputPrecio.value = (valCant > (panificado.unidPorPaq || 1)) ? panificado.mayor : panificado.menor;
+    }
+
+    function cargarSelectorDespachoReparto() {
+      const sel = document.getElementById('rep-despacho-producto');
+      if (!sel) return;
+      sel.innerHTML = '<option value="">-- Producto Despacho --</option>';
+      Object.keys(dbProductos).sort((a, b) => a.localeCompare(b)).forEach(prod => {
+        const opt = document.createElement('option');
+        opt.value = prod; opt.textContent = prod; sel.appendChild(opt);
+      });
+    }
+
+    function actualizarPrecioSugeridoDespacho() {
+      const prodNombre = document.getElementById('rep-despacho-producto')?.value;
+      const inputPrecio = document.getElementById('rep-despacho-precio-unitario');
+      const cantInput = document.getElementById('rep-despacho-cantidad');
+      if (!prodNombre || !inputPrecio) return;
+      const valCant = cantInput?.value ? parseFloat(cantInput.value) : null;
+      if (valCant === null || isNaN(valCant) || valCant <= 0) { inputPrecio.value = ''; return; }
+      const prodCatalogo = dbProductos[prodNombre];
+      inputPrecio.value = prodCatalogo ? (prodCatalogo.reparto || prodCatalogo.mostrador || 0) : 0;
+    }
+
+    function agregarPedidoPanificado() {
+      const cliId = document.getElementById('rep-cliente').value;
+      const prodNombre = document.getElementById('rep-producto').value;
+      const cant = parseFloat(document.getElementById('rep-cantidad').value);
+      const precioPersonalizado = parseFloat(document.getElementById('rep-precio-unitario').value);
+
+      if (!cliId || !prodNombre || isNaN(cant) || cant <= 0 || isNaN(precioPersonalizado)) { alert("Verifique los datos cargados."); return; }
+      const cliente = dbClientes[cliId]; const panificado = dbPanificados[prodNombre];
+      if (!cliente) return;
+
+      if (!dbRepartos[fechaActual]) dbRepartos[fechaActual] = [];
+      dbRepartos[fechaActual].push({
+        id: generarID('REP'), clienteId: cliId, clienteNombre: cliente.nombre, producto: prodNombre,
+        unidades: cant, unidPorPaq: panificado ? panificado.unidPorPaq : 1, precioUnitario: precioPersonalizado,
+        monto: cant * precioPersonalizado, origen: 'cuadra', pagado: false, medioPago: "Pendiente"
+      });
+
+      guardarDB('db_repartos', dbRepartos);
+      document.getElementById('rep-cantidad').value = '';
+      renderizarPlanillaReparto(); renderizarCuadra(); renderizarReportesMensuales();
+    }
+
+    function agregarPedidoDespacho() {
+      let cliId = document.getElementById('rep-despacho-cliente').value || document.getElementById('rep-cliente').value;
+      const prodNombre = document.getElementById('rep-despacho-producto').value;
+      const cant = parseFloat(document.getElementById('rep-despacho-cantidad').value);
+      const precioPersonalizado = parseFloat(document.getElementById('rep-despacho-precio-unitario').value);
+
+      if (!cliId || !prodNombre || isNaN(cant) || cant <= 0 || isNaN(precioPersonalizado)) { alert("Verifique los datos del adicional."); return; }
+      const cliente = dbClientes[cliId]; if (!cliente) return;
+
+      if (!dbRepartos[fechaActual]) dbRepartos[fechaActual] = [];
+      dbRepartos[fechaActual].push({
+        id: generarID('REP'), clienteId: cliId, clienteNombre: cliente.nombre, producto: prodNombre,
+        unidades: cant, unidPorPaq: 1, precioUnitario: precioPersonalizado, monto: cant * precioPersonalizado,
+        origen: 'despacho', pagado: false, medioPago: "Pendiente"
+      });
+
+      guardarDB('db_repartos', dbRepartos);
+      document.getElementById('rep-despacho-cantidad').value = '';
+      renderizarPlanillaReparto(); renderizarCuadra(); renderizarReportesMensuales();
+    }
+
 function renderizarPlanillaReparto() {
       const tbody = document.getElementById('tabla-reparto');
       if (!tbody) return;
@@ -44,3 +1536,1489 @@ function renderizarPlanillaReparto() {
       if (elTr) elTr.textContent = `$${totalTransf.toLocaleString()}`;
       if (elTot) elTot.textContent = `$${(totalEfectivo + totalTransf).toLocaleString()}`;
     }
+
+    function modificarPrecioPedidoDirecto(pedidoId, nuevoPrecioVal) {
+      const nuevoPrecio = parseFloat(nuevoPrecioVal); if (isNaN(nuevoPrecio)) return;
+      const pedido = (dbRepartos[fechaActual] || []).find(p => p.id === pedidoId);
+      if (pedido) { 
+        pedido.precioUnitario = nuevoPrecio; 
+        pedido.monto = pedido.unidades * nuevoPrecio; 
+        guardarDB('db_repartos', dbRepartos); 
+        renderizarPlanillaReparto(); 
+        renderizarReportesMensuales(); 
+        if(!document.getElementById('modal-pedidos-auto').classList.contains('hidden')){
+          renderizarTablaPedidosAuto();
+        }
+      }
+    }
+
+    function marcarPedidoCobrado(pedidoId, medioPago) {
+      if (!medioPago) return;
+      const pedido = (dbRepartos[fechaActual] || []).find(p => p.id === pedidoId);
+      if (pedido) { pedido.pagado = true; pedido.medioPago = medioPago; guardarDB('db_repartos', dbRepartos); renderizarPlanillaReparto(); renderizarReportesMensuales(); }
+    }
+
+    function deshacerCobroPedido(pedidoId) {
+      const pedido = (dbRepartos[fechaActual] || []).find(p => p.id === pedidoId);
+      if (pedido) { pedido.pagado = false; pedido.medioPago = "Pendiente"; guardarDB('db_repartos', dbRepartos); renderizarPlanillaReparto(); renderizarReportesMensuales(); }
+    }
+
+    function eliminarPedidoReparto(pedidoId, productoNombre) {
+      if (confirm(`⚠️ ¿Desea eliminar el pedido de "${productoNombre}"?`)) {
+        if (dbRepartos[fechaActual]) {
+          dbRepartos[fechaActual] = dbRepartos[fechaActual].filter(p => p.id !== pedidoId);
+          guardarDB('db_repartos', dbRepartos); 
+          renderizarPlanillaReparto(); 
+          renderizarCuadra(); 
+          renderizarReportesMensuales();
+          if(!document.getElementById('modal-pedidos-auto').classList.contains('hidden')){
+            renderizarTablaPedidosAuto();
+          }
+        }
+      }
+    }
+
+    // --- IMPRESIÓN DIRECTA / IMPRESIÓN PDF NATIVA ---
+    function imprimirCuadra() {
+      const fechaFormateada = obtenerFechaConDia(fechaActual);
+      const pedidosHoy = dbRepartos[fechaActual] || [];
+      const consolidados = {};
+
+      pedidosHoy.forEach(p => {
+        if (p.origen === 'despacho') return;
+        consolidados[p.producto] = (consolidados[p.producto] || 0) + p.unidades;
+      });
+
+      let produccionHtml = '';
+      const lista = Object.entries(consolidados).sort((a, b) => a[0].localeCompare(b[0]));
+      
+      if (lista.length === 0) {
+        produccionHtml = '<tr><td colspan="2" style="padding: 12px; text-align: center; color: #6b7280; font-style: italic; border-bottom: 1px solid #e5e7eb;">Sin pedidos de cuadra cargados.</td></tr>';
+      } else {
+        lista.forEach(([prodNombre, cantUnidades]) => {
+          produccionHtml += `
+            <tr style="border-bottom: 1px solid #e5e7eb;">
+              <td style="padding: 10px 14px; font-size: 13px; font-weight: 600; color: #1f2937; text-align: left;">${prodNombre}</td>
+              <td style="padding: 10px 14px; text-align: center; font-size: 14px; font-weight: 800; color: #78350f; background-color: #fef3c7; width: 140px;">${cantUnidades} un.</td>
+            </tr>
+          `;
+        });
+      }
+
+      let notasHtml = '';
+      const notasHoy = dbNotasMostrador[fechaActual] || [];
+      notasHoy.forEach((nota) => {
+        notasHtml += `<li style="margin-bottom: 6px; font-size: 12px; color: #374151; font-weight: 500;">${nota}</li>`;
+      });
+      if (notasHoy.length === 0) {
+        notasHtml = '<p style="color: #9ca3af; font-style: italic; margin: 0; font-size: 12px;">Sin notas ni pedidos especiales registrados.</p>';
+      }
+
+      const areaImp = document.getElementById('area-impresion');
+      areaImp.innerHTML = `
+        <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; color: #111827;">
+          <div style="border-bottom: 3px solid #78350f; padding-bottom: 12px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-end;">
+            <div>
+              <h1 style="font-size: 20px; font-weight: 800; margin: 0; color: #78350f; text-transform: uppercase;">La Casa del Pan & La Espiga de Oro</h1>
+              <p style="font-size: 13px; margin: 4px 0 0 0; color: #4b5563; font-weight: 600;">Planilla de Producción Consolidada (Cuadra)</p>
+            </div>
+            <div style="text-align: right; background-color: #fef3c7; border: 1px solid #fde68a; padding: 8px 14px; border-radius: 6px;">
+              <span style="font-size: 10px; color: #92400e; font-weight: 700; display: block; text-transform: uppercase;">Fecha Operativa</span>
+              <span style="font-size: 12px; font-weight: 800; color: #78350f;">${fechaFormateada}</span>
+            </div>
+          </div>
+
+          <div style="margin-bottom: 28px;">
+            <h2 style="font-size: 13px; font-weight: 700; color: #374151; margin: 0 0 10px 0; text-transform: uppercase;">1. Totales a Producir</h2>
+            <table style="width: 100%; border-collapse: collapse; border: 1px solid #d1d5db;">
+              <thead>
+                <tr style="background-color: #78350f; color: #ffffff;">
+                  <th style="padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase;">Producto / Panificado</th>
+                  <th style="padding: 10px 14px; text-align: center; font-size: 11px; font-weight: 700; text-transform: uppercase; width: 140px;">Cantidad Total</th>
+                </tr>
+              </thead>
+              <tbody>${produccionHtml}</tbody>
+            </table>
+          </div>
+
+          <div style="border: 1px solid #d1d5db; border-radius: 6px; padding: 18px; background-color: #fafafa;">
+            <h2 style="font-size: 13px; font-weight: 700; color: #374151; margin: 0 0 12px 0; text-transform: uppercase;">2. Pedidos Especiales y Mostrador</h2>
+            <ul style="padding-left: 20px; margin: 0;">${notasHtml}</ul>
+          </div>
+        </div>
+      `;
+
+      window.print();
+    }
+
+    function imprimirReparto() {
+      const fechaFormateada = obtenerFechaConDia(fechaActual);
+      const pedidosHoy = dbRepartos[fechaActual] || [];
+      
+      if (pedidosHoy.length === 0) {
+        alert("No hay pedidos cargados para la fecha actual.");
+        return;
+      }
+
+      const agrupadoClientes = {};
+      let totalGeneral = 0;
+
+      pedidosHoy.forEach(p => {
+        totalGeneral += p.monto;
+        if (!agrupadoClientes[p.clienteNombre]) agrupadoClientes[p.clienteNombre] = { items: [], total: 0 };
+        agrupadoClientes[p.clienteNombre].items.push(p);
+        agrupadoClientes[p.clienteNombre].total += p.monto;
+      });
+
+      let clientesHtml = '';
+      Object.keys(agrupadoClientes).sort().forEach(cliNombre => {
+        const datos = agrupadoClientes[cliNombre];
+        let itemsHtml = '';
+        datos.items.forEach(it => {
+          itemsHtml += `
+            <tr style="border-bottom: 1px solid #e5e7eb;">
+              <td style="padding: 8px 10px; font-size: 12px; font-weight: 600; color: #111827;">${it.producto}</td>
+              <td style="width: 15%; padding: 8px 10px; text-align: center; font-size: 11px; font-weight: 700; color: #4b5563;">${it.origen === 'despacho' ? 'Despacho' : 'Cuadra'}</td>
+              <td style="width: 15%; padding: 8px 10px; text-align: center; font-size: 13px; font-weight: 800; color: #1e3a8a;">${it.unidades} un.</td>
+              <td style="width: 18%; padding: 8px 10px; text-align: right; font-size: 12px; color: #374151;">$${it.precioUnitario.toLocaleString()}</td>
+              <td style="width: 20%; padding: 8px 10px; text-align: right; font-size: 13px; font-weight: 800; color: #78350f;">$${it.monto.toLocaleString()}</td>
+            </tr>
+          `;
+        });
+
+        clientesHtml += `
+          <div style="margin-bottom: 18px; page-break-inside: avoid; border: 1px solid #d1d5db; border-radius: 6px; overflow: hidden;">
+            <div style="background-color: #f3f4f6; padding: 8px 12px; border-bottom: 1px solid #d1d5db; display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 13px; font-weight: 800; color: #111827; text-transform: uppercase;">CLIENTE: ${cliNombre}</span>
+              <span style="font-size: 12px; font-weight: 800; color: #92400e; background-color: #fef3c7; padding: 3px 8px; border-radius: 4px; border: 1px solid #fde68a;">TOTAL: $${datos.total.toLocaleString()}</span>
+            </div>
+            <table style="width: 100%; border-collapse: collapse; background-color: #ffffff;">
+              <thead>
+                <tr style="background-color: #f9fafb; color: #6b7280; border-bottom: 1px solid #e5e7eb;">
+                  <th style="padding: 6px 10px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase;">Descripción</th>
+                  <th style="width: 15%; padding: 6px 10px; text-align: center; font-size: 11px; font-weight: 700; text-transform: uppercase;">Origen</th>
+                  <th style="width: 15%; padding: 6px 10px; text-align: center; font-size: 11px; font-weight: 700; text-transform: uppercase;">Cantidad</th>
+                  <th style="width: 18%; padding: 6px 10px; text-align: right; font-size: 11px; font-weight: 700; text-transform: uppercase;">P. Unit ($)</th>
+                  <th style="width: 20%; padding: 6px 10px; text-align: right; font-size: 11px; font-weight: 700; text-transform: uppercase;">Importe ($)</th>
+                </tr>
+              </thead>
+              <tbody>${itemsHtml}</tbody>
+            </table>
+          </div>
+        `;
+      });
+
+      const areaImp = document.getElementById('area-impresion');
+      areaImp.innerHTML = `
+        <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; color: #111827;">
+          <div style="border-bottom: 3px solid #78350f; padding-bottom: 12px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-end;">
+            <div>
+              <h1 style="font-size: 20px; font-weight: 800; margin: 0; color: #78350f; text-transform: uppercase;">La Casa del Pan & La Espiga de Oro</h1>
+              <p style="font-size: 13px; margin: 4px 0 0 0; color: #4b5563; font-weight: 600;">Planilla Diaria de Reparto y Logística</p>
+            </div>
+            <div style="text-align: right; background-color: #fef3c7; border: 1px solid #fde68a; padding: 6px 12px; border-radius: 6px;">
+              <span style="font-size: 10px; color: #92400e; font-weight: 700; display: block; text-transform: uppercase;">Fecha Operativa</span>
+              <span style="font-size: 13px; font-weight: 800; color: #78350f;">${fechaFormateada}</span>
+            </div>
+          </div>
+          <div>${clientesHtml}</div>
+          <div style="margin-top: 20px; padding: 12px; background-color: #78350f; color: #ffffff; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 13px; font-weight: 700; text-transform: uppercase;">Total General de la Hoja de Ruta:</span>
+            <span style="font-size: 16px; font-weight: 800;">$${totalGeneral.toLocaleString()}</span>
+          </div>
+        </div>
+      `;
+
+      window.print();
+    }
+
+    // 2. PRODUCCIÓN / CUADRA
+    function renderizarCuadra() {
+      const usr = dbUsuarios[usuarioActivoId];
+      const boxConsolidado = document.getElementById('box-cuadra-consolidado');
+
+      if (usr && usr.sucursal === 'espiga' && usr.rol !== 'admin') {
+        if (boxConsolidado) boxConsolidado.classList.add('hidden');
+      } else {
+        if (boxConsolidado) boxConsolidado.classList.remove('hidden');
+      }
+
+      const fechaFormateada = obtenerFechaConDia(fechaActual);
+      const lblCua = document.getElementById('label-fecha-cuadra'); if (lblCua) lblCua.innerText = `Fecha: ${fechaFormateada}`;
+      const contTotales = document.getElementById('totales-panificados'); if (!contTotales) return;
+      contTotales.innerHTML = '';
+
+      const consolidados = {};
+      (dbRepartos[fechaActual] || []).forEach(p => {
+        if (p.origen === 'despacho') return;
+        consolidados[p.producto] = (consolidados[p.producto] || 0) + p.unidades;
+      });
+
+      const lista = Object.entries(consolidados).sort((a, b) => a[0].localeCompare(b[0]));
+      if (lista.length === 0) contTotales.innerHTML = '<p class="text-sm text-gray-500 italic">No hay pedidos de cuadra cargados.</p>';
+      else {
+        lista.forEach(([prodNombre, cantUnidades]) => {
+          const card = document.createElement('div'); card.className = "p-3 bg-amber-50 rounded-lg border border-amber-200 flex justify-between items-center";
+          card.innerHTML = `<h4 class="font-bold text-amber-950">${prodNombre}</h4><span class="text-xl font-extrabold text-amber-900">${cantUnidades} un.</span>`;
+          contTotales.appendChild(card);
+        });
+      }
+
+      const listaNotas = document.getElementById('lista-notas-mostrador');
+      if (listaNotas) {
+        listaNotas.innerHTML = '';
+        (dbNotasMostrador[fechaActual] || []).forEach((nota, idx) => {
+          const li = document.createElement('li'); li.className = "flex justify-between items-center bg-gray-50 p-2 rounded border mb-1";
+          li.innerHTML = `<span>${nota}</span><button onclick="eliminarNotaMostrador(${idx})" class="text-xs text-red-600 font-bold">Eliminar</button>`;
+          listaNotas.appendChild(li);
+        });
+      }
+    }
+
+    function agregarNotaMostrador() {
+      const input = document.getElementById('nota-mostrador'); if (!input || !input.value.trim()) return;
+      if (!dbNotasMostrador[fechaActual]) dbNotasMostrador[fechaActual] = [];
+      dbNotasMostrador[fechaActual].push(input.value.trim());
+      guardarDB('db_notas_mostrador', dbNotasMostrador); input.value = ''; renderizarCuadra();
+    }
+
+    function eliminarNotaMostrador(idx) {
+      if (dbNotasMostrador[fechaActual]) dbNotasMostrador[fechaActual].splice(idx, 1);
+      guardarDB('db_notas_mostrador', dbNotasMostrador); renderizarCuadra();
+    }
+
+    // 3. CLIENTES Y CTA CTE
+    function guardarCliente() {
+      const nombre = document.getElementById('cli-nombre').value.trim(); if (!nombre) return;
+      const id = generarID('CLI');
+      dbClientes[id] = { 
+        id, 
+        nombre, 
+        cuit: document.getElementById('cli-cuit').value.trim(), 
+        direccion: document.getElementById('cli-direccion').value.trim(), 
+        telefono: document.getElementById('cli-telefono').value.trim(),
+        email: document.getElementById('cli-email')?.value.trim() || '' 
+      };
+      guardarDB('db_clientes', dbClientes);
+      document.getElementById('cli-nombre').value = ''; 
+      if(document.getElementById('cli-cuit')) document.getElementById('cli-cuit').value = '';
+      if(document.getElementById('cli-direccion')) document.getElementById('cli-direccion').value = '';
+      if(document.getElementById('cli-telefono')) document.getElementById('cli-telefono').value = '';
+      if(document.getElementById('cli-email')) document.getElementById('cli-email').value = '';
+      cargarSelectorClientesReparto(); 
+      cargarSelectorClientesRecurrentes();
+      renderizarTablaClientes();
+      cargarBuscadorClientes();
+    }
+
+    function calcularSaldoCliente(cliId) {
+      let saldo = 0;
+      Object.values(dbRepartos).forEach(pDia => pDia.forEach(p => { if (p.clienteId === cliId && !p.pagado) saldo += p.monto; }));
+      (dbHistorialClientes[cliId] || []).forEach(m => { if (m.tipo === 'debito') saldo += m.monto; if (m.tipo === 'credito') saldo -= m.monto; });
+      return saldo;
+    }
+
+    function cargarBuscadorClientes() {
+      const sel = document.getElementById('select-buscador-cliente');
+      if (!sel) return;
+      sel.innerHTML = '<option value="">-- Buscar / Elegir Cliente --</option>';
+      Object.values(dbClientes).sort((a, b) => a.nombre.localeCompare(b.nombre)).forEach(c => {
+        const saldo = calcularSaldoCliente(c.id);
+        const opt = document.createElement('option');
+        opt.value = c.id;
+        opt.textContent = `${c.nombre} (Saldo: $${saldo.toLocaleString()})`;
+        sel.appendChild(opt);
+      });
+    }
+
+    function seleccionarClienteDesdeBuscador(cliId) {
+      if (!cliId) { cerrarHistorialCliente(); return; }
+      verHistorialCliente(cliId);
+    }
+
+    function renderizarTablaClientes() {
+      const tbody = document.getElementById('tabla-resumen-clientes-deuda'); if (!tbody) return; tbody.innerHTML = '';
+      Object.values(dbClientes).sort((a, b) => a.nombre.localeCompare(b.nombre)).forEach(cli => {
+        const saldo = calcularSaldoCliente(cli.id);
+        if (saldo <= 0) return;
+        const tr = document.createElement('tr'); tr.className = "border-b hover:bg-gray-50";
+        tr.innerHTML = `
+          <td class="p-1.5 font-bold text-gray-800">${cli.nombre}</td>
+          <td class="p-1.5 text-right font-bold text-red-600">$${saldo.toLocaleString()}</td>
+          <td class="p-1.5 text-center flex justify-center gap-1">
+            <button onclick="verHistorialCliente('${cli.id}')" class="bg-amber-700 text-white text-[10px] px-2 py-1 rounded font-bold">Ver Cta. / Ficha</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+      if (tbody.innerHTML === '') {
+        tbody.innerHTML = '<tr><td colspan="3" class="p-2 text-center text-gray-400 italic">No hay clientes con saldo pendiente de cobro.</td></tr>';
+      }
+      cargarBuscadorClientes();
+    }
+
+    function eliminarClienteActual() {
+      if (!clienteSeleccionadoId) return;
+      const cli = dbClientes[clienteSeleccionadoId];
+      const nombreCli = cli ? cli.nombre : 'este cliente';
+      if (confirm(`⚠️ ¿Está completamente seguro que desea borrar al cliente "${nombreCli}"?`)) {
+        delete dbClientes[clienteSeleccionadoId];
+        guardarDB('db_clientes', dbClientes);
+        renderizarTablaClientes();
+        cargarSelectorClientesReparto();
+        cargarSelectorClientesRecurrentes();
+        cerrarHistorialCliente();
+        alert("Cliente eliminado correctamente.");
+      }
+    }
+
+    function verHistorialCliente(cliId) {
+      clienteSeleccionadoId = cliId; const cli = dbClientes[cliId]; if (!cli) return;
+      document.getElementById('historial-nombre-cliente').textContent = cli.nombre;
+      const saldoActual = calcularSaldoCliente(cliId);
+      document.getElementById('historial-contacto-cliente').textContent = `Tel: ${cli.telefono || 'S/D'} | Email: ${cli.email || 'S/D'} | Saldo Actual: $${saldoActual.toLocaleString()}`;
+      
+      document.getElementById('edit-cli-nombre').value = cli.nombre || '';
+      document.getElementById('edit-cli-cuit').value = cli.cuit || '';
+      document.getElementById('edit-cli-direccion').value = cli.direccion || '';
+      document.getElementById('edit-cli-telefono').value = cli.telefono || '';
+      document.getElementById('edit-cli-email').value = cli.email || '';
+
+      document.getElementById('módulo-historial-cliente').classList.remove('hidden');
+      const selBuscador = document.getElementById('select-buscador-cliente');
+      if (selBuscador) selBuscador.value = cliId;
+      renderizarTablaHistorialCliente();
+    }
+
+    function guardarEdicionCliente() {
+      if (!clienteSeleccionadoId || !dbClientes[clienteSeleccionadoId]) return;
+      const cli = dbClientes[clienteSeleccionadoId];
+
+      const nuevoNombre = document.getElementById('edit-cli-nombre').value.trim();
+      if (!nuevoNombre) { alert("El nombre del cliente no puede estar vacío."); return; }
+
+      cli.nombre = nuevoNombre;
+      cli.cuit = document.getElementById('edit-cli-cuit').value.trim();
+      cli.direccion = document.getElementById('edit-cli-direccion').value.trim();
+      cli.telefono = document.getElementById('edit-cli-telefono').value.trim();
+      cli.email = document.getElementById('edit-cli-email').value.trim();
+
+      guardarDB('db_clientes', dbClientes);
+      renderizarTablaClientes();
+      cargarSelectorClientesReparto();
+      cargarSelectorClientesRecurrentes();
+      verHistorialCliente(clienteSeleccionadoId);
+      alert("¡Datos actualizados con éxito!");
+    }
+
+    function cerrarHistorialCliente() { 
+      clienteSeleccionadoId = null; 
+      document.getElementById('módulo-historial-cliente').classList.add('hidden'); 
+      const selBuscador = document.getElementById('select-buscador-cliente');
+      if (selBuscador) selBuscador.value = "";
+    }
+
+    function borrarMovimientoCliente(movId) {
+      if(confirm("¿Seguro que querés borrar este movimiento?")) {
+        dbHistorialClientes[clienteSeleccionadoId] = dbHistorialClientes[clienteSeleccionadoId].filter(m => m.id !== movId);
+        guardarDB('db_historial_clientes', dbHistorialClientes);
+        renderizarTablaHistorialCliente();
+        renderizarTablaClientes();
+      }
+    }
+
+    function renderizarTablaHistorialCliente() {
+      if (!clienteSeleccionadoId) return;
+      const tbody = document.getElementById('tabla-historial-cliente'); if (!tbody) return; tbody.innerHTML = '';
+      const movs = [];
+      Object.entries(dbRepartos).forEach(([fecha, pDia]) => { pDia.forEach(p => { if (p.clienteId === clienteSeleccionadoId && !p.pagado) movs.push({ id: p.id, fecha, concepto: `Pedido Reparto: ${p.producto} (${p.unidades} un.)`, debito: p.monto, credito: 0 }); }); });
+      (dbHistorialClientes[clienteSeleccionadoId] || []).forEach(p => movs.push({ id: p.id, fecha: p.fecha, concepto: `Pago (${p.medio})`, debito: p.tipo === 'debito' ? p.monto : 0, credito: p.tipo === 'credito' ? p.monto : 0 }));
+      movs.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+
+      let acumulado = 0;
+      movs.forEach(m => {
+        acumulado += (m.debito - m.credito);
+        const tr = document.createElement('tr'); tr.className = "border-b text-xs md:text-sm hover:bg-gray-50";
+        tr.innerHTML = `<td class="p-2">${m.fecha}</td><td class="p-2">${m.concepto}</td><td class="p-2 text-right text-red-600">${m.debito > 0 ? '$' + m.debito.toLocaleString() : '-'}</td><td class="p-2 text-right text-green-700">${m.credito > 0 ? '$' + m.credito.toLocaleString() : '-'}</td><td class="p-2 text-right font-bold text-red-600">$${acumulado.toLocaleString()}</td>
+        <td class="p-2 text-center">
+          ${m.concepto.includes('Pago') ? `<button onclick="borrarMovimientoCliente('${m.id}')" class="text-[10px] text-red-600 font-bold border border-red-600 px-1 rounded">Borrar</button>` : '-'}
+        </td>`;
+        tbody.appendChild(tr);
+      });
+
+      const trBorrar = document.createElement('tr');
+      trBorrar.innerHTML = `
+        <td colspan="6" class="p-3 text-right bg-gray-50 border-t">
+          <button type="button" onclick="eliminarClienteActual()" class="bg-red-600 text-white text-xs px-3 py-1.5 rounded font-bold hover:bg-red-700">🗑️ Borrar este Cliente</button>
+        </td>
+      `;
+      tbody.appendChild(trBorrar);
+    }
+
+    function registrarPagoCliente() {
+      if (!clienteSeleccionadoId) return;
+      const monto = parseFloat(document.getElementById('pago-monto').value); if (isNaN(monto) || monto <= 0) return;
+      if (!dbHistorialClientes[clienteSeleccionadoId]) dbHistorialClientes[clienteSeleccionadoId] = [];
+      dbHistorialClientes[clienteSeleccionadoId].push({ id: generarID('PAG'), fecha: document.getElementById('pago-fecha').value || fechaActual, monto, medio: document.getElementById('pago-medio').value, tipo: 'credito' });
+      guardarDB('db_historial_clientes', dbHistorialClientes); document.getElementById('pago-monto').value = ''; renderizarTablaHistorialCliente(); renderizarTablaClientes(); verHistorialCliente(clienteSeleccionadoId);
+    }
+
+    // --- ENVIAR RESUMEN A CLIENTES (WHATSAPP & MAIL) ---
+    function enviarResumenWhatsAppCliente() {
+      if (!clienteSeleccionadoId) return;
+      const cli = dbClientes[clienteSeleccionadoId];
+      if (!cli) return;
+
+      const saldo = calcularSaldoCliente(clienteSeleccionadoId);
+      let mensaje = `Hola *${cli.nombre}*, te enviamos el resumen de tu Cuenta Corriente:\n\n`;
+
+      const movs = [];
+      Object.entries(dbRepartos).forEach(([fecha, pDia]) => {
+        pDia.forEach(p => {
+          if (p.clienteId === clienteSeleccionadoId && !p.pagado) {
+            movs.push({ fecha, concepto: `${p.producto} (${p.unidades} un.)`, monto: p.monto, tipo: '+' });
+          }
+        });
+      });
+      (dbHistorialClientes[clienteSeleccionadoId] || []).forEach(p => {
+        movs.push({ fecha: p.fecha, concepto: `Pago (${p.medio})`, monto: p.monto, tipo: '-' });
+      });
+      movs.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+
+      if (movs.length === 0) {
+        mensaje += `Actualmente no presentás saldo pendiente. ¡Muchas gracias!\n`;
+      } else {
+        mensaje += `*Detalle de movimientos pendientes:*\n`;
+        movs.forEach(m => {
+          mensaje += `• ${m.fecha}: ${m.concepto} -> ${m.tipo}$${m.monto.toLocaleString()}\n`;
+        });
+        mensaje += `\n*SALDO TOTAL A PAGAR: $${saldo.toLocaleString()}*\n\n`;
+        mensaje += `Muchas gracias por tu compra. La Casa del Pan & La Espiga de Oro.`;
+      }
+
+      let tel = (cli.telefono || '').replace(/\D/g, '');
+      const url = tel ? `https://api.whatsapp.com/send?phone=${tel}&text=${encodeURIComponent(mensaje)}` : `https://api.whatsapp.com/send?text=${encodeURIComponent(mensaje)}`;
+      window.open(url, '_blank');
+    }
+
+    function enviarResumenEmailCliente() {
+      if (!clienteSeleccionadoId) return;
+      const cli = dbClientes[clienteSeleccionadoId];
+      if (!cli) return;
+
+      const saldo = calcularSaldoCliente(clienteSeleccionadoId);
+      const asunto = `Resumen de Cuenta Corriente - ${cli.nombre}`;
+      let cuerpo = `Hola ${cli.nombre},\n\nAdjuntamos el detalle de tu Cuenta Corriente:\n\n`;
+
+      const movs = [];
+      Object.entries(dbRepartos).forEach(([fecha, pDia]) => {
+        pDia.forEach(p => {
+          if (p.clienteId === clienteSeleccionadoId && !p.pagado) {
+            movs.push({ fecha, concepto: `${p.producto} (${p.unidades} un.)`, monto: p.monto, tipo: '+' });
+          }
+        });
+      });
+      (dbHistorialClientes[clienteSeleccionadoId] || []).forEach(p => {
+        movs.push({ fecha: p.fecha, concepto: `Pago (${p.medio})`, monto: p.monto, tipo: '-' });
+      });
+      movs.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+
+      if (movs.length === 0) {
+        cuerpo += `Actualmente no presentás saldo pendiente. ¡Muchas gracias!\n`;
+      } else {
+        cuerpo += `Detalle de movimientos pendientes:\n`;
+        movs.forEach(m => {
+          cuerpo += `- ${m.fecha}: ${m.concepto} -> ${m.tipo}$${m.monto.toLocaleString()}\n`;
+        });
+        cuerpo += `\nSALDO TOTAL A PAGAR: $${saldo.toLocaleString()}\n\n`;
+        cuerpo += `Saludos cordiales,\nLa Casa del Pan & La Espiga de Oro`;
+      }
+
+      const emailDestino = cli.email || '';
+      window.location.href = `mailto:${emailDestino}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`;
+    }
+
+    // 4. PROVEEDORES Y FACTURACIÓN
+    function guardarProveedor() {
+      const nombre = document.getElementById('prov-nombre').value.trim(); if (!nombre) return;
+      const id = generarID('PRV');
+      dbProveedores[id] = { id, nombre, cuit: document.getElementById('prov-cuit').value.trim(), telefono: document.getElementById('prov-telefono').value.trim(), rubro: document.getElementById('prov-rubro').value.trim() };
+      guardarDB('db_proveedores', dbProveedores); renderizarTablaProveedores(); cargarBuscadorProveedores();
+    }
+
+    function calcularSaldoProveedor(provId) {
+      let saldo = 0;
+      (dbHistorialProveedores[provId] || []).forEach(m => { if (m.tipo === 'factura') saldo += m.monto; if (m.tipo === 'pago') saldo -= m.monto; });
+      return saldo;
+    }
+
+    function cargarBuscadorProveedores() {
+      const sel = document.getElementById('select-buscador-proveedor');
+      if (!sel) return;
+      sel.innerHTML = '<option value="">-- Buscar / Elegir Proveedor --</option>';
+      Object.values(dbProveedores).sort((a, b) => a.nombre.localeCompare(b.nombre)).forEach(p => {
+        const saldo = calcularSaldoProveedor(p.id);
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = `${p.nombre} (Deuda: $${saldo.toLocaleString()})`;
+        sel.appendChild(opt);
+      });
+    }
+
+    function seleccionarProveedorDesdeBuscador(provId) {
+      if (!provId) { cerrarHistorialProveedor(); return; }
+      verHistorialProveedor(provId);
+    }
+
+    function renderizarTablaProveedores() {
+      const tbody = document.getElementById('tabla-resumen-proveedores-deuda'); if (!tbody) return; tbody.innerHTML = '';
+      Object.values(dbProveedores).sort((a, b) => a.nombre.localeCompare(b.nombre)).forEach(prv => {
+        const saldo = calcularSaldoProveedor(prv.id);
+        const tr = document.createElement('tr'); tr.className = "border-b hover:bg-gray-50";
+        tr.innerHTML = `
+          <td class="p-1.5 font-bold">${prv.nombre}</td>
+          <td class="p-1.5 text-right font-bold text-red-600">$${saldo.toLocaleString()}</td>
+          <td class="p-1.5 text-center"><button onclick="verHistorialProveedor('${prv.id}')" class="bg-amber-700 text-white text-[10px] px-2 py-1 rounded font-bold">Ver Cta. / Ficha</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+      if (tbody.innerHTML === '') {
+        tbody.innerHTML = '<tr><td colspan="3" class="p-2 text-center text-gray-400 italic">No hay proveedores registrados.</td></tr>';
+      }
+      cargarBuscadorProveedores();
+    }
+
+    function eliminarProveedorActual() {
+      if (!proveedorSeleccionadoId) return;
+      const prv = dbProveedores[proveedorSeleccionadoId];
+      const nombrePrv = prv ? prv.nombre : 'este proveedor';
+      if (confirm(`⚠️ ¿Está completamente seguro que desea borrar al proveedor "${nombrePrv}"?`)) {
+        delete dbProveedores[proveedorSeleccionadoId];
+        guardarDB('db_proveedores', dbProveedores);
+        renderizarTablaProveedores();
+        cerrarHistorialProveedor();
+        alert("Proveedor eliminado correctamente.");
+      }
+    }
+
+    function verHistorialProveedor(provId) {
+      proveedorSeleccionadoId = provId; const prv = dbProveedores[provId]; if (!prv) return;
+      document.getElementById('historial-nombre-proveedor').textContent = prv.nombre;
+      
+      document.getElementById('edit-prov-nombre').value = prv.nombre || '';
+      document.getElementById('edit-prov-cuit').value = prv.cuit || '';
+      document.getElementById('edit-prov-telefono').value = prv.telefono || '';
+      document.getElementById('edit-prov-rubro').value = prv.rubro || '';
+
+      document.getElementById('módulo-historial-proveedor').classList.remove('hidden');
+      const selBuscador = document.getElementById('select-buscador-proveedor');
+      if (selBuscador) selBuscador.value = provId;
+      renderizarTablaHistorialProveedor();
+    }
+
+    function guardarEdicionProveedor() {
+      if (!proveedorSeleccionadoId || !dbProveedores[proveedorSeleccionadoId]) return;
+      const prv = dbProveedores[proveedorSeleccionadoId];
+
+      const nuevoNombre = document.getElementById('edit-prov-nombre').value.trim();
+      if (!nuevoNombre) { alert("El nombre del proveedor no puede estar vacío."); return; }
+
+      prv.nombre = nuevoNombre;
+      prv.cuit = document.getElementById('edit-prov-cuit').value.trim();
+      prv.telefono = document.getElementById('edit-prov-telefono').value.trim();
+      prv.rubro = document.getElementById('edit-prov-rubro').value.trim();
+
+      guardarDB('db_proveedores', dbProveedores);
+      renderizarTablaProveedores();
+      verHistorialProveedor(proveedorSeleccionadoId);
+      alert("¡Datos actualizados con éxito!");
+    }
+
+    function cerrarHistorialProveedor() { 
+      proveedorSeleccionadoId = null; 
+      document.getElementById('módulo-historial-proveedor').classList.add('hidden'); 
+      const selBuscador = document.getElementById('select-buscador-proveedor');
+      if (selBuscador) selBuscador.value = "";
+    }
+
+    function cargarFacturaProveedor() {
+      if (!proveedorSeleccionadoId) return;
+      const cant = parseFloat(document.getElementById('fact-cant').value); const precioUn = parseFloat(document.getElementById('fact-precio').value);
+      const insumoId = document.getElementById('fact-insumo').value;
+      if (isNaN(cant) || isNaN(precioUn)) return;
+      
+      if (!dbHistorialProveedores[proveedorSeleccionadoId]) dbHistorialProveedores[proveedorSeleccionadoId] = [];
+
+      dbHistorialProveedores[proveedorSeleccionadoId].push({
+        id: generarID('FAC'), fecha: document.getElementById('fact-fecha').value || fechaActual,
+        nroFactura: document.getElementById('fact-nro').value.trim() || 'S/N', monto: cant * precioUn, tipo: 'factura'
+      });
+
+      if (insumoId && dbInsumos[insumoId]) {
+        dbInsumos[insumoId].stock += cant;
+        guardarDB('db_insumos', dbInsumos);
+        renderizarStockInsumos();
+      }
+
+      guardarDB('db_historial_proveedores', dbHistorialProveedores);
+      renderizarTablaHistorialProveedor(); renderizarTablaProveedores(); renderizarReportesMensuales();
+    }
+
+    function registrarPagoProveedor() {
+      if (!proveedorSeleccionadoId) return;
+      const monto = parseFloat(document.getElementById('pago-prov-monto').value); if (isNaN(monto) || monto <= 0) return;
+      if (!dbHistorialProveedores[proveedorSeleccionadoId]) dbHistorialProveedores[proveedorSeleccionadoId] = [];
+
+      dbHistorialProveedores[proveedorSeleccionadoId].push({
+        id: generarID('PAGPRV'), fecha: document.getElementById('pago-prov-fecha').value || fechaActual,
+        monto, medio: document.getElementById('pago-prov-medio').value, tipo: 'pago'
+      });
+
+      guardarDB('db_historial_proveedores', dbHistorialProveedores);
+      renderizarTablaHistorialProveedor(); renderizarTablaProveedores(); renderizarReportesMensuales();
+    }
+
+    function borrarMovimientoProveedor(movId) {
+      if(confirm("¿Seguro que querés borrar este movimiento?")) {
+        dbHistorialProveedores[proveedorSeleccionadoId] = dbHistorialProveedores[proveedorSeleccionadoId].filter(m => m.id !== movId);
+        guardarDB('db_historial_proveedores', dbHistorialProveedores);
+        renderizarTablaHistorialProveedor();
+        renderizarTablaProveedores();
+      }
+    }
+
+    function renderizarTablaHistorialProveedor() {
+      if (!proveedorSeleccionadoId) return;
+      const tbody = document.getElementById('tabla-historial-proveedor'); if (!tbody) return; tbody.innerHTML = '';
+      const movs = dbHistorialProveedores[proveedorSeleccionadoId] || [];
+      movs.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+
+      let acumulado = 0;
+      movs.forEach(m => {
+        if (m.tipo === 'factura') acumulado += m.monto; if (m.tipo === 'pago') acumulado -= m.monto;
+        const tr = document.createElement('tr'); tr.className = "border-b text-xs md:text-sm hover:bg-gray-50";
+        tr.innerHTML = `<td class="p-2">${m.fecha}</td><td class="p-2">${m.tipo === 'factura' ? 'Factura N° ' + m.nroFactura : 'Pago (' + m.medio + ')'}</td><td class="p-2 text-right text-red-600">${m.tipo === 'factura' ? '$' + m.monto.toLocaleString() : '-'}</td><td class="p-2 text-right text-green-700">${m.tipo === 'pago' ? '$' + m.monto.toLocaleString() : '-'}</td><td class="p-2 text-right font-bold text-red-600">$${acumulado.toLocaleString()}</td>
+        <td class="p-2 text-center">
+          <button onclick="borrarMovimientoProveedor('${m.id}')" class="text-[10px] text-red-600 font-bold border border-red-600 px-1 rounded">Borrar</button>
+        </td>`;
+        tbody.appendChild(tr);
+      });
+
+      const trBorrar = document.createElement('tr');
+      trBorrar.innerHTML = `
+        <td colspan="6" class="p-3 text-right bg-gray-50 border-t">
+          <button type="button" onclick="eliminarProveedorActual()" class="bg-red-600 text-white text-xs px-3 py-1.5 rounded font-bold hover:bg-red-700">🗑️ Borrar este Proveedor</button>
+        </td>
+      `;
+      tbody.appendChild(trBorrar);
+    }
+
+    // --- ENVIAR RESUMEN A PROVEEDORES (WHATSAPP & MAIL) ---
+    function enviarResumenWhatsAppProveedor() {
+      if (!proveedorSeleccionadoId) return;
+      const prv = dbProveedores[proveedorSeleccionadoId];
+      if (!prv) return;
+
+      const saldo = calcularSaldoProveedor(proveedorSeleccionadoId);
+      let mensaje = `Estimados *${prv.nombre}*, enviamos la conciliación de estado de cuenta:\n\n`;
+
+      const movs = dbHistorialProveedores[proveedorSeleccionadoId] || [];
+      movs.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+
+      if (movs.length === 0) {
+        mensaje += `No registramos comprobantes pendientes.\n`;
+      } else {
+        mensaje += `*Detalle de comprobantes y pagos:*\n`;
+        movs.forEach(m => {
+          mensaje += `• ${m.fecha}: ${m.tipo === 'factura' ? 'Factura N° ' + m.nroFactura : 'Pago (' + m.medio + ')'} -> $${m.monto.toLocaleString()}\n`;
+        });
+        mensaje += `\n*SALDO DEUDA ACUMULADO: $${saldo.toLocaleString()}*\n\n`;
+        mensaje += `La Casa del Pan & La Espiga de Oro.`;
+      }
+
+      let tel = (prv.telefono || '').replace(/\D/g, '');
+      const url = tel ? `https://api.whatsapp.com/send?phone=${tel}&text=${encodeURIComponent(mensaje)}` : `https://api.whatsapp.com/send?text=${encodeURIComponent(mensaje)}`;
+      window.open(url, '_blank');
+    }
+
+    function enviarResumenEmailProveedor() {
+      if (!proveedorSeleccionadoId) return;
+      const prv = dbProveedores[proveedorSeleccionadoId];
+      if (!prv) return;
+
+      const saldo = calcularSaldoProveedor(proveedorSeleccionadoId);
+      const asunto = `Estado de Cuenta Corriente Proveedor - ${prv.nombre}`;
+      let cuerpo = `Estimados ${prv.nombre},\n\nAdjuntamos la conciliación de estado de cuenta:\n\n`;
+
+      const movs = dbHistorialProveedores[proveedorSeleccionadoId] || [];
+      movs.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+
+      if (movs.length === 0) {
+        cuerpo += `No registramos comprobantes pendientes.\n`;
+      } else {
+        cuerpo += `Detalle de movimientos:\n`;
+        movs.forEach(m => {
+          cuerpo += `- ${m.fecha}: ${m.tipo === 'factura' ? 'Factura N° ' + m.nroFactura : 'Pago (' + m.medio + ')'} -> $${m.monto.toLocaleString()}\n`;
+        });
+        cuerpo += `\nSALDO DEUDA ACUMULADO: $${saldo.toLocaleString()}\n\n`;
+        cuerpo += `Saludos cordiales,\nLa Casa del Pan & La Espiga de Oro`;
+      }
+
+      window.location.href = `mailto:?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`;
+    }
+
+    // 5. CONTROL DE STOCK E INSUMOS
+    function cargarSelectorInsumosFactura() {
+      const sel = document.getElementById('fact-insumo'); if (!sel) return; sel.innerHTML = '<option value="">-- Insumo --</option>';
+      Object.values(dbInsumos).forEach(ins => { const opt = document.createElement('option'); opt.value = ins.id; opt.textContent = ins.nombre; sel.appendChild(opt); });
+    }
+
+    function cargarSelectorInsumosMovimiento() {
+      const sel = document.getElementById('mov-stock-insumo'); if (!sel) return; sel.innerHTML = '<option value="">-- Insumo --</option>';
+      Object.values(dbInsumos).sort((a, b) => a.nombre.localeCompare(b.nombre)).forEach(ins => { const opt = document.createElement('option'); opt.value = ins.id; opt.textContent = `${ins.nombre} (Stock: ${ins.stock} ${ins.unidad})`; sel.appendChild(opt); });
+    }
+
+    function editarInsumoUI(id) {
+      const ins = dbInsumos[id];
+      document.getElementById('ins-id-editando').value = id;
+      document.getElementById('ins-nombre').value = ins.nombre;
+      document.getElementById('ins-stock').value = ins.stock;
+      document.getElementById('ins-minimo').value = ins.minimo;
+      document.getElementById('ins-unidad').value = ins.unidad;
+    }
+
+    function guardarInsumo() {
+      const nombre = document.getElementById('ins-nombre').value.trim(); if (!nombre) return;
+      const editId = document.getElementById('ins-id-editando').value;
+      const id = editId ? editId : generarID('INS');
+      
+      dbInsumos[id] = { 
+        id, nombre, 
+        stock: parseFloat(document.getElementById('ins-stock').value) || 0, 
+        minimo: parseFloat(document.getElementById('ins-minimo').value) || 0, 
+        unidad: document.getElementById('ins-unidad').value.trim() || 'Unid' 
+      };
+      
+      guardarDB('db_insumos', dbInsumos); 
+      document.getElementById('ins-id-editando').value = '';
+      document.getElementById('ins-nombre').value = '';
+      document.getElementById('ins-stock').value = '';
+      document.getElementById('ins-minimo').value = '';
+      document.getElementById('ins-unidad').value = '';
+      renderizarStockInsumos(); 
+      cargarSelectorInsumosFactura();
+      cargarSelectorInsumosMovimiento();
+    }
+
+    function guardarInsumosMasivo() {
+      const texto = document.getElementById('ins-masivo-texto').value.trim();
+      if (!texto) { alert("El campo de texto está vacío."); return; }
+      
+      const lineas = texto.split('\n');
+      let contador = 0;
+
+      lineas.forEach(linea => {
+        const partes = linea.split(',').map(p => p.trim());
+        if (partes.length >= 1 && partes[0]) {
+          const nombre = partes[0];
+          const stock = parseFloat(partes[1]) || 0;
+          const minimo = parseFloat(partes[2]) || 0;
+          const unidad = partes[3] || 'Unid';
+          
+          const id = generarID('INS');
+          dbInsumos[id] = { id, nombre, stock, minimo, unidad };
+          contador++;
+        }
+      });
+
+      if (contador > 0) {
+        guardarDB('db_insumos', dbInsumos);
+        document.getElementById('ins-masivo-texto').value = '';
+        renderizarStockInsumos();
+        cargarSelectorInsumosFactura();
+        cargarSelectorInsumosMovimiento();
+        alert(`¡Se cargaron ${contador} insumos exitosamente!`);
+      } else {
+        alert("No se pudieron procesar las líneas. Verifique el formato.");
+      }
+    }
+
+    function registrarMovimientoManualStock() {
+      const insId = document.getElementById('mov-stock-insumo').value;
+      const tipo = document.getElementById('mov-stock-tipo').value;
+      const cant = parseFloat(document.getElementById('mov-stock-cantidad').value);
+
+      if (!insId || isNaN(cant) || cant <= 0) { alert("Seleccione un insumo y una cantidad válida."); return; }
+      const ins = dbInsumos[insId];
+      if (!ins) return;
+
+      if (tipo === 'salida') {
+        ins.stock -= cant;
+      } else {
+        ins.stock += cant;
+      }
+
+      guardarDB('db_insumos', dbInsumos);
+      document.getElementById('mov-stock-cantidad').value = '';
+      renderizarStockInsumos();
+      cargarSelectorInsumosMovimiento();
+      alert(`¡Movimiento registrado con éxito! Nuevo stock de ${ins.nombre}: ${ins.stock} ${ins.unidad}`);
+    }
+
+    function eliminarInsumoStock(id) {
+      const ins = dbInsumos[id];
+      const nombreIns = ins ? ins.nombre : 'este insumo';
+      if (confirm(`⚠️ ¿Desea eliminar "${nombreIns}" del stock?`)) {
+        delete dbInsumos[id];
+        guardarDB('db_insumos', dbInsumos);
+        renderizarStockInsumos();
+        cargarSelectorInsumosFactura();
+        cargarSelectorInsumosMovimiento();
+        alert("Insumo eliminado correctamente.");
+      }
+    }
+
+    function renderizarStockInsumos() {
+      const tbody = document.getElementById('tabla-stock-insumos'); if (!tbody) return; tbody.innerHTML = '';
+      Object.values(dbInsumos).sort((a, b) => a.nombre.localeCompare(b.nombre)).forEach(ins => {
+        const tr = document.createElement('tr'); tr.className = "border-b hover:bg-gray-50";
+        tr.innerHTML = `
+          <td class="p-2 font-bold">${ins.nombre}</td>
+          <td class="p-2 font-semibold">${ins.stock} ${ins.unidad}</td>
+          <td class="p-2 text-gray-500">${ins.minimo} ${ins.unidad}</td>
+          <td class="p-2 text-center">${ins.stock <= ins.minimo ? `<span class="bg-red-100 text-red-800 text-xs px-2 py-0.5 rounded font-bold">⚠️ Alerta</span>` : `<span class="bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded font-bold">Normal</span>`}</td>
+          <td class="p-2 text-center">
+            <button onclick="editarInsumoUI('${ins.id}')" class="bg-blue-600 text-white text-xs px-2 py-1 rounded font-bold mr-1">✏️ Editar</button>
+            <button onclick="eliminarInsumoStock('${ins.id}')" class="bg-red-600 text-white text-xs px-2 py-1 rounded font-bold">✕ Eliminar</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // 6. CAJAS INDEPENDIENTES Y REPORTES
+    function cargarCajasHoyUI() {
+      const usr = dbUsuarios[usuarioActivoId];
+      const boxRep = document.getElementById('box-caja-reparto');
+      const boxAlem = document.getElementById('box-caja-alem');
+      const boxEspiga = document.getElementById('box-caja-espiga');
+      const selOrigenEgreso = document.getElementById('egreso-origen');
+
+      if (usr && usr.sucursal === 'espiga' && usr.rol !== 'admin') {
+        if (boxRep) boxRep.classList.add('hidden');
+        if (boxAlem) boxAlem.classList.add('hidden');
+        if (boxEspiga) boxEspiga.classList.remove('hidden');
+        if (selOrigenEgreso) selOrigenEgreso.innerHTML = '<option value="La Espiga de Oro">La Espiga de Oro</option>';
+      } else if (usr && usr.sucursal === 'alem' && usr.rol !== 'admin') {
+        if (boxRep) boxRep.classList.add('hidden');
+        if (boxAlem) boxAlem.classList.remove('hidden');
+        if (boxEspiga) boxEspiga.classList.add('hidden');
+        if (selOrigenEgreso) selOrigenEgreso.innerHTML = '<option value="La Casa del Pan">La Casa del Pan</option>';
+      } else {
+        if (boxRep) boxRep.classList.remove('hidden');
+        if (boxAlem) boxAlem.classList.remove('hidden');
+        if (boxEspiga) boxEspiga.classList.remove('hidden');
+        if (selOrigenEgreso) selOrigenEgreso.innerHTML = `
+          <option value="La Casa del Pan">La Casa del Pan</option>
+          <option value="La Espiga de Oro">La Espiga de Oro</option>
+          <option value="Reparto">Reparto</option>
+        `;
+      }
+
+      const datosCaja = dbCajasDiarias[fechaActual] || {};
+
+      ['alem', 'espiga'].forEach(suc => {
+        ['manana', 'tarde'].forEach(turno => {
+          const pfx = `${suc}-${turno.charAt(0)}`;
+          let info = datosCaja[suc]?.[turno];
+          
+          if (!info) {
+            info = { efectivo: 0, digital: 0, cerrado: false, usuario: "" };
+          }
+
+          const inEf = document.getElementById(`${pfx}-efectivo`);
+          const inDg = document.getElementById(`${pfx}-digital`);
+          const stLbl = document.getElementById(`st-${suc}-${turno}`);
+
+          if (inEf) { inEf.value = info.efectivo || 0; inEf.disabled = info.cerrado; }
+          if (inDg) { inDg.value = info.digital || 0; inDg.disabled = info.cerrado; }
+          if (stLbl) {
+            stLbl.textContent = info.cerrado ? `🔒 Cerrado (${info.usuario || ''})` : '🟢 Abierto';
+            stLbl.className = info.cerrado ? "text-[10px] bg-red-200 text-red-800 px-2 py-0.5 rounded font-bold" : "text-[10px] bg-green-200 text-green-800 px-2 py-0.5 rounded font-bold";
+          }
+        });
+      });
+    }
+
+    function guardarDatosCajaDiaria() {
+      if (!dbCajasDiarias[fechaActual]) {
+        dbCajasDiarias[fechaActual] = {
+          alem: { manana: { efectivo: 0, digital: 0, cerrado: false }, tarde: { efectivo: 0, digital: 0, cerrado: false } },
+          espiga: { manana: { efectivo: 0, digital: 0, cerrado: false }, tarde: { efectivo: 0, digital: 0, cerrado: false } }
+        };
+      }
+
+      const c = dbCajasDiarias[fechaActual];
+      if (!c.alem) c.alem = { manana: { efectivo: 0, digital: 0, cerrado: false }, tarde: { efectivo: 0, digital: 0, cerrado: false } };
+      if (!c.espiga) c.espiga = { manana: { efectivo: 0, digital: 0, cerrado: false }, tarde: { efectivo: 0, digital: 0, cerrado: false } };
+
+      if (!c.alem.manana.cerrado) {
+        c.alem.manana.efectivo = parseFloat(document.getElementById('alem-m-efectivo')?.value) || 0;
+        c.alem.manana.digital = parseFloat(document.getElementById('alem-m-digital')?.value) || 0;
+      }
+      if (!c.alem.tarde.cerrado) {
+        c.alem.tarde.efectivo = parseFloat(document.getElementById('alem-t-efectivo')?.value) || 0;
+        c.alem.tarde.digital = parseFloat(document.getElementById('alem-t-digital')?.value) || 0;
+      }
+      if (!c.espiga.manana.cerrado) {
+        c.espiga.manana.efectivo = parseFloat(document.getElementById('espiga-m-efectivo')?.value) || 0;
+        c.espiga.manana.digital = parseFloat(document.getElementById('espiga-m-digital')?.value) || 0;
+      }
+      if (!c.espiga.tarde.cerrado) {
+        c.espiga.tarde.efectivo = parseFloat(document.getElementById('espiga-t-efectivo')?.value) || 0;
+        c.espiga.tarde.digital = parseFloat(document.getElementById('espiga-t-digital')?.value) || 0;
+      }
+
+      guardarDB('db_cajas_diarias', dbCajasDiarias);
+      renderizarReportesMensuales();
+    }
+
+    function cerrarTurnoParcial(sucursal, turno) {
+      guardarDatosCajaDiaria();
+      const usr = dbUsuarios[usuarioActivoId];
+      const c = dbCajasDiarias[fechaActual][sucursal][turno];
+
+      if (c.cerrado) {
+        alert("Este turno ya se encuentra cerrado.");
+        return;
+      }
+
+      if (confirm(`¿Confirmar cierre del turno ${turno.toUpperCase()} para ${sucursal.toUpperCase()}?`)) {
+        c.cerrado = true;
+        c.usuario = usr?.nombre || 'Usuario';
+        guardarDB('db_cajas_diarias', dbCajasDiarias);
+        cargarCajasHoyUI();
+        alert(`¡Turno ${turno} cerrado correctamente!`);
+      }
+    }
+
+    function registrarEgresoCaja() {
+      const origen = document.getElementById('egreso-origen').value;
+      const concepto = document.getElementById('egreso-concepto').value.trim();
+      const monto = parseFloat(document.getElementById('egreso-monto').value);
+
+      if (!concepto || isNaN(monto) || monto <= 0) { alert("Ingrese concepto y monto válidos."); return; }
+
+      if (!dbEgresosCaja[fechaActual]) dbEgresosCaja[fechaActual] = [];
+      dbEgresosCaja[fechaActual].push({ id: generarID('EGR'), origen, concepto, monto });
+
+      guardarDB('db_egresos_caja', dbEgresosCaja);
+      document.getElementById('egreso-concepto').value = '';
+      document.getElementById('egreso-monto').value = '';
+      renderizarTablaEgresosHoy();
+      renderizarReportesMensuales();
+    }
+
+    function renderizarTablaEgresosHoy() {
+      const tbody = document.getElementById('tabla-egresos-hoy'); if (!tbody) return; tbody.innerHTML = '';
+      const egresos = dbEgresosCaja[fechaActual] || [];
+      const usr = dbUsuarios[usuarioActivoId];
+
+      egresos.forEach((e, idx) => {
+        if (usr && usr.sucursal === 'espiga' && usr.rol !== 'admin' && e.origen !== 'La Espiga de Oro') return;
+        if (usr && usr.sucursal === 'alem' && usr.rol !== 'admin' && e.origen !== 'La Casa del Pan') return;
+
+        const tr = document.createElement('tr'); tr.className = "border-b hover:bg-gray-50";
+        tr.innerHTML = `
+          <td class="p-1.5 font-bold text-gray-700">${e.origen}</td>
+          <td class="p-1.5">${e.concepto}</td>
+          <td class="p-1.5 text-right font-bold text-red-600">$${e.monto.toLocaleString()}</td>
+          <td class="p-1.5 text-center"><button onclick="eliminarEgresoCaja(${idx})" class="text-xs text-red-600 font-bold">✕</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function eliminarEgresoCaja(idx) {
+      if (dbEgresosCaja[fechaActual]) dbEgresosCaja[fechaActual].splice(idx, 1);
+      guardarDB('db_egresos_caja', dbEgresosCaja); renderizarTablaEgresosHoy(); renderizarReportesMensuales();
+    }
+
+    function guardarYReiniciarDia() {
+      guardarDatosCajaDiaria();
+      alert(`¡Cierre Operativo Diario registrado para ${fechaActual}!`);
+    }
+
+    function abrirModalEditarCajaAdmin(fechaStr) {
+      const usr = dbUsuarios[usuarioActivoId];
+      if (!usr || usr.rol !== 'admin') {
+        alert("Acceso restringido al Administrador General.");
+        return;
+      }
+      
+      document.getElementById('admin-edit-caja-fecha').value = fechaStr;
+      const cDia = dbCajasDiarias[fechaStr] || {};
+      
+      let vAlem = 0;
+      if (cDia.alem) {
+        vAlem = ((cDia.alem.manana?.efectivo || 0) + (cDia.alem.manana?.digital || 0)) +
+                ((cDia.alem.tarde?.efectivo || 0) + (cDia.alem.tarde?.digital || 0));
+      }
+
+      let vEspiga = 0;
+      if (cDia.espiga) {
+        vEspiga = ((cDia.espiga.manana?.efectivo || 0) + (cDia.espiga.manana?.digital || 0)) +
+                  ((cDia.espiga.tarde?.efectivo || 0) + (cDia.espiga.tarde?.digital || 0));
+      }
+
+      document.getElementById('admin-edit-alem').value = vAlem;
+      document.getElementById('admin-edit-espiga').value = vEspiga;
+      document.getElementById('modal-editar-caja-admin').classList.remove('hidden');
+    }
+
+    function cerrarModalEditarCajaAdmin() {
+      document.getElementById('modal-editar-caja-admin').classList.add('hidden');
+    }
+
+    function guardarCorreccionCajaAdmin() {
+      const fechaStr = document.getElementById('admin-edit-caja-fecha').value;
+      const nuevoAlem = parseFloat(document.getElementById('admin-edit-alem').value) || 0;
+      const nuevoEspiga = parseFloat(document.getElementById('admin-edit-espiga').value) || 0;
+
+      if (!fechaStr) return;
+
+      if (!dbCajasDiarias[fechaStr]) {
+        dbCajasDiarias[fechaStr] = {
+          alem: { manana: { efectivo: 0, digital: 0, cerrado: true }, tarde: { efectivo: 0, digital: 0, cerrado: true } },
+          espiga: { manana: { efectivo: 0, digital: 0, cerrado: true }, tarde: { efectivo: 0, digital: 0, cerrado: true } }
+        };
+      }
+
+      dbCajasDiarias[fechaStr].alem = {
+        manana: { efectivo: nuevoAlem, digital: 0, cerrado: true, usuario: "Admin (Corr.)" },
+        tarde: { efectivo: 0, digital: 0, cerrado: true }
+      };
+
+      dbCajasDiarias[fechaStr].espiga = {
+        manana: { efectivo: nuevoEspiga, digital: 0, cerrado: true, usuario: "Admin (Corr.)" },
+        tarde: { efectivo: 0, digital: 0, cerrado: true }
+      };
+
+      guardarDB('db_cajas_diarias', dbCajasDiarias);
+      cerrarModalEditarCajaAdmin();
+      renderizarReportesMensuales();
+      alert("¡Montos corregidos con éxito!");
+    }
+
+    function renderizarReportesMensuales() {
+      const mesSel = document.getElementById('reporte-mes-select')?.value; if (!mesSel) return;
+      const theadVentas = document.getElementById('thead-reporte-ventas');
+      const tbodyVentas = document.getElementById('tabla-reporte-ventas');
+      const tfootVentas = document.getElementById('tfoot-reporte-ventas');
+      const tbodyEgresos = document.getElementById('tabla-reporte-egresos');
+      const tfootEgresos = document.getElementById('tfoot-reporte-egresos');
+
+      if (!tbodyVentas || !tbodyEgresos || !theadVentas) return;
+      theadVentas.innerHTML = ''; tbodyVentas.innerHTML = ''; tfootVentas.innerHTML = '';
+      tbodyEgresos.innerHTML = ''; tfootEgresos.innerHTML = '';
+
+      const usr = dbUsuarios[usuarioActivoId];
+      const esEspiga = (usr && usr.sucursal === 'espiga' && usr.rol !== 'admin');
+      const esAdminGeneral = (usr && usr.rol === 'admin');
+
+      const contenedorBtnAdmin = document.getElementById('contenedor-btn-admin-edicion-caja');
+      if (contenedorBtnAdmin) {
+        if (esAdminGeneral) {
+          contenedorBtnAdmin.innerHTML = `<button type="button" onclick="abrirModalEditarCajaAdmin('${fechaActual}')" class="bg-amber-800 text-white text-[10px] px-2.5 py-1 rounded font-bold hover:bg-amber-900 shadow">✏️ Editar Montos de Hoy</button>`;
+        } else {
+          contenedorBtnAdmin.innerHTML = '';
+        }
+      }
+
+      if (esEspiga) {
+        theadVentas.innerHTML = `
+          <tr class="bg-gray-100 border-b">
+            <th class="p-2">Día / Fecha</th>
+            <th class="p-2 text-right">La Espiga de Oro ($)</th>
+            <th class="p-2 text-right font-bold bg-amber-50">Total Día ($)</th>
+            ${esAdminGeneral ? '<th class="p-2 text-center">Acción Admin</th>' : ''}
+          </tr>
+        `;
+      } else {
+        theadVentas.innerHTML = `
+          <tr class="bg-gray-100 border-b">
+            <th class="p-2">Día / Fecha</th>
+            <th class="p-2 text-right">La Casa del Pan ($)</th>
+            <th class="p-2 text-right">La Espiga de Oro ($)</th>
+            <th class="p-2 text-right">Reparto ($)</th>
+            <th class="p-2 text-right font-bold bg-amber-50">Total Día ($)</th>
+            ${esAdminGeneral ? '<th class="p-2 text-center">Acción Admin</th>' : ''}
+          </tr>
+        `;
+      }
+
+      const [anio, mes] = mesSel.split('-').map(Number);
+      const diasEnMes = new Date(anio, mes, 0).getDate();
+
+      let sumAlem = 0, sumEspiga = 0, sumReparto = 0, sumTotalVentas = 0;
+      let sumEgresosCaja = 0, sumPagosProv = 0, sumTotalEgresos = 0;
+      let diasConVentas = 0;
+
+      for (let d = 1; d <= diasEnMes; d++) {
+        const diaStr = `${anio}-${String(mes).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        const cDia = dbCajasDiarias[diaStr] || {};
+        
+        let vAlem = 0;
+        if (cDia.alem) {
+          vAlem = ((cDia.alem.manana?.efectivo || 0) + (cDia.alem.manana?.digital || 0)) +
+                  ((cDia.alem.tarde?.efectivo || 0) + (cDia.alem.tarde?.digital || 0));
+        }
+
+        let vEspiga = 0;
+        if (cDia.espiga) {
+          vEspiga = ((cDia.espiga.manana?.efectivo || 0) + (cDia.espiga.manana?.digital || 0)) +
+                    ((cDia.espiga.tarde?.efectivo || 0) + (cDia.espiga.tarde?.digital || 0));
+        }
+
+        let vReparto = 0;
+        (dbRepartos[diaStr] || []).forEach(p => { vReparto += p.monto; });
+
+        const totalDiaVentas = esEspiga ? vEspiga : (vAlem + vEspiga + vReparto);
+        if (totalDiaVentas > 0) diasConVentas++;
+
+        sumAlem += vAlem; sumEspiga += vEspiga; sumReparto += vReparto; sumTotalVentas += totalDiaVentas;
+
+        const trV = document.createElement('tr'); trV.className = "border-b hover:bg-gray-50";
+        const btnAccionAdmin = esAdminGeneral ? `<td class="p-1.5 text-center"><button onclick="abrirModalEditarCajaAdmin('${diaStr}')" class="bg-amber-700 text-white text-[10px] px-2 py-0.5 rounded font-bold">Editar</button></td>` : '';
+
+        if (esEspiga) {
+          trV.innerHTML = `
+            <td class="p-1.5 font-medium">${diaStr}</td>
+            <td class="p-1.5 text-right">$${vEspiga.toLocaleString()}</td>
+            <td class="p-1.5 text-right font-bold bg-amber-50">$${totalDiaVentas.toLocaleString()}</td>
+            ${btnAccionAdmin}
+          `;
+        } else {
+          trV.innerHTML = `
+            <td class="p-1.5 font-medium">${diaStr}</td>
+            <td class="p-1.5 text-right">$${vAlem.toLocaleString()}</td>
+            <td class="p-1.5 text-right">$${vEspiga.toLocaleString()}</td>
+            <td class="p-1.5 text-right">$${vReparto.toLocaleString()}</td>
+            <td class="p-1.5 text-right font-bold bg-amber-50">$${totalDiaVentas.toLocaleString()}</td>
+            ${btnAccionAdmin}
+          `;
+        }
+        tbodyVentas.appendChild(trV);
+
+        let egCaja = 0;
+        (dbEgresosCaja[diaStr] || []).forEach(e => {
+          if (esEspiga && e.origen !== 'La Espiga de Oro') return;
+          egCaja += e.monto;
+        });
+
+        let egProv = 0;
+        if (!esEspiga) {
+          Object.values(dbHistorialProveedores).forEach(hList => {
+            hList.forEach(m => { if (m.fecha === diaStr && m.tipo === 'pago') egProv += m.monto; });
+          });
+        }
+
+        const totalDiaEgresos = egCaja + egProv;
+        sumEgresosCaja += egCaja; sumPagosProv += egProv; sumTotalEgresos += totalDiaEgresos;
+
+        const trE = document.createElement('tr'); trE.className = "border-b hover:bg-gray-50";
+        trE.innerHTML = `
+          <td class="p-1.5 font-medium">${diaStr}</td>
+          <td class="p-1.5 text-right text-red-600">$${egCaja.toLocaleString()}</td>
+          <td class="p-1.5 text-right text-red-600">$${egProv.toLocaleString()}</td>
+          <td class="p-1.5 text-right font-bold bg-red-50 text-red-700">$${totalDiaEgresos.toLocaleString()}</td>
+        `;
+        tbodyEgresos.appendChild(trE);
+      }
+
+      const promVentas = diasConVentas > 0 ? (sumTotalVentas / diasConVentas) : 0;
+      const colspanProm = esEspiga ? 2 : 4;
+
+      if (esEspiga) {
+        tfootVentas.innerHTML = `
+          <tr>
+            <td class="p-2">TOTAL MENSUAL</td>
+            <td class="p-2 text-right">$${sumEspiga.toLocaleString()}</td>
+            <td class="p-2 text-right font-bold">$${sumTotalVentas.toLocaleString()}</td>
+            ${esAdminGeneral ? '<td></td>' : ''}
+          </tr>
+          <tr class="bg-amber-200">
+            <td class="p-2 text-amber-950" colspan="${colspanProm}">PROMEDIO DIARIO VENTAS (${diasConVentas} días)</td>
+            <td class="p-2 text-right font-extrabold text-amber-950">$${Math.round(promVentas).toLocaleString()}</td>
+            ${esAdminGeneral ? '<td></td>' : ''}
+          </tr>
+        `;
+      } else {
+        tfootVentas.innerHTML = `
+          <tr>
+            <td class="p-2">TOTAL MENSUAL</td>
+            <td class="p-2 text-right">$${sumAlem.toLocaleString()}</td>
+            <td class="p-2 text-right">$${sumEspiga.toLocaleString()}</td>
+            <td class="p-2 text-right">$${sumReparto.toLocaleString()}</td>
+            <td class="p-2 text-right font-bold">$${sumTotalVentas.toLocaleString()}</td>
+            ${esAdminGeneral ? '<td></td>' : ''}
+          </tr>
+          <tr class="bg-amber-200">
+            <td class="p-2 text-amber-950" colspan="${colspanProm}">PROMEDIO DIARIO VENTAS (${diasConVentas} días)</td>
+            <td class="p-2 text-right font-extrabold text-amber-950">$${Math.round(promVentas).toLocaleString()}</td>
+            ${esAdminGeneral ? '<td></td>' : ''}
+          </tr>
+        `;
+      }
+
+      tfootEgresos.innerHTML = `
+        <tr>
+          <td class="p-2">TOTAL EGRESOS</td>
+          <td class="p-2 text-right">$${sumEgresosCaja.toLocaleString()}</td>
+          <td class="p-2 text-right">$${sumPagosProv.toLocaleString()}</td>
+          <td class="p-2 text-right font-bold">$${sumTotalEgresos.toLocaleString()}</td>
+        </tr>
+      `;
+    }
+
+    // 7. CATÁLOGO Y PRECIOS
+    function agregarNuevoPanificado() {
+      const nombre = document.getElementById('nuevo-panificado-nombre').value.trim();
+      const unid = parseInt(document.getElementById('nuevo-panificado-unidades').value);
+      const menor = parseFloat(document.getElementById('nuevo-panificado-menor').value);
+      const mayor = parseFloat(document.getElementById('nuevo-panificado-mayor').value);
+      if (!nombre || isNaN(unid) || isNaN(menor) || isNaN(mayor)) return;
+
+      dbPanificados[nombre] = { unidPorPaq: unid, menor, mayor };
+      guardarDB('db_panificados', dbPanificados); 
+      document.getElementById('nuevo-panificado-nombre').value = '';
+      document.getElementById('nuevo-panificado-unidades').value = '';
+      document.getElementById('nuevo-panificado-menor').value = '';
+      document.getElementById('nuevo-panificado-mayor').value = '';
+      renderizarTablaPanificados(); 
+      cargarSelectorPanificadosReparto();
+      cargarSelectorProductosRecurrentes();
+    }
+
+    function editarPanificadoDirecto(nombre, campo, valor) {
+      if (!dbPanificados[nombre]) return;
+      const valNum = parseFloat(valor);
+      if (isNaN(valNum)) return;
+      dbPanificados[nombre][campo] = valNum;
+      guardarDB('db_panificados', dbPanificados);
+      cargarSelectorPanificadosReparto();
+    }
+
+    function renderizarTablaPanificados() {
+      const tbody = document.getElementById('tabla-panificados-precios'); if (!tbody) return; tbody.innerHTML = '';
+      Object.entries(dbPanificados).sort((a, b) => a[0].localeCompare(b[0])).forEach(([nombre, data]) => {
+        const tr = document.createElement('tr'); tr.className = "border-b hover:bg-gray-50";
+        tr.innerHTML = `
+          <td class="p-2 font-bold">${nombre}</td>
+          <td class="p-2"><input type="number" value="${data.unidPorPaq}" onchange="editarPanificadoDirecto('${nombre}', 'unidPorPaq', this.value)" class="w-16 border rounded p-1 text-xs font-bold"></td>
+          <td class="p-2">
+            <div class="flex items-center"><span class="text-xs mr-1 text-gray-500">$</span>
+            <input type="number" value="${data.menor}" onchange="editarPanificadoDirecto('${nombre}', 'menor', this.value)" class="w-20 border rounded p-1 text-xs font-bold"></div>
+          </td>
+          <td class="p-2">
+            <div class="flex items-center"><span class="text-xs mr-1 text-gray-500">$</span>
+            <input type="number" value="${data.mayor}" onchange="editarPanificadoDirecto('${nombre}', 'mayor', this.value)" class="w-20 border rounded p-1 text-xs font-bold text-amber-900"></div>
+          </td>
+          <td class="p-2 text-center"><button onclick="eliminarPanificado('${nombre}')" class="bg-red-600 text-white text-xs px-2 py-1 rounded">✕</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function eliminarPanificado(nombre) { 
+      if (confirm(`⚠️ ¿Desea eliminar "${nombre}"?`)) {
+        delete dbPanificados[nombre]; 
+        guardarDB('db_panificados', dbPanificados); 
+        renderizarTablaPanificados(); 
+        cargarSelectorPanificadosReparto();
+        cargarSelectorProductosRecurrentes();
+      }
+    }
+
+    function aplicarAumentoPorcentaje() {
+      if (dbUsuarios[usuarioActivoId]?.rol !== 'admin') { alert("Acceso restringido al Administrador."); return; }
+      const porcentaje = parseFloat(document.getElementById('ajuste-porcentaje-valor').value); if (isNaN(porcentaje)) return;
+      const factor = 1 + (porcentaje / 100);
+
+      Object.keys(dbProductos).forEach(nombre => {
+        let p = dbProductos[nombre];
+        if (p.mostrador > 0) p.mostrador = Math.round(p.mostrador * factor);
+        if (p.reparto > 0) p.reparto = Math.round(p.reparto * factor);
+        if (p.unOcuarto > 0) p.unOcuarto = Math.round(p.unOcuarto * factor);
+      });
+
+      guardarDB('db_productos', dbProductos); renderizarTablaCatalogo();
+    }
+
+    function agregarNuevoProducto() {
+      const nombre = document.getElementById('nuevo-prod-nombre').value.trim(); if (!nombre) return;
+      dbProductos[nombre] = {
+        mostrador: parseFloat(document.getElementById('nuevo-prod-mostrador').value) || 0,
+        reparto: parseFloat(document.getElementById('nuevo-prod-reparto').value) || 0,
+        unOcuarto: parseFloat(document.getElementById('nuevo-prod-unOcuarto').value) || 0
+      };
+      guardarDB('db_productos', dbProductos); 
+      document.getElementById('nuevo-prod-nombre').value = '';
+      document.getElementById('nuevo-prod-mostrador').value = '';
+      document.getElementById('nuevo-prod-reparto').value = '';
+      document.getElementById('nuevo-prod-unOcuarto').value = '';
+      renderizarTablaCatalogo(); 
+      cargarSelectorDespachoReparto();
+      cargarSelectorProductosRecurrentes();
+    }
+
+    function editarProductoCatalogoDirecto(nombre, campo, valor) {
+      if (!dbProductos[nombre]) return;
+      let valNum = parseFloat(valor);
+      if (isNaN(valNum)) return;
+      dbProductos[nombre][campo] = valNum;
+      guardarDB('db_productos', dbProductos);
+      cargarSelectorDespachoReparto();
+    }
+
+    function renderizarTablaCatalogo() {
+      const tbody = document.getElementById('tabla-catalogo-precios'); if (!tbody) return; tbody.innerHTML = '';
+      Object.entries(dbProductos).sort((a, b) => a[0].localeCompare(b[0])).forEach(([nombre, p]) => {
+        const tr = document.createElement('tr'); tr.className = "border-b hover:bg-gray-50";
+        tr.innerHTML = `
+          <td class="p-2 font-bold">${nombre}</td>
+          <td class="p-2"><input type="number" value="${p.mostrador}" onchange="editarProductoCatalogoDirecto('${nombre}', 'mostrador', this.value)" class="w-24 border rounded p-1 text-xs font-bold"></td>
+          <td class="p-2"><input type="number" value="${p.reparto}" onchange="editarProductoCatalogoDirecto('${nombre}', 'reparto', this.value)" class="w-24 border rounded p-1 text-xs font-bold text-amber-900"></td>
+          <td class="p-2"><input type="number" value="${p.unOcuarto}" onchange="editarProductoCatalogoDirecto('${nombre}', 'unOcuarto', this.value)" class="w-24 border rounded p-1 text-xs font-bold"></td>
+          <td class="p-2 text-center"><button onclick="eliminarProductoCatalogo('${nombre}')" class="bg-red-600 text-white text-xs px-2 py-1 rounded">✕</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function eliminarProductoCatalogo(nombre) { 
+      if (confirm(`⚠️ ¿Desea eliminar "${nombre}" del Catálogo?`)) {
+        delete dbProductos[nombre]; 
+        guardarDB('db_productos', dbProductos); 
+        renderizarTablaCatalogo(); 
+        cargarSelectorDespachoReparto();
+        cargarSelectorProductosRecurrentes();
+      }
+    }
+
+    function filtrarTablaPrecios() { 
+      const b = document.getElementById('buscar-producto').value.toLowerCase(); 
+      document.querySelectorAll('#tabla-catalogo-precios tr').forEach(f => f.style.display = f.innerText.toLowerCase().includes(b) ? '' : 'none'); 
+    }
+
+    // 8. USUARIOS Y BACKUPS
+    function guardarUsuario() {
+      const nombre = document.getElementById('usr-nombre').value.trim(); if (!nombre) return;
+      const id = generarID('USR');
+      dbUsuarios[id] = { 
+        id, 
+        nombre, 
+        rol: document.getElementById('usr-rol').value, 
+        sucursal: document.getElementById('usr-sucursal').value, 
+        pin: '1234' 
+      };
+      guardarDB('db_usuarios', dbUsuarios); renderizarTablaUsuarios(); renderizarUsuariosSelect();
+    }
+
+    function renderizarTablaUsuarios() {
+      const tbody = document.getElementById('tabla-usuarios'); if (!tbody) return; tbody.innerHTML = '';
+      Object.values(dbUsuarios).forEach(u => {
+        const configRol = PERMISOS_ROLES[u.rol];
+        const tr = document.createElement('tr'); tr.className = "border-b hover:bg-gray-50";
+        tr.innerHTML = `
+          <td class="p-2 font-bold">${u.nombre}</td>
+          <td class="p-2"><span class="bg-amber-100 text-amber-900 px-2 py-0.5 rounded text-xs font-bold">${configRol?.nombre || u.rol}</span></td>
+          <td class="p-2"><span class="bg-blue-100 text-blue-900 px-2 py-0.5 rounded text-xs font-bold">${ETIQUETAS_SUCURSAL[u.sucursal || 'todas']}</span></td>
+          <td class="p-2 text-center">${u.id !== 'USR-1' ? `<button onclick="eliminarUsuario('${u.id}')" class="text-xs text-red-600 font-bold">Eliminar</button>` : '-'}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function eliminarUsuario(id) { delete dbUsuarios[id]; guardarDB('db_usuarios', dbUsuarios); renderizarTablaUsuarios(); renderizarUsuariosSelect(); }
+
+    function ejecutarBackupDiarioAutomatico() {
+      const hoy = fechaActual;
+      if (!dbBackupsDiarios[hoy]) {
+        dbBackupsDiarios[hoy] = {
+          fechaBackup: hoy,
+          timestamp: Date.now(),
+          datos: { dbUsuarios, dbPanificados, dbProductos, dbClientes, dbProveedores, dbInsumos, dbRepartos, dbRecurrentes, dbNotasMostrador, dbHistorialClientes, dbHistorialProveedores, dbCajasDiarias, dbEgresosCaja }
+        };
+
+        const fechasGuardadas = Object.keys(dbBackupsDiarios).sort();
+        if (fechasGuardadas.length > 30) {
+          const aEliminar = fechasGuardadas.slice(0, fechasGuardadas.length - 30);
+          aEliminar.forEach(f => delete dbBackupsDiarios[f]);
+        }
+
+        guardarDB('db_backups_diarios', dbBackupsDiarios);
+      }
+    }
+
+    function renderizarSelectorBackups() {
+      const sel = document.getElementById('select-backups-historial'); if (!sel) return;
+      sel.innerHTML = '<option value="">-- Seleccionar Fecha Respaldo --</option>';
+      Object.keys(dbBackupsDiarios).sort().reverse().forEach(f => {
+        const opt = document.createElement('option');
+        opt.value = f;
+        opt.textContent = `Backup: ${f}`;
+        sel.appendChild(opt);
+      });
+    }
+
+    function descargarBackupManual() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dbBackupsDiarios[fechaActual] || { fecha: fechaActual, dbRepartos, dbCajasDiarias }));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `Backup_Panaderia_${fechaActual}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+
+    function restaurarFechaSeleccionada() {
+      const fSel = document.getElementById('select-backups-historial').value;
+      if (!fSel || !dbBackupsDiarios[fSel]) { alert("Seleccione una fecha válida."); return; }
+
+      if (confirm(`⚠️ ¿Desea restaurar el estado completo a la fecha ${fSel}?`)) {
+        const bkp = dbBackupsDiarios[fSel].datos;
+        guardarDB('db_usuarios', bkp.dbUsuarios);
+        guardarDB('db_panificados', bkp.dbPanificados);
+        guardarDB('db_productos', bkp.dbProductos);
+        guardarDB('db_clientes', bkp.dbClientes);
+        guardarDB('db_proveedores', bkp.dbProveedores);
+        guardarDB('db_insumos', bkp.dbInsumos);
+        guardarDB('db_repartos', bkp.dbRepartos);
+        guardarDB('db_recurrentes', bkp.dbRecurrentes || {});
+        guardarDB('db_notas_mostrador', bkp.dbNotasMostrador);
+        guardarDB('db_historial_clientes', bkp.dbHistorialClientes);
+        guardarDB('db_historial_proveedores', bkp.dbHistorialProveedores);
+        guardarDB('db_cajas_diarias', bkp.dbCajasDiarias);
+        guardarDB('db_egresos_caja', bkp.dbEgresosCaja);
+
+        alert("¡Sistema restaurado correctamente!");
+        window.location.reload();
+      }
+    }
+
+    // MOSTRAR / OCULTAR SECCIÓN AUTOMATIZACIÓN
+    function toggleAutomatizacion() {
+      const cuerpo = document.getElementById('cont-automatizacion-cuerpo');
+      const btn = document.getElementById('btn-toggle-auto');
+      if (cuerpo.classList.contains('hidden')) {
+        cuerpo.classList.remove('hidden');
+        btn.innerHTML = 'Ocultar ⬆️';
+      } else {
+        cuerpo.classList.add('hidden');
+        btn.innerHTML = 'Mostrar ⬇️';
+      }
+    }
+  </script>
+</body>
+</html>
