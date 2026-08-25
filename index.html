@@ -53,6 +53,11 @@
       box-sizing: border-box !important;
       overflow-y: auto !important;
     }
+/* Fuerza absoluta para que la APK detecte los clics en tablas dinámicas */
+    table button {
+      pointer-events: auto !important;
+      touch-action: manipulation !important;
+    }
 
     .apk-modal-contenido {
       background: #ffffff !important;
@@ -2329,7 +2334,7 @@
       return saldo;
     }
 
-    function renderizarTablaClientes() {
+  function renderizarTablaClientes() {
       const tbody = document.getElementById('tabla-resumen-clientes-deuda'); 
       if (!tbody) return; 
       tbody.innerHTML = '';
@@ -2351,10 +2356,21 @@
           <td class="p-2 font-bold text-gray-800">${cli.nombre}</td>
           <td class="p-2 text-gray-600">${cli.telefono || 'S/D'}</td>
           <td class="p-2 text-right ${claseSaldo}">$${saldo.toLocaleString()}</td>
-          <td class="p-2 text-center">
-            <button type="button" onclick="verHistorialCliente('${cli.id}')" ontouchend="verHistorialCliente('${cli.id}'); event.preventDefault();" class="bg-amber-700 text-white text-xs px-3 py-1.5 rounded-lg font-bold shadow active:bg-amber-900">Abrir Ficha</button>
-          </td>
+          <td class="p-2 text-center"></td>
         `;
+        
+        // Inyección segura del botón compatible 100% con WebView APK
+        const tdAccion = tr.querySelector('td:last-child');
+        const btnFicha = document.createElement('button');
+        btnFicha.type = "button";
+        btnFicha.className = "bg-amber-700 text-white text-xs px-3 py-1.5 rounded-lg font-bold shadow active:bg-amber-900";
+        btnFicha.textContent = "Abrir Ficha";
+        btnFicha.onclick = (e) => {
+          e.preventDefault();
+          verHistorialCliente(cli.id);
+        };
+        tdAccion.appendChild(btnFicha);
+
         tbody.appendChild(tr);
       });
     }
@@ -2705,8 +2721,7 @@
       Object.values(dbHistorialProveedores[provId] || {}).forEach(m => { if (m.tipo === 'factura') saldo += m.monto; if (m.tipo === 'pago') saldo -= m.monto; });
       return saldo;
     }
-
-    function renderizarTablaProveedores() {
+function renderizarTablaProveedores() {
       const tbody = document.getElementById('tabla-resumen-proveedores-deuda'); 
       if (!tbody) return; 
       tbody.innerHTML = '';
@@ -2728,14 +2743,24 @@
           <td class="p-2 font-bold text-gray-800">${prv.nombre}</td>
           <td class="p-2 text-gray-600">${prv.rubro || 'General'}</td>
           <td class="p-2 text-right ${claseSaldo}">$${saldo.toLocaleString()}</td>
-          <td class="p-2 text-center">
-            <button type="button" onclick="verHistorialProveedor('${prv.id}')" ontouchend="verHistorialProveedor('${prv.id}'); event.preventDefault();" class="bg-amber-700 text-white text-xs px-3 py-1.5 rounded-lg font-bold shadow active:bg-amber-900">Abrir Ficha</button>
-          </td>
+          <td class="p-2 text-center"></td>
         `;
+
+        // Inyección segura del botón compatible 100% con WebView APK
+        const tdAccion = tr.querySelector('td:last-child');
+        const btnFicha = document.createElement('button');
+        btnFicha.type = "button";
+        btnFicha.className = "bg-amber-700 text-white text-xs px-3 py-1.5 rounded-lg font-bold shadow active:bg-amber-900";
+        btnFicha.textContent = "Abrir Ficha";
+        btnFicha.onclick = (e) => {
+          e.preventDefault();
+          verHistorialProveedor(prv.id);
+        };
+        tdAccion.appendChild(btnFicha);
+
         tbody.appendChild(tr);
       });
     }
-
     function eliminarProveedorActual() {
       if (!proveedorSeleccionadoId) return;
       const prv = dbProveedores[proveedorSeleccionadoId];
