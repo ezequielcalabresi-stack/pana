@@ -61,6 +61,13 @@
       <p class="text-xs text-amber-200 md:text-sm">Sistema Integrado de Producción, Logística, Proveedores, Cajas y Reportes</p>
     </div>
     <div class="flex flex-wrap items-center gap-2">
+      <!-- INDICADOR DE CONEXIÓN A LA NUBE -->
+      <div class="flex items-center gap-1 bg-gray-800 p-2 rounded-lg border border-gray-600">
+        <span id="status-conexion" class="text-[10px] bg-yellow-200 text-yellow-900 px-2 py-0.5 rounded-full font-bold shadow-sm whitespace-nowrap">
+          🟡 Conectando...
+        </span>
+      </div>
+
       <div class="flex items-center gap-1 bg-amber-950 p-2 rounded-lg border border-amber-700">
         <label class="text-xs font-semibold text-amber-100">👤 Usuario:</label>
         <select id="select-usuario-activo" onchange="cambiarUsuarioActivo()" class="bg-white text-gray-800 text-xs p-1 rounded font-bold">
@@ -774,6 +781,8 @@
 
           <div class="flex flex-col gap-2">
             <button type="button" onclick="descargarBackupManual()" class="bg-blue-700 hover:bg-blue-800 text-white font-bold text-xs p-2 rounded shadow">📥 Descargar Respaldo JSON</button>
+            <button type="button" onclick="document.getElementById('input-subir-backup').click()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs p-2 rounded shadow">📤 Subir Respaldo JSON (Recuperar)</button>
+            <input type="file" id="input-subir-backup" accept=".json" class="hidden" onchange="subirBackupManual(event)">
             <hr class="border-blue-200">
             <label class="text-xs font-bold text-blue-900 block">Restaurar a fecha guardada:</label>
             <div class="flex gap-2">
@@ -1006,7 +1015,14 @@
 
   <script>
     const firebaseConfig = {
-      databaseURL: "https://panaderia-sync-281a5-default-rtdb.firebaseio.com/"
+      apiKey: "AIzaSyBXgZYpJAktv1rV9Cw8xeQYLeqp_i2tASg",
+      authDomain: "panaderia-sync-281a5.firebaseapp.com",
+      databaseURL: "https://panaderia-sync-281a5-default-rtdb.firebaseio.com",
+      projectId: "panaderia-sync-281a5",
+      storageBucket: "panaderia-sync-281a5.firebasestorage.app",
+      messagingSenderId: "1051272691576",
+      appId: "1:1051272691576:web:a4628f48613b38bc85528d",
+      measurementId: "G-CDPQM4RFH7"
     };
 
     let rtdb = null;
@@ -1015,6 +1031,21 @@
         firebase.initializeApp(firebaseConfig);
       }
       rtdb = firebase.database();
+      
+      // --- NUEVO: MONITOR DE CONEXIÓN EN TIEMPO REAL ---
+      rtdb.ref(".info/connected").on("value", function(snap) {
+        const statusDiv = document.getElementById("status-conexion");
+        if (!statusDiv) return;
+        if (snap.val() === true) {
+          statusDiv.innerHTML = "🟢 Conectado (Nube)";
+          statusDiv.className = "text-[10px] bg-green-200 text-green-900 px-2 py-0.5 rounded-full font-bold shadow-sm whitespace-nowrap";
+        } else {
+          statusDiv.innerHTML = "🔴 Desconectado (¡No cargar!)";
+          statusDiv.className = "text-[10px] bg-red-200 text-red-900 px-2 py-0.5 rounded-full font-bold shadow-sm whitespace-nowrap animate-pulse";
+        }
+      });
+      // ------------------------------------------------
+      
     } catch (e) {
       console.warn("Modo offline detectado.");
     }
@@ -3494,6 +3525,51 @@
         alert("¡Sistema restaurado correctamente!");
         window.location.reload();
       }
+    }
+
+    // NUEVA FUNCIÓN: Subir Respaldo JSON desde el dispositivo y guardarlo en Firebase
+    function subirBackupManual(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const contenido = JSON.parse(e.target.result);
+          // Dependiendo si sube un JSON de un día específico o algo general
+          const bkp = contenido.datos || contenido; 
+          
+          if (!bkp.dbUsuarios && !bkp.dbCajasDiarias) {
+            alert("El archivo no parece tener el formato correcto de respaldo.");
+            return;
+          }
+
+          if (confirm("⚠️ ¿Estás seguro de que deseas subir este respaldo? Se sincronizarán todos los datos a la nube y en este dispositivo.")) {
+            if (bkp.dbUsuarios) guardarDB('db_usuarios', bkp.dbUsuarios);
+            if (bkp.dbPanificados) guardarDB('db_panificados', bkp.dbPanificados);
+            if (bkp.dbProductos) guardarDB('db_productos', bkp.dbProductos);
+            if (bkp.dbClientes) guardarDB('db_clientes', bkp.dbClientes);
+            if (bkp.dbProveedores) guardarDB('db_proveedores', bkp.dbProveedores);
+            if (bkp.dbInsumos) guardarDB('db_insumos', bkp.dbInsumos);
+            if (bkp.dbRepartos) guardarDB('db_repartos', bkp.dbRepartos);
+            if (bkp.dbRecurrentes) guardarDB('db_recurrentes', bkp.dbRecurrentes);
+            if (bkp.dbNotasMostrador) guardarDB('db_notas_mostrador', bkp.dbNotasMostrador);
+            if (bkp.dbHistorialClientes) guardarDB('db_historial_clientes', bkp.dbHistorialClientes);
+            if (bkp.dbHistorialProveedores) guardarDB('db_historial_proveedores', bkp.dbHistorialProveedores);
+            if (bkp.dbCajasDiarias) guardarDB('db_cajas_diarias', bkp.dbCajasDiarias);
+            if (bkp.dbEgresosCaja) guardarDB('db_egresos_caja', bkp.dbEgresosCaja);
+            if (bkp.dbRepartosCerrados) guardarDB('db_repartos_cerrados', bkp.dbRepartosCerrados);
+
+            alert("¡Datos restaurados y subidos a la nube exitosamente!");
+            window.location.reload();
+          }
+        } catch (error) {
+          alert("Error al leer el archivo JSON. Asegurate de que sea el archivo correcto.");
+          console.error(error);
+        }
+        event.target.value = ""; // Resetear input
+      };
+      reader.readAsText(file);
     }
 
     function toggleAutomatizacion() {
