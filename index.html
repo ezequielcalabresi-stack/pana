@@ -80,26 +80,25 @@
 </head>
 <body class="bg-gray-100 font-sans min-h-screen overflow-x-hidden">
 
-  <!-- HEADER IDÉNTICO A GITHUB PAGES -->
-  <header class="bg-amber-900 text-white p-3 shadow-lg flex flex-col md:flex-row items-center justify-between gap-3 relative z-30">
-    <div>
+  <!-- HEADER CORREGIDO PARA RESPONSIVE EN APK -->
+  <header class="bg-amber-900 text-white p-3 shadow-lg flex flex-col items-center justify-between gap-3 relative z-30">
+    <div class="text-center w-full">
       <h1 class="text-xl font-bold md:text-2xl">La Casa del Pan & La Espiga de Oro</h1>
-      <p class="text-xs text-amber-200">Sistema Integrado de Producción, Logística, Proveedores, Cajas y Reportes</p>
+      <p class="text-[10px] text-amber-200 sm:text-xs">Sistema Integrado de Producción, Logística, Proveedores, Cajas y Reportes</p>
     </div>
-    <div class="flex flex-wrap items-center gap-3">
-      <div class="flex items-center gap-1 bg-amber-950 p-1.5 rounded-lg border border-amber-700">
+    
+    <div class="flex flex-wrap items-center justify-center w-full gap-2 text-center">
+      <div class="flex items-center justify-center bg-amber-950 p-1.5 rounded-lg border border-amber-700 w-auto">
         <span id="status-conexion" class="text-[10px] bg-yellow-200 text-yellow-900 px-2 py-0.5 rounded-full font-bold shadow-sm whitespace-nowrap">
           🟡 Conectando...
         </span>
       </div>
-      <div class="flex items-center gap-1 bg-amber-950 p-1.5 rounded-lg border border-amber-700">
-        <label class="text-xs font-semibold text-amber-100">👤 Usuario:</label>
-        <select id="select-usuario-activo" onchange="cambiarUsuarioActivo()" class="bg-white text-gray-800 text-xs p-1 rounded font-bold"></select>
-        <span id="badge-rol-activo" class="text-[10px] bg-amber-600 text-white px-2 py-0.5 rounded-full font-bold ml-1"></span>
+      <div class="flex flex-wrap items-center justify-center gap-1 bg-amber-950 p-1.5 rounded-lg border border-amber-700 w-auto max-w-full">
+        <select id="select-usuario-activo" onchange="cambiarUsuarioActivo()" class="bg-white text-gray-800 text-[10px] p-1 rounded font-bold max-w-[120px] truncate"></select>
+        <span id="badge-rol-activo" class="text-[9px] sm:text-[10px] bg-amber-600 text-white px-2 py-0.5 rounded-full font-bold whitespace-normal text-center"></span>
       </div>
-      <div class="flex items-center gap-2 bg-amber-950 p-1.5 rounded-lg border border-amber-700">
-        <label class="text-xs font-semibold text-amber-100">Fecha Operativa:</label>
-        <input type="date" id="fecha-operativa" onchange="cambiarFechaOperativa()" class="bg-white text-gray-800 text-xs p-1 rounded font-bold">
+      <div class="flex items-center justify-center bg-amber-950 p-1.5 rounded-lg border border-amber-700 w-auto">
+        <input type="date" id="fecha-operativa" onchange="cambiarFechaOperativa()" class="bg-white text-gray-800 text-[10px] p-1 rounded font-bold">
       </div>
     </div>
   </header>
@@ -296,79 +295,6 @@
 
     <!-- 3. CLIENTES Y CUENTA CORRIENTE -->
     <section id="sec-clientes" class="hidden space-y-4">
-      
-      <!-- Ficha del cliente seleccionada arriba de todo -->
-      <div id="modulo-historial-cliente" class="bg-white p-4 rounded-xl shadow border border-amber-500 space-y-4 hidden">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 border-b pb-2">
-          <div>
-            <h2 id="historial-nombre-cliente" class="text-lg font-bold text-amber-900"></h2>
-            <p id="historial-contacto-cliente" class="text-xs text-gray-600"></p>
-          </div>
-          <div class="flex flex-wrap items-center gap-2">
-            <button type="button" onclick="enviarResumenWhatsAppCliente()" class="bg-green-600 hover:bg-green-700 text-white text-xs px-3 py-2 rounded font-bold shadow flex items-center gap-1">📱 Enviar WhatsApp</button>
-            <button type="button" onclick="enviarResumenEmailCliente()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-2 rounded font-bold shadow flex items-center gap-1">✉️ Enviar Mail</button>
-            <button type="button" onclick="cerrarHistorialCliente()" class="bg-gray-300 text-gray-800 text-xs px-3 py-2 rounded font-bold">✕ Cerrar Ficha</button>
-          </div>
-        </div>
-
-        <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 space-y-2">
-          <h3 class="text-xs font-bold text-gray-700">✏️ Editar Datos del Cliente</h3>
-          <div class="grid grid-cols-1 md:grid-cols-5 gap-2">
-            <input type="text" id="edit-cli-nombre" placeholder="Nombre" class="border p-1.5 rounded text-xs bg-white">
-            <input type="text" id="edit-cli-cuit" placeholder="CUIT / DNI" class="border p-1.5 rounded text-xs bg-white">
-            <input type="text" id="edit-cli-direccion" placeholder="Dirección" class="border p-1.5 rounded text-xs bg-white">
-            <input type="text" id="edit-cli-telefono" placeholder="Teléfono" class="border p-1.5 rounded text-xs bg-white">
-            <input type="email" id="edit-cli-email" placeholder="Email" class="border p-1.5 rounded text-xs bg-white">
-          </div>
-          <div class="flex justify-end gap-2 pt-1">
-            <button type="button" onclick="guardarEdicionCliente()" class="bg-amber-700 text-white font-bold px-3 py-1.5 rounded text-xs hover:bg-amber-800">Guardar Cambios</button>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div class="bg-red-50 p-3 rounded-lg border border-red-200 space-y-2">
-            <h3 class="text-xs font-bold text-red-900">⬆️ Agregar pedidos / Cargo Manual</h3>
-            <div class="grid grid-cols-2 gap-2">
-              <input type="date" id="cargo-cli-fecha" class="border p-2 rounded text-xs bg-white">
-              <input type="number" id="cargo-cli-monto" placeholder="Monto ($)" class="border p-2 rounded text-xs bg-white">
-            </div>
-            <input type="text" id="cargo-cli-concepto" placeholder="Concepto (Ej: Saldo anterior, Ajuste...)" class="border p-2 rounded text-xs bg-white w-full">
-            <button type="button" onclick="registrarCargoCliente()" class="bg-red-700 text-white font-bold px-3 py-2 rounded text-xs hover:bg-red-800 w-full">Sumar a la Deuda</button>
-          </div>
-
-          <div class="bg-green-50 p-3 rounded-lg border border-green-200 space-y-2">
-            <h3 class="text-xs font-bold text-green-900">⬇️ Registrar Entrega / Pago</h3>
-            <div class="grid grid-cols-2 gap-2">
-              <input type="date" id="pago-fecha" class="border p-2 rounded text-xs bg-white">
-              <input type="number" id="pago-monto" placeholder="Monto abonado ($)" class="border p-2 rounded text-xs bg-white">
-            </div>
-            <select id="pago-medio" class="border p-2 rounded text-xs bg-white w-full">
-              <option value="Efectivo">Efectivo</option>
-              <option value="Transferencia">Transferencia</option>
-              <option value="Mercado Pago">Mercado Pago</option>
-              <option value="Cheque">Cheque</option>
-            </select>
-            <button type="button" onclick="registrarPagoCliente()" class="bg-green-700 text-white font-bold px-3 py-2 rounded text-xs hover:bg-green-800 w-full">Registrar Pago</button>
-          </div>
-        </div>
-
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs md:text-sm">
-            <thead>
-              <tr class="bg-amber-100 border-b text-amber-900 font-bold">
-                <th class="p-2">Fecha</th>
-                <th class="p-2">Concepto / Detalle</th>
-                <th class="p-2 text-right">Débito</th>
-                <th class="p-2 text-right">Crédito</th>
-                <th class="p-2 text-right">Saldo Acumulado</th>
-                <th class="p-2 text-center">Acción</th>
-              </tr>
-            </thead>
-            <tbody id="tabla-historial-cliente"></tbody>
-          </table>
-        </div>
-      </div>
-
       <div class="bg-white p-4 rounded-xl shadow border space-y-3">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 mb-3">
           <h2 class="text-base font-bold text-gray-800">Directorio General de Clientes</h2>
@@ -402,76 +328,6 @@
 
     <!-- 4. PROVEEDORES Y FACTURACIÓN -->
     <section id="sec-proveedores" class="hidden space-y-4">
-      <div id="modulo-historial-proveedor" class="bg-white p-4 rounded-xl shadow border border-amber-500 space-y-4 hidden">
-        <div class="flex justify-between items-center border-b pb-2">
-          <h2 id="historial-nombre-proveedor" class="text-lg font-bold text-amber-900"></h2>
-          <div class="flex flex-wrap items-center gap-2">
-            <button type="button" onclick="enviarResumenWhatsAppProveedor()" class="bg-green-600 hover:bg-green-700 text-white text-xs px-3 py-2 rounded font-bold shadow flex items-center gap-1">📱 Enviar WhatsApp</button>
-            <button type="button" onclick="enviarResumenEmailProveedor()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-2 rounded font-bold shadow flex items-center gap-1">✉️ Enviar Mail</button>
-            <button type="button" onclick="cerrarHistorialProveedor()" class="bg-gray-300 text-gray-800 text-xs px-3 py-2 rounded font-bold">✕ Cerrar Ficha</button>
-          </div>
-        </div>
-
-        <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 space-y-2">
-          <h3 class="text-xs font-bold text-gray-700">✏️ Editar Datos del Proveedor</h3>
-          <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
-            <input type="text" id="edit-prov-nombre" placeholder="Razón Social" class="border p-1.5 rounded text-xs bg-white">
-            <input type="text" id="edit-prov-cuit" placeholder="CUIT" class="border p-1.5 rounded text-xs bg-white">
-            <input type="text" id="edit-prov-telefono" placeholder="Teléfono" class="border p-1.5 rounded text-xs bg-white">
-            <input type="text" id="edit-prov-rubro" placeholder="Rubro" class="border p-1.5 rounded text-xs bg-white">
-          </div>
-          <div class="flex justify-end gap-2 pt-1">
-            <button type="button" onclick="guardarEdicionProveedor()" class="bg-amber-700 text-white font-bold px-3 py-1.5 rounded text-xs hover:bg-amber-800">Guardar Cambios</button>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div class="bg-amber-50 p-3 rounded-lg border border-amber-200 space-y-2">
-            <h3 class="text-xs font-bold text-amber-900">🧾 Cargar Factura de Compra</h3>
-            <div class="grid grid-cols-2 gap-2">
-              <input type="date" id="fact-fecha" class="border p-2 rounded text-xs bg-white">
-              <input type="text" id="fact-nro" placeholder="N° Factura" class="border p-2 rounded text-xs bg-white">
-            </div>
-            <div class="grid grid-cols-3 gap-1">
-              <select id="fact-insumo" class="border p-2 rounded text-xs bg-white col-span-1"></select>
-              <input type="number" id="fact-cant" placeholder="Cant." class="border p-2 rounded text-xs bg-white">
-              <input type="number" id="fact-precio" placeholder="Precio Un." class="border p-2 rounded text-xs bg-white">
-            </div>
-            <button type="button" onclick="cargarFacturaProveedor()" class="bg-amber-800 text-white font-bold px-3 py-2 rounded text-xs hover:bg-amber-900 w-full">Ingresar Factura y Stock</button>
-          </div>
-
-          <div class="bg-green-50 p-3 rounded-lg border border-green-200 space-y-2">
-            <h3 class="text-xs font-bold text-green-900">💸 Registrar Pago a Proveedor</h3>
-            <div class="grid grid-cols-2 gap-2">
-              <input type="date" id="pago-prov-fecha" class="border p-2 rounded text-xs bg-white">
-              <input type="number" id="pago-prov-monto" placeholder="Monto ($)" class="border p-2 rounded text-xs bg-white">
-            </div>
-            <select id="pago-prov-medio" class="border p-2 rounded text-xs bg-white w-full">
-              <option value="Efectivo">Efectivo</option>
-              <option value="Transferencia">Transferencia</option>
-              <option value="Cheque">Cheque</option>
-            </select>
-            <button type="button" onclick="registrarPagoProveedor()" class="bg-green-700 text-white font-bold px-3 py-2 rounded text-xs hover:bg-green-800 w-full">Registrar Pago</button>
-          </div>
-        </div>
-
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs md:text-sm">
-            <thead>
-              <tr class="bg-amber-100 border-b text-amber-900 font-bold">
-                <th class="p-2">Fecha</th>
-                <th class="p-2">Detalle / N° Factura</th>
-                <th class="p-2 text-right">Facturado</th>
-                <th class="p-2 text-right">Pagado</th>
-                <th class="p-2 text-right">Saldo Deuda</th>
-                <th class="p-2 text-center">Acción</th>
-              </tr>
-            </thead>
-            <tbody id="tabla-historial-proveedor"></tbody>
-          </table>
-        </div>
-      </div>
-
       <div class="bg-white p-4 rounded-xl shadow border space-y-3">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 mb-3">
           <h2 class="text-base font-bold text-gray-800">Directorio General de Proveedores</h2>
@@ -1061,6 +917,154 @@
         <button type="button" onclick="cerrarModalAltaProveedor()" class="bg-gray-300 text-gray-800 text-xs px-4 py-2 rounded font-bold">Cancelar</button>
         <button type="button" onclick="guardarProveedor()" class="bg-amber-700 text-white font-bold px-4 py-2 rounded text-sm hover:bg-amber-800">Registrar Proveedor</button>
       </div>
+    </div>
+  </div>
+
+  <!-- MODAL FICHA / HISTORIAL DE CLIENTE (Agregado aquí junto a los otros modales) -->
+  <div id="modal-historial-cliente" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 hidden p-4">
+    <div class="bg-white p-4 rounded-2xl shadow-2xl max-w-3xl w-full space-y-4 border border-amber-500 max-h-[90vh] overflow-y-auto">
+      
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 border-b pb-2">
+        <div>
+          <h2 id="historial-nombre-cliente" class="text-lg font-bold text-amber-900"></h2>
+          <p id="historial-contacto-cliente" class="text-xs text-gray-600"></p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <button type="button" onclick="enviarResumenWhatsAppCliente()" class="bg-green-600 hover:bg-green-700 text-white text-[10px] px-2 py-1.5 rounded font-bold shadow">📱 WhatsApp</button>
+          <button type="button" onclick="enviarResumenEmailCliente()" class="bg-blue-600 hover:bg-blue-700 text-white text-[10px] px-2 py-1.5 rounded font-bold shadow">✉️ Mail</button>
+          <button type="button" onclick="cerrarHistorialCliente()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 text-[10px] px-2 py-1.5 rounded font-bold">✕ Cerrar</button>
+        </div>
+      </div>
+
+      <div class="bg-gray-50 p-2 rounded-lg border border-gray-200 space-y-2">
+        <h3 class="text-[11px] font-bold text-gray-700">✏️ Editar Datos del Cliente</h3>
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-1.5">
+          <input type="text" id="edit-cli-nombre" placeholder="Nombre" class="border p-1.5 rounded text-[11px] bg-white">
+          <input type="text" id="edit-cli-cuit" placeholder="CUIT / DNI" class="border p-1.5 rounded text-[11px] bg-white">
+          <input type="text" id="edit-cli-direccion" placeholder="Dirección" class="border p-1.5 rounded text-[11px] bg-white">
+          <input type="text" id="edit-cli-telefono" placeholder="Teléfono" class="border p-1.5 rounded text-[11px] bg-white">
+          <input type="email" id="edit-cli-email" placeholder="Email" class="border p-1.5 rounded text-[11px] bg-white col-span-2 md:col-span-1">
+        </div>
+        <div class="flex justify-end pt-1">
+          <button type="button" onclick="guardarEdicionCliente()" class="bg-amber-700 text-white font-bold px-3 py-1.5 rounded text-[10px] hover:bg-amber-800">Guardar Cambios</button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div class="bg-red-50 p-2.5 rounded-lg border border-red-200 space-y-2">
+          <h3 class="text-[11px] font-bold text-red-900">⬆️ Agregar Cargo Manual</h3>
+          <div class="flex gap-1.5">
+            <input type="date" id="cargo-cli-fecha" class="border p-1.5 rounded text-[11px] bg-white w-full">
+            <input type="number" id="cargo-cli-monto" placeholder="Monto ($)" class="border p-1.5 rounded text-[11px] bg-white w-full">
+          </div>
+          <input type="text" id="cargo-cli-concepto" placeholder="Concepto (Ej: Saldo anterior)" class="border p-1.5 rounded text-[11px] bg-white w-full">
+          <button type="button" onclick="registrarCargoCliente()" class="bg-red-700 text-white font-bold px-3 py-1.5 rounded text-[10px] w-full shadow-sm hover:bg-red-800">Sumar a la Deuda</button>
+        </div>
+
+        <div class="bg-green-50 p-2.5 rounded-lg border border-green-200 space-y-2">
+          <h3 class="text-[11px] font-bold text-green-900">⬇️ Registrar Pago</h3>
+          <div class="flex gap-1.5">
+            <input type="date" id="pago-fecha" class="border p-1.5 rounded text-[11px] bg-white w-full">
+            <input type="number" id="pago-monto" placeholder="Abono ($)" class="border p-1.5 rounded text-[11px] bg-white w-full">
+          </div>
+          <select id="pago-medio" class="border p-1.5 rounded text-[11px] bg-white w-full">
+            <option value="Efectivo">Efectivo</option>
+            <option value="Transferencia">Transferencia</option>
+            <option value="Mercado Pago">Mercado Pago</option>
+            <option value="Cheque">Cheque</option>
+          </select>
+          <button type="button" onclick="registrarPagoCliente()" class="bg-green-700 text-white font-bold px-3 py-1.5 rounded text-[10px] w-full shadow-sm hover:bg-green-800">Registrar Pago</button>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto border rounded bg-white">
+        <table class="w-full text-left text-[11px]">
+          <thead>
+            <tr class="bg-amber-100 border-b text-amber-900 font-bold">
+              <th class="p-1.5">Fecha</th>
+              <th class="p-1.5">Concepto</th>
+              <th class="p-1.5 text-right">Débito</th>
+              <th class="p-1.5 text-right">Crédito</th>
+              <th class="p-1.5 text-right">Saldo Acumulado</th>
+              <th class="p-1.5 text-center">Acción</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-historial-cliente"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL FICHA PROVEEDOR (Agregado aquí junto a los otros modales) -->
+  <div id="modal-historial-proveedor" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 hidden p-4">
+    <div class="bg-white p-4 rounded-2xl shadow-2xl max-w-3xl w-full space-y-4 border border-amber-500 max-h-[90vh] overflow-y-auto">
+        <div class="flex justify-between items-center border-b pb-2">
+          <h2 id="historial-nombre-proveedor" class="text-lg font-bold text-amber-900"></h2>
+          <div class="flex flex-wrap items-center gap-2">
+            <button type="button" onclick="enviarResumenWhatsAppProveedor()" class="bg-green-600 hover:bg-green-700 text-white text-[10px] px-2 py-1.5 rounded font-bold shadow flex items-center gap-1">📱 WhatsApp</button>
+            <button type="button" onclick="enviarResumenEmailProveedor()" class="bg-blue-600 hover:bg-blue-700 text-white text-[10px] px-2 py-1.5 rounded font-bold shadow flex items-center gap-1">✉️ Mail</button>
+            <button type="button" onclick="cerrarHistorialProveedor()" class="bg-gray-300 text-gray-800 text-[10px] px-2 py-1.5 rounded font-bold">✕ Cerrar</button>
+          </div>
+        </div>
+
+        <div class="bg-gray-50 p-2 rounded-lg border border-gray-200 space-y-2">
+          <h3 class="text-[11px] font-bold text-gray-700">✏️ Editar Datos del Proveedor</h3>
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-1.5">
+            <input type="text" id="edit-prov-nombre" placeholder="Razón Social" class="border p-1.5 rounded text-[11px] bg-white">
+            <input type="text" id="edit-prov-cuit" placeholder="CUIT" class="border p-1.5 rounded text-[11px] bg-white">
+            <input type="text" id="edit-prov-telefono" placeholder="Teléfono" class="border p-1.5 rounded text-[11px] bg-white">
+            <input type="text" id="edit-prov-rubro" placeholder="Rubro" class="border p-1.5 rounded text-[11px] bg-white">
+          </div>
+          <div class="flex justify-end gap-2 pt-1">
+            <button type="button" onclick="guardarEdicionProveedor()" class="bg-amber-700 text-white font-bold px-3 py-1.5 rounded text-[10px] hover:bg-amber-800">Guardar Cambios</button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div class="bg-amber-50 p-2.5 rounded-lg border border-amber-200 space-y-2">
+            <h3 class="text-[11px] font-bold text-amber-900">🧾 Cargar Factura de Compra</h3>
+            <div class="flex gap-1.5">
+              <input type="date" id="fact-fecha" class="border p-1.5 rounded text-[11px] bg-white w-full">
+              <input type="text" id="fact-nro" placeholder="N° Factura" class="border p-1.5 rounded text-[11px] bg-white w-full">
+            </div>
+            <div class="grid grid-cols-3 gap-1">
+              <select id="fact-insumo" class="border p-1.5 rounded text-[11px] bg-white col-span-1"></select>
+              <input type="number" id="fact-cant" placeholder="Cant." class="border p-1.5 rounded text-[11px] bg-white">
+              <input type="number" id="fact-precio" placeholder="Precio Un." class="border p-1.5 rounded text-[11px] bg-white">
+            </div>
+            <button type="button" onclick="cargarFacturaProveedor()" class="bg-amber-800 text-white font-bold px-3 py-1.5 rounded text-[10px] hover:bg-amber-900 w-full shadow-sm">Ingresar Factura y Stock</button>
+          </div>
+
+          <div class="bg-green-50 p-2.5 rounded-lg border border-green-200 space-y-2">
+            <h3 class="text-[11px] font-bold text-green-900">💸 Registrar Pago a Proveedor</h3>
+            <div class="flex gap-1.5">
+              <input type="date" id="pago-prov-fecha" class="border p-1.5 rounded text-[11px] bg-white w-full">
+              <input type="number" id="pago-prov-monto" placeholder="Monto ($)" class="border p-1.5 rounded text-[11px] bg-white w-full">
+            </div>
+            <select id="pago-prov-medio" class="border p-1.5 rounded text-[11px] bg-white w-full">
+              <option value="Efectivo">Efectivo</option>
+              <option value="Transferencia">Transferencia</option>
+              <option value="Cheque">Cheque</option>
+            </select>
+            <button type="button" onclick="registrarPagoProveedor()" class="bg-green-700 text-white font-bold px-3 py-1.5 rounded text-[10px] hover:bg-green-800 w-full shadow-sm">Registrar Pago</button>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto border rounded bg-white">
+          <table class="w-full text-left text-[11px]">
+            <thead>
+              <tr class="bg-amber-100 border-b text-amber-900 font-bold">
+                <th class="p-1.5">Fecha</th>
+                <th class="p-1.5">Detalle / N° Factura</th>
+                <th class="p-1.5 text-right">Facturado</th>
+                <th class="p-1.5 text-right">Pagado</th>
+                <th class="p-1.5 text-right">Saldo Deuda</th>
+                <th class="p-1.5 text-center">Acción</th>
+              </tr>
+            </thead>
+            <tbody id="tabla-historial-proveedor"></tbody>
+          </table>
+        </div>
     </div>
   </div>
 
@@ -2399,9 +2403,11 @@
       document.getElementById('edit-cli-telefono').value = cli.telefono || '';
       document.getElementById('edit-cli-email').value = cli.email || '';
 
-      const modulo = document.getElementById('modulo-historial-cliente');
-      modulo.classList.remove('hidden');
-      modulo.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const modal = document.getElementById('modal-historial-cliente');
+      if (modal) {
+          modal.classList.remove('hidden');
+          modal.className = "fixed-modal-apk";
+      }
       
       const labelSel = document.getElementById('label-selector-cliente');
       if (labelSel) labelSel.textContent = cli.nombre;
@@ -2432,7 +2438,11 @@
 
     function cerrarHistorialCliente() { 
       clienteSeleccionadoId = null; 
-      document.getElementById('modulo-historial-cliente').classList.add('hidden'); 
+      const modal = document.getElementById('modal-historial-cliente');
+      if (modal) {
+          modal.classList.add('hidden');
+          modal.className = "fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 hidden p-4";
+      }
       const labelSel = document.getElementById('label-selector-cliente');
       if (labelSel) labelSel.textContent = "🔍 Buscar Cliente...";
     }
@@ -2764,9 +2774,11 @@
       document.getElementById('edit-prov-telefono').value = prv.telefono || '';
       document.getElementById('edit-prov-rubro').value = prv.rubro || '';
 
-      const modulo = document.getElementById('modulo-historial-proveedor');
-      modulo.classList.remove('hidden');
-      modulo.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const modal = document.getElementById('modal-historial-proveedor');
+      if (modal) {
+          modal.classList.remove('hidden');
+          modal.className = "fixed-modal-apk";
+      }
 
       const labelSel = document.getElementById('label-selector-proveedor');
       if (labelSel) labelSel.textContent = prv.nombre;
@@ -2794,7 +2806,11 @@
 
     function cerrarHistorialProveedor() { 
       proveedorSeleccionadoId = null; 
-      document.getElementById('modulo-historial-proveedor').classList.add('hidden'); 
+      const modal = document.getElementById('modal-historial-proveedor');
+      if (modal) {
+          modal.classList.add('hidden');
+          modal.className = "fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 hidden p-4";
+      }
       const labelSel = document.getElementById('label-selector-proveedor');
       if (labelSel) labelSel.textContent = "🔍 Buscar Proveedor...";
     }
@@ -3508,7 +3524,7 @@
             <td class="p-2 text-right font-bold">$${sumTotalVentas.toLocaleString()}</td>
             ${esAdminGeneral ? '<td></td>' : ''}
           </tr>
-          <tr class="bg-amber-200">
+         <tr class="bg-amber-200">
             <td class="p-2 text-amber-950" colspan="${colspanProm}">PROMEDIO DIARIO VENTAS (${diasConVentas} días)</td>
             <td class="p-2 text-right font-extrabold text-amber-950">$${Math.round(promVentas).toLocaleString()}</td>
             ${esAdminGeneral ? '<td></td>' : ''}
@@ -3517,298 +3533,260 @@
       }
 
       tfootEgresos.innerHTML = `
-        <tr>
-          <td class="p-2">TOTAL EGRESOS</td>
+        <tr class="bg-red-100 font-bold">
+          <td class="p-2">TOTAL MENSUAL EGRESOS</td>
           <td class="p-2 text-right">$${sumEgresosCaja.toLocaleString()}</td>
           <td class="p-2 text-right">$${sumPagosProv.toLocaleString()}</td>
-          <td class="p-2 text-right font-bold">$${sumTotalEgresos.toLocaleString()}</td>
+          <td class="p-2 text-right font-bold text-red-800">$${sumTotalEgresos.toLocaleString()}</td>
         </tr>
       `;
     }
 
-    function agregarNuevoPanificado() {
-      const nombre = document.getElementById('nuevo-panificado-nombre').value.trim();
-      const unid = parseInt(document.getElementById('nuevo-panificado-unidades').value);
-      const menor = parseFloat(document.getElementById('nuevo-panificado-menor').value);
-      const mayor = parseFloat(document.getElementById('nuevo-panificado-mayor').value);
-      if (!nombre || isNaN(unid) || isNaN(menor) || isNaN(mayor)) return;
-
-      dbPanificados[nombre] = { unidPorPaq: unid, menor, mayor };
-      guardarDB('db_panificados', dbPanificados); 
-      document.getElementById('nuevo-panificado-nombre').value = '';
-      document.getElementById('nuevo-panificado-unidades').value = '';
-      document.getElementById('nuevo-panificado-menor').value = '';
-      document.getElementById('nuevo-panificado-mayor').value = '';
-      renderizarTablaPanificados(); 
-      cargarSelectorPanificadosReparto();
-      cargarSelectorProductosRecurrentes();
-    }
-
-    function editarPanificadoDirecto(nombre, campo, valor) {
-      if (!dbPanificados[nombre]) return;
-      const valNum = parseFloat(valor);
-      if (isNaN(valNum)) return;
-      dbPanificados[nombre][campo] = valNum;
-      guardarDB('db_panificados', dbPanificados);
-      cargarSelectorPanificadosReparto();
-    }
-
     function renderizarTablaPanificados() {
       const tbody = document.getElementById('tabla-panificados-precios'); if (!tbody) return; tbody.innerHTML = '';
-      Object.entries(dbPanificados).sort((a, b) => a[0].localeCompare(b[0])).forEach(([nombre, data]) => {
-        const tr = document.createElement('tr'); tr.className = "border-b hover:bg-gray-50";
+      Object.entries(dbPanificados).sort((a, b) => a[0].localeCompare(b[0])).forEach(([nombre, p]) => {
+        const tr = document.createElement('tr'); tr.className = "border-b hover:bg-amber-50";
         tr.innerHTML = `
-          <td class="p-2 font-bold">${nombre}</td>
-          <td class="p-2"><input type="number" value="${data.unidPorPaq}" onchange="editarPanificadoDirecto('${nombre}', 'unidPorPaq', this.value)" class="w-16 border rounded p-1 text-xs font-bold"></td>
-          <td class="p-2">
-            <div class="flex items-center"><span class="text-xs mr-1 text-gray-500">$</span>
-            <input type="number" value="${data.menor}" onchange="editarPanificadoDirecto('${nombre}', 'menor', this.value)" class="w-20 border rounded p-1 text-xs font-bold"></div>
-          </td>
-          <td class="p-2">
-            <div class="flex items-center"><span class="text-xs mr-1 text-gray-500">$</span>
-            <input type="number" value="${data.mayor}" onchange="editarPanificadoDirecto('${nombre}', 'mayor', this.value)" class="w-20 border rounded p-1 text-xs font-bold text-amber-900"></div>
-          </td>
-          <td class="p-2 text-center"><button onclick="eliminarPanificado('${nombre}')" class="bg-red-600 text-white text-xs px-2 py-1 rounded">✕</button></td>
+          <td class="p-2 font-bold text-amber-950">${nombre}</td>
+          <td class="p-2"><input type="number" value="${p.unidPorPaq}" onchange="modificarPanificado('${nombre}', 'unidPorPaq', this.value)" class="w-16 border rounded p-1 text-center text-xs"></td>
+          <td class="p-2"><input type="number" value="${p.menor}" onchange="modificarPanificado('${nombre}', 'menor', this.value)" class="w-20 border rounded p-1 text-xs font-bold text-amber-900"></td>
+          <td class="p-2"><input type="number" value="${p.mayor}" onchange="modificarPanificado('${nombre}', 'mayor', this.value)" class="w-20 border rounded p-1 text-xs font-bold text-amber-900"></td>
+          <td class="p-2 text-center"><button onclick="eliminarPanificado('${nombre}')" class="bg-red-600 text-white text-xs px-2 py-1 rounded font-bold">✕ Eliminar</button></td>
         `;
         tbody.appendChild(tr);
       });
     }
 
-    function eliminarPanificado(nombre) { 
-      if (confirm(`⚠️ ¿Desea eliminar "${nombre}"?`)) {
-        delete dbPanificados[nombre]; 
-        guardarDB('db_panificados', dbPanificados); 
-        renderizarTablaPanificados(); 
-        cargarSelectorPanificadosReparto();
-        cargarSelectorProductosRecurrentes();
+    function agregarNuevoPanificado() {
+      const nom = document.getElementById('nuevo-panificado-nombre').value.trim();
+      const unid = parseInt(document.getElementById('nuevo-panificado-unidades').value) || 1;
+      const men = parseFloat(document.getElementById('nuevo-panificado-menor').value) || 0;
+      const may = parseFloat(document.getElementById('nuevo-panificado-mayor').value) || 0;
+      if (!nom) { alert("Ingresá un nombre."); return; }
+      dbPanificados[nom] = { unidPorPaq: unid, menor: men, mayor: may };
+      guardarDB('db_panificados', dbPanificados);
+      document.getElementById('nuevo-panificado-nombre').value = '';
+      document.getElementById('nuevo-panificado-unidades').value = '';
+      document.getElementById('nuevo-panificado-menor').value = '';
+      document.getElementById('nuevo-panificado-mayor').value = '';
+      renderizarTablaPanificados(); cargarSelectorPanificadosReparto();
+      alert("¡Panificado agregado!");
+    }
+
+    function modificarPanificado(nom, campo, val) {
+      if (dbPanificados[nom]) {
+        dbPanificados[nom][campo] = parseFloat(val) || 0;
+        guardarDB('db_panificados', dbPanificados);
       }
     }
 
-    function aplicarAumentoPorcentaje() {
-      if (dbUsuarios[usuarioActivoId]?.rol !== 'admin') { alert("Acceso restringido al Administrador."); return; }
-      const porcentaje = parseFloat(document.getElementById('ajuste-porcentaje-valor').value); if (isNaN(porcentaje)) return;
-      const factor = 1 + (porcentaje / 100);
-
-      Object.keys(dbProductos).forEach(nombre => {
-        let p = dbProductos[nombre];
-        if (p.mostrador > 0) p.mostrador = Math.round(p.mostrador * factor);
-        if (p.reparto > 0) p.reparto = Math.round(p.reparto * factor);
-        if (p.unOcuarto > 0) p.unOcuarto = Math.round(p.unOcuarto * factor);
-      });
-
-      guardarDB('db_productos', dbProductos); renderizarTablaCatalogo();
-    }
-
-    function agregarNuevoProducto() {
-      const nombre = document.getElementById('nuevo-prod-nombre').value.trim(); if (!nombre) return;
-      dbProductos[nombre] = {
-        mostrador: parseFloat(document.getElementById('nuevo-prod-mostrador').value) || 0,
-        reparto: parseFloat(document.getElementById('nuevo-prod-reparto').value) || 0,
-        unOcuarto: parseFloat(document.getElementById('nuevo-prod-unOcuarto').value) || 0
-      };
-      guardarDB('db_productos', dbProductos); 
-      document.getElementById('nuevo-prod-nombre').value = '';
-      document.getElementById('nuevo-prod-mostrador').value = '';
-      document.getElementById('nuevo-prod-reparto').value = '';
-      document.getElementById('nuevo-prod-unOcuarto').value = '';
-      renderizarTablaCatalogo(); 
-      cargarSelectorDespachoReparto();
-      cargarSelectorProductosRecurrentes();
+    function eliminarPanificado(nom) {
+      if (confirm(`¿Eliminar ${nom}?`)) {
+        delete dbPanificados[nom];
+        guardarDB('db_panificados', dbPanificados);
+        renderizarTablaPanificados(); cargarSelectorPanificadosReparto();
+      }
     }
 
     function renderizarTablaCatalogo() {
       const tbody = document.getElementById('tabla-catalogo-precios'); if (!tbody) return; tbody.innerHTML = '';
       Object.entries(dbProductos).sort((a, b) => a[0].localeCompare(b[0])).forEach(([nombre, p]) => {
         const tr = document.createElement('tr'); tr.className = "border-b hover:bg-gray-50";
-        
         tr.innerHTML = `
-          <td class="p-2 font-bold">${nombre}</td>
-          <td class="p-2"><input type="text" value="$${p.mostrador.toLocaleString('es-AR')}" onchange="editarProductoCatalogoDirecto('${nombre}', 'mostrador', this.value)" class="w-24 border rounded p-1 text-xs font-bold text-center"></td>
-          <td class="p-2"><input type="text" value="$${p.reparto.toLocaleString('es-AR')}" onchange="editarProductoCatalogoDirecto('${nombre}', 'reparto', this.value)" class="w-24 border rounded p-1 text-xs font-bold text-amber-900 text-center"></td>
-          <td class="p-2"><input type="text" value="$${p.unOcuarto.toLocaleString('es-AR')}" onchange="editarProductoCatalogoDirecto('${nombre}', 'unOcuarto', this.value)" class="w-24 border rounded p-1 text-xs font-bold text-center"></td>
-          <td class="p-2 text-center"><button onclick="eliminarProductoCatalogo('${nombre}')" class="bg-red-600 text-white text-xs px-2 py-1 rounded">✕</button></td>
+          <td class="p-2 font-bold text-gray-800">${nombre}</td>
+          <td class="p-2"><input type="number" value="${p.mostrador || 0}" onchange="modificarProductoCat('${nombre}', 'mostrador', this.value)" class="w-20 border rounded p-1 text-xs font-bold"></td>
+          <td class="p-2"><input type="number" value="${p.reparto || 0}" onchange="modificarProductoCat('${nombre}', 'reparto', this.value)" class="w-20 border rounded p-1 text-xs font-bold text-amber-900"></td>
+          <td class="p-2"><input type="number" value="${p.unOcuarto || 0}" onchange="modificarProductoCat('${nombre}', 'unOcuarto', this.value)" class="w-20 border rounded p-1 text-xs"></td>
+          <td class="p-2 text-center"><button onclick="eliminarProductoCat('${nombre}')" class="bg-red-600 text-white text-xs px-2 py-1 rounded font-bold">✕ Eliminar</button></td>
         `;
         tbody.appendChild(tr);
       });
     }
 
-    function editarProductoCatalogoDirecto(nombre, campo, valor) {
-      if (!dbProductos[nombre]) return;
-      let valLimpio = valor.toString().replace(/\$/g, '').replace(/\./g, '').replace(/,/g, '.').trim();
-      let valNum = parseFloat(valLimpio);
-      
-      if (!isNaN(valNum)) {
-        dbProductos[nombre][campo] = valNum;
-        if (rtdb) rtdb.ref(`db_productos/${nombre}/${campo}`).set(valNum).catch(e => console.warn(e));
-        localStorage.setItem('db_productos', JSON.stringify(dbProductos));
-        cargarSelectorDespachoReparto();
+    function agregarNuevoProducto() {
+      const nom = document.getElementById('nuevo-prod-nombre').value.trim();
+      const mos = parseFloat(document.getElementById('nuevo-prod-mostrador').value) || 0;
+      const rep = parseFloat(document.getElementById('nuevo-prod-reparto').value) || 0;
+      const unQ = parseFloat(document.getElementById('nuevo-prod-unOcuarto').value) || 0;
+      if (!nom) { alert("Ingresá un nombre."); return; }
+      dbProductos[nom] = { mostrador: mos, reparto: rep, unOcuarto: unQ };
+      guardarDB('db_productos', dbProductos);
+      document.getElementById('nuevo-prod-nombre').value = '';
+      document.getElementById('nuevo-prod-mostrador').value = '';
+      document.getElementById('nuevo-prod-reparto').value = '';
+      document.getElementById('nuevo-prod-unOcuarto').value = '';
+      renderizarTablaCatalogo(); cargarSelectorDespachoReparto();
+      alert("¡Producto agregado!");
+    }
+
+    function modificarProductoCat(nom, campo, val) {
+      if (dbProductos[nom]) {
+        dbProductos[nom][campo] = parseFloat(val) || 0;
+        guardarDB('db_productos', dbProductos);
       }
-      renderizarTablaCatalogo();
     }
 
-    function eliminarProductoCatalogo(nombre) { 
-      if (confirm(`⚠️ ¿Desea eliminar "${nombre}" del Catálogo?`)) {
-        delete dbProductos[nombre]; 
-        guardarDB('db_productos', dbProductos); 
-        renderizarTablaCatalogo(); 
-        cargarSelectorDespachoReparto();
-        cargarSelectorProductosRecurrentes();
+    function eliminarProductoCat(nom) {
+      if (confirm(`¿Eliminar ${nom}?`)) {
+        delete dbProductos[nom];
+        guardarDB('db_productos', dbProductos);
+        renderizarTablaCatalogo(); cargarSelectorDespachoReparto();
       }
     }
 
-    function filtrarTablaPrecios() { 
-      const b = document.getElementById('buscar-producto').value.toLowerCase(); 
-      document.querySelectorAll('#tabla-catalogo-precios tr').forEach(f => f.style.display = f.innerText.toLowerCase().includes(b) ? '' : 'none'); 
+    function aplicarAumentoPorcentaje() {
+      const col = document.getElementById('ajuste-columna-precio').value;
+      const pct = parseFloat(document.getElementById('ajuste-porcentaje-valor').value);
+      if (isNaN(pct) || pct === 0) { alert("Ingresá un porcentaje válido."); return; }
+
+      if (confirm(`¿Aplicar ajuste del ${pct}%?`)) {
+        const mult = 1 + (pct / 100);
+        Object.keys(dbProductos).forEach(k => {
+          if (col === 'todos' || col === 'mostrador') dbProductos[k].mostrador = Math.round((dbProductos[k].mostrador || 0) * mult);
+          if (col === 'todos' || col === 'reparto') dbProductos[k].reparto = Math.round((dbProductos[k].reparto || 0) * mult);
+          if (col === 'todos' || col === 'unOcuarto') dbProductos[k].unOcuarto = Math.round((dbProductos[k].unOcuarto || 0) * mult);
+        });
+        guardarDB('db_productos', dbProductos);
+        renderizarTablaCatalogo();
+        alert("¡Precios actualizados!");
+      }
     }
 
-    function guardarUsuario() {
-      const nombre = document.getElementById('usr-nombre').value.trim(); if (!nombre) return;
-      const id = generarID('USR');
-      dbUsuarios[id] = { 
-        id, 
-        nombre, 
-        rol: document.getElementById('usr-rol').value, 
-        sucursal: document.getElementById('usr-sucursal').value, 
-        pin: '1234' 
-      };
-      guardarDB('db_usuarios', dbUsuarios); renderizarTablaUsuarios(); renderizarUsuariosSelect();
+    function filtrarTablaPrecios() {
+      const txt = document.getElementById('buscar-producto').value.toLowerCase();
+      const filas = document.querySelectorAll('#tabla-catalogo-precios tr');
+      filas.forEach(f => {
+        const prod = f.children[0]?.textContent.toLowerCase() || '';
+        f.style.display = prod.includes(txt) ? '' : 'none';
+      });
     }
 
     function renderizarTablaUsuarios() {
       const tbody = document.getElementById('tabla-usuarios'); if (!tbody) return; tbody.innerHTML = '';
       Object.values(dbUsuarios).forEach(u => {
-        const configRol = PERMISOS_ROLES[u.rol];
         const tr = document.createElement('tr'); tr.className = "border-b hover:bg-gray-50";
         tr.innerHTML = `
           <td class="p-2 font-bold">${u.nombre}</td>
-          <td class="p-2"><span class="bg-amber-100 text-amber-900 px-2 py-0.5 rounded text-xs font-bold">${configRol?.nombre || u.rol}</span></td>
-          <td class="p-2"><span class="bg-blue-100 text-blue-900 px-2 py-0.5 rounded text-xs font-bold">${ETIQUETAS_SUCURSAL[u.sucursal || 'todas']}</span></td>
-          <td class="p-2 text-center">${u.id !== 'USR-1' ? `<button onclick="eliminarUsuario('${u.id}')" class="text-xs text-red-600 font-bold">Eliminar</button>` : '-'}</td>
+          <td class="p-2 text-xs">${PERMISOS_ROLES[u.rol]?.nombre || u.rol}</td>
+          <td class="p-2 text-xs">${ETIQUETAS_SUCURSAL[u.sucursal || 'todas']}</td>
+          <td class="p-2 text-center">${u.id !== 'USR-1' ? `<button onclick="eliminarUsuario('${u.id}')" class="bg-red-600 text-white text-xs px-2 py-1 rounded font-bold">✕ Eliminar</button>` : '<span class="text-xs text-gray-400">Principal</span>'}</td>
         `;
         tbody.appendChild(tr);
       });
     }
 
-    function eliminarUsuario(id) { delete dbUsuarios[id]; guardarDB('db_usuarios', dbUsuarios); renderizarTablaUsuarios(); renderizarUsuariosSelect(); }
+    function guardarUsuario() {
+      const nom = document.getElementById('usr-nombre').value.trim();
+      const rol = document.getElementById('usr-rol').value;
+      const suc = document.getElementById('usr-sucursal').value;
+      if (!nom) { alert("Ingresá un nombre."); return; }
+      const id = generarID('USR');
+      dbUsuarios[id] = { id, nombre: nom, rol, sucursal: suc, pin: "1234" };
+      guardarDB('db_usuarios', dbUsuarios);
+      document.getElementById('usr-nombre').value = '';
+      renderizarTablaUsuarios(); renderizarUsuariosSelect();
+      alert("¡Usuario guardado! (PIN inicial: 1234)");
+    }
+
+    function eliminarUsuario(id) {
+      if (confirm("¿Eliminar usuario?")) {
+        delete dbUsuarios[id];
+        guardarDB('db_usuarios', dbUsuarios);
+        renderizarTablaUsuarios(); renderizarUsuariosSelect();
+      }
+    }
+
+    // --- FUNCIONES DE BACKUP ---
 
     function ejecutarBackupDiarioAutomatico() {
-      const hoy = fechaActual;
-      if (!dbBackupsDiarios[hoy]) {
-        dbBackupsDiarios[hoy] = {
-          fechaBackup: hoy,
-          timestamp: Date.now(),
-          datos: { dbUsuarios, dbPanificados, dbProductos, dbClientes, dbProveedores, dbInsumos, dbRepartos, dbRecurrentes, dbNotasMostrador, dbHistorialClientes, dbHistorialProveedores, dbCajasDiarias, dbEgresosCaja, dbRepartosCerrados }
+      if (!dbBackupsDiarios) dbBackupsDiarios = {};
+      const fecha = obtenerFechaHoyLocal();
+      if (!dbBackupsDiarios[fecha]) {
+        dbBackupsDiarios[fecha] = {
+          db_usuarios: dbUsuarios,
+          db_panificados: dbPanificados,
+          db_productos: dbProductos,
+          db_clientes: dbClientes,
+          db_proveedores: dbProveedores,
+          db_insumos: dbInsumos,
+          db_repartos: dbRepartos,
+          db_recurrentes: dbRecurrentes,
+          db_historial_clientes: dbHistorialClientes,
+          db_historial_proveedores: dbHistorialProveedores,
+          db_cajas_diarias: dbCajasDiarias,
+          db_egresos_caja: dbEgresosCaja,
+          db_repartos_cerrados: dbRepartosCerrados
         };
-
-        const fechasGuardadas = Object.keys(dbBackupsDiarios).sort();
-        if (fechasGuardadas.length > 30) {
-          const aEliminar = fechasGuardadas.slice(0, fechasGuardadas.length - 30);
-          aEliminar.forEach(f => delete dbBackupsDiarios[f]);
-        }
-
         guardarDB('db_backups_diarios', dbBackupsDiarios);
       }
     }
 
     function renderizarSelectorBackups() {
-      const sel = document.getElementById('select-backups-historial'); if (!sel) return;
-      sel.innerHTML = '<option value="">-- Seleccionar Fecha Respaldo --</option>';
-      Object.keys(dbBackupsDiarios).sort().reverse().forEach(f => {
+      const sel = document.getElementById('select-backups-historial');
+      if (!sel) return;
+      sel.innerHTML = '<option value="">-- Seleccionar Fecha --</option>';
+      Object.keys(dbBackupsDiarios || {}).sort((a,b) => b.localeCompare(a)).forEach(fecha => {
         const opt = document.createElement('option');
-        opt.value = f;
-        opt.textContent = `Backup: ${f}`;
+        opt.value = fecha;
+        opt.textContent = `Respaldo del ${fecha}`;
         sel.appendChild(opt);
       });
     }
 
     function descargarBackupManual() {
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dbBackupsDiarios[fechaActual] || { fecha: fechaActual, dbRepartos, dbCajasDiarias }));
-      const downloadAnchor = document.createElement('a');
-      downloadAnchor.setAttribute("href", dataStr);
-      downloadAnchor.setAttribute("download", `Backup_Panaderia_${fechaActual}.json`);
-      document.body.appendChild(downloadAnchor);
-      downloadAnchor.click();
-      downloadAnchor.remove();
-    }
-
-    function restaurarFechaSeleccionada() {
-      const fSel = document.getElementById('select-backups-historial').value;
-      if (!fSel || !dbBackupsDiarios[fSel]) { alert("Seleccione una fecha válida."); return; }
-
-      if (confirm(`⚠️ ¿Desea restaurar el estado completo a la fecha ${fSel}?`)) {
-        const bkp = dbBackupsDiarios[fSel].datos;
-        guardarDB('db_usuarios', bkp.dbUsuarios);
-        guardarDB('db_panificados', bkp.dbPanificados);
-        guardarDB('db_productos', bkp.dbProductos);
-        guardarDB('db_clientes', bkp.dbClientes);
-        guardarDB('db_proveedores', bkp.dbProveedores);
-        guardarDB('db_insumos', bkp.dbInsumos);
-        guardarDB('db_repartos', bkp.dbRepartos);
-        guardarDB('db_recurrentes', bkp.dbRecurrentes || {});
-        guardarDB('db_notas_mostrador', bkp.dbNotasMostrador);
-        guardarDB('db_historial_clientes', bkp.dbHistorialClientes);
-        guardarDB('db_historial_proveedores', bkp.dbHistorialProveedores);
-        guardarDB('db_cajas_diarias', bkp.dbCajasDiarias);
-        guardarDB('db_egresos_caja', bkp.dbEgresosCaja);
-        guardarDB('db_repartos_cerrados', bkp.dbRepartosCerrados || {});
-
-        alert("¡Sistema restaurado correctamente!");
-        window.location.reload();
-      }
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(localStorage));
+      const downloadAnchorNode = document.createElement('a');
+      downloadAnchorNode.setAttribute("href", dataStr);
+      downloadAnchorNode.setAttribute("download", "backup_panaderia_" + obtenerFechaHoyLocal() + ".json");
+      document.body.appendChild(downloadAnchorNode);
+      downloadAnchorNode.click();
+      downloadAnchorNode.remove();
     }
 
     function subirBackupManual(event) {
       const file = event.target.files[0];
       if (!file) return;
-
       const reader = new FileReader();
       reader.onload = function(e) {
         try {
-          const contenido = JSON.parse(e.target.result);
-          const bkp = contenido.datos || contenido; 
-          
-          if (!bkp.dbUsuarios && !bkp.dbCajasDiarias) {
-            alert("El archivo no parece tener el formato correcto de respaldo.");
-            return;
-          }
-
-          if (confirm("⚠️ ¿Estás seguro de que deseas subir este respaldo? Se sincronizarán todos los datos a la nube y en este dispositivo.")) {
-            if (bkp.dbUsuarios) guardarDB('db_usuarios', bkp.dbUsuarios);
-            if (bkp.dbPanificados) guardarDB('db_panificados', bkp.dbPanificados);
-            if (bkp.dbProductos) guardarDB('db_productos', bkp.dbProductos);
-            if (bkp.dbClientes) guardarDB('db_clientes', bkp.dbClientes);
-            if (bkp.dbProveedores) guardarDB('db_proveedores', bkp.dbProveedores);
-            if (bkp.dbInsumos) guardarDB('db_insumos', bkp.dbInsumos);
-            if (bkp.dbRepartos) guardarDB('db_repartos', bkp.dbRepartos);
-            if (bkp.dbRecurrentes) guardarDB('db_repartos_cerrados', bkp.dbRecurrentes);
-            if (bkp.dbNotasMostrador) guardarDB('db_notas_mostrador', bkp.dbNotasMostrador);
-            if (bkp.dbHistorialClientes) guardarDB('db_historial_clientes', bkp.dbHistorialClientes);
-            if (bkp.dbHistorialProveedores) guardarDB('db_historial_proveedores', bkp.dbHistorialProveedores);
-            if (bkp.dbCajasDiarias) guardarDB('db_cajas_diarias', bkp.dbCajasDiarias);
-            if (bkp.dbEgresosCaja) guardarDB('db_egresos_caja', bkpe.dbEgresosCaja || bkp.dbEgresosCaja);
-            if (bkp.dbRepartosCerrados) guardarDB('db_repartos_cerrados', bkp.dbRepartosCerrados);
-
-            alert("¡Datos restaurados y subidos a la nube exitosamente!");
-            window.location.reload();
+          const data = JSON.parse(e.target.result);
+          if (confirm("⚠️ ¿Estás seguro de restaurar este backup? Se sobrescribirán todos los datos actuales.")) {
+            for (let key in data) {
+               localStorage.setItem(key, data[key]);
+               if (rtdb) { rtdb.ref(key).set(JSON.parse(data[key])); }
+            }
+            alert("Backup restaurado con éxito. La página se recargará.");
+            location.reload();
           }
         } catch (error) {
-          alert("Error al leer el archivo JSON. Asegurate de que sea el archivo correcto.");
-          console.error(error);
+          alert("Error al leer el archivo de backup.");
         }
-        event.target.value = "";
       };
       reader.readAsText(file);
     }
 
-    function toggleAutomatizacion() {
-      const cuerpo = document.getElementById('cont-automatizacion-cuerpo');
-      const btn = document.getElementById('btn-toggle-auto');
-      if (cuerpo.classList.contains('hidden')) {
-        cuerpo.classList.remove('hidden');
-        btn.innerHTML = 'Ocultar ⬆️';
-      } else {
-        cuerpo.classList.add('hidden');
-        btn.innerHTML = 'Mostrar ⬇️';
+    function restaurarFechaSeleccionada() {
+      const fecha = document.getElementById('select-backups-historial').value;
+      if (!fecha) { alert("Seleccioná una fecha primero."); return; }
+      if (confirm(`⚠️ ¿Restaurar la base de datos al estado del ${fecha}? Perderás los cambios posteriores a esa fecha.`)) {
+         const bkp = dbBackupsDiarios[fecha];
+         if (bkp) {
+            dbUsuarios = bkp.db_usuarios || {}; guardarDB('db_usuarios', dbUsuarios);
+            dbPanificados = bkp.db_panificados || {}; guardarDB('db_panificados', dbPanificados);
+            dbProductos = bkp.db_productos || {}; guardarDB('db_productos', dbProductos);
+            dbClientes = bkp.db_clientes || {}; guardarDB('db_clientes', dbClientes);
+            dbProveedores = bkp.db_proveedores || {}; guardarDB('db_proveedores', dbProveedores);
+            dbInsumos = bkp.db_insumos || {}; guardarDB('db_insumos', dbInsumos);
+            dbRepartos = bkp.db_repartos || {}; guardarDB('db_repartos', dbRepartos);
+            dbRecurrentes = bkp.db_recurrentes || {}; guardarDB('db_recurrentes', dbRecurrentes);
+            dbHistorialClientes = bkp.db_historial_clientes || {}; guardarDB('db_historial_clientes', dbHistorialClientes);
+            dbHistorialProveedores = bkp.db_historial_proveedores || {}; guardarDB('db_historial_proveedores', dbHistorialProveedores);
+            dbCajasDiarias = bkp.db_cajas_diarias || {}; guardarDB('db_cajas_diarias', dbCajasDiarias);
+            dbEgresosCaja = bkp.db_egresos_caja || {}; guardarDB('db_egresos_caja', dbEgresosCaja);
+            dbRepartosCerrados = bkp.db_repartos_cerrados || {}; guardarDB('db_repartos_cerrados', dbRepartosCerrados);
+            alert("Datos restaurados correctamente. Recargando...");
+            location.reload();
+         }
       }
     }
   </script>
