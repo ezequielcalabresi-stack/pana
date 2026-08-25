@@ -37,28 +37,25 @@
       background-color: #f9fafb !important;
     }
 
-    /* Corrección táctil y de capas para APK WebView y Ventanas Modales */
-    .fixed-modal-apk {
-      position: fixed !important;
+    /* Solución definitiva para APK WebView: Forzar overlay absoluto por encima de todo */
+    .apk-modal-activo {
+      position: absolute !important;
       top: 0 !important;
       left: 0 !important;
       width: 100vw !important;
-      height: 100vh !important;
-      z-index: 999999 !important;
-      background-color: rgba(0, 0, 0, 0.75) !important;
+      min-height: 100vh !important;
+      z-index: 2147483647 !important;
+      background-color: rgba(0, 0, 0, 0.8) !important;
       display: flex !important;
       align-items: center !important;
       justify-content: center !important;
-      padding: 12px !important;
-      pointer-events: auto !important;
-      -webkit-tap-highlight-color: transparent;
+      padding: 10px !important;
+      box-sizing: border-box !important;
     }
 
-    /* Evita que Android seleccione texto y bloquee los clics en la APK */
-    button, a, tr, td, th, span {
-      -webkit-user-select: none !important;
-      user-select: none !important;
-      -webkit-touch-callout: none !important;
+    /* Evita bloqueos táctiles en Android */
+    button, a, tr, td, th, span, input, select {
+      -webkit-tap-highlight-color: transparent;
     }
 
     #area-impresion {
@@ -1263,7 +1260,7 @@
 
     function abrirSelectorModalClientes() {
       const modal = document.getElementById('modal-selector-clientes');
-      modal.className = "fixed-modal-apk";
+      modal.className = "apk-modal-activo";
       document.getElementById('input-filtro-modal-clientes').value = '';
       filtrarModalClientes('');
       setTimeout(() => document.getElementById('input-filtro-modal-clientes').focus(), 100);
@@ -1309,7 +1306,7 @@
 
     function abrirSelectorModalProveedores() {
       const modal = document.getElementById('modal-selector-proveedores');
-      modal.className = "fixed-modal-apk";
+      modal.className = "apk-modal-activo";
       document.getElementById('input-filtro-modal-proveedores').value = '';
       filtrarModalProveedores('');
       setTimeout(() => document.getElementById('input-filtro-modal-proveedores').focus(), 100);
@@ -1354,13 +1351,13 @@
     }
 
     function abrirModalAltaCliente() { 
-      document.getElementById('modal-alta-cliente').className = "fixed-modal-apk";
+      document.getElementById('modal-alta-cliente').className = "apk-modal-activo";
     }
     function cerrarModalAltaCliente() { 
       document.getElementById('modal-alta-cliente').className = "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden";
     }
     function abrirModalAltaProveedor() { 
-      document.getElementById('modal-alta-proveedor').className = "fixed-modal-apk";
+      document.getElementById('modal-alta-proveedor').className = "apk-modal-activo";
     }
     function cerrarModalAltaProveedor() { 
       document.getElementById('modal-alta-proveedor').className = "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden";
@@ -1623,7 +1620,7 @@
     }
 
     function abrirModalPedidosAuto() {
-      document.getElementById('modal-pedidos-auto').className = "fixed-modal-apk";
+      document.getElementById('modal-pedidos-auto').className = "apk-modal-activo";
       renderizarTablaPedidosAuto();
     }
 
@@ -2381,7 +2378,7 @@
 
       const modal = document.getElementById('modal-historial-cliente');
       if (modal) {
-          modal.className = "fixed-modal-apk";
+          modal.className = "apk-modal-activo";
       }
 
       const labelSel = document.getElementById('label-selector-cliente');
@@ -2443,7 +2440,7 @@
           document.getElementById('mod-cli-monto').value = m.monto;
         }
       }
-      document.getElementById('modal-editar-mov-cliente').className = "fixed-modal-apk";
+      document.getElementById('modal-editar-mov-cliente').className = "apk-modal-activo";
     }
 
     function cerrarModalEditarMovCliente() {
@@ -2755,7 +2752,7 @@
 
       const modal = document.getElementById('modal-historial-proveedor');
       if (modal) {
-          modal.className = "fixed-modal-apk";
+          modal.className = "apk-modal-activo";
       }
 
       const labelSel = document.getElementById('label-selector-proveedor');
@@ -2842,7 +2839,7 @@
             document.getElementById('mod-prov-concepto').value = m.medio || '';
         }
         document.getElementById('mod-prov-monto').value = m.monto;
-        document.getElementById('modal-editar-mov-proveedor').className = "fixed-modal-apk";
+        document.getElementById('modal-editar-mov-proveedor').className = "apk-modal-activo";
       }
     }
 
@@ -3008,7 +3005,7 @@
         document.getElementById('mod-ins-stock').value = ins.stock;
         document.getElementById('mod-ins-minimo').value = ins.minimo;
         document.getElementById('mod-ins-unidad').value = ins.unidad;
-        document.getElementById('modal-editar-insumo').className = "fixed-modal-apk";
+        document.getElementById('modal-editar-insumo').className = "apk-modal-activo";
       }
     }
 
@@ -3299,7 +3296,7 @@
 
       document.getElementById('admin-edit-alem').value = vAlem;
       document.getElementById('admin-edit-espiga').value = vEspiga;
-      document.getElementById('modal-editar-caja-admin').className = "fixed-modal-apk";
+      document.getElementById('modal-editar-caja-admin').className = "apk-modal-activo";
     }
 
     function cerrarModalEditarCajaAdmin() {
