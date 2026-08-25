@@ -30,7 +30,7 @@
       background-color: #fef3c7 !important;
     }
     .tab-inactive {
-      color: #4b5563 !important;
+      color: #4b5563 !important;MainActivity.java
       background-color: #ffffff !important;
     }
     .tab-inactive:hover {
@@ -50,34 +50,24 @@
       align-items: center !important;
       justify-content: center !important;
       padding: 12px !important;
+      pointer-events: auto !important;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Evita que Android seleccione texto y bloquee los clics en la APK */
+    button, a, tr, td, th, span {
+      -webkit-user-select: none !important;
+      user-select: none !important;
+      -webkit-touch-callout: none !important;
     }
 
     #area-impresion {
       display: none;
-    }
 
-    @media print {
-      body > *:not(#area-impresion) {
-        display: none !important;
-      }
-      #area-impresion {
-        display: block !important;
-        visibility: visible !important;
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-        margin: 0;
-        padding: 20px;
-        background: #ffffff !important;
-        color: #000000 !important;
-      }
-      #area-impresion * {
-        visibility: visible !important;
-      }
     }
   </style>
 </head>
+
 <body class="bg-gray-100 font-sans min-h-screen overflow-x-hidden">
 
   <!-- HEADER CORREGIDO PARA RESPONSIVE EN APK -->
