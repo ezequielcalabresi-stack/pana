@@ -2384,57 +2384,54 @@ function renderizarTablaClientes() {
       }
     }
 
-    function verHistorialCliente(cliId) {
+   function verHistorialCliente(cliId) {
+  alert("1. Tocó el botón del cliente: " + cliId); // <--- Chivato 1
   clienteSeleccionadoId = cliId; 
   const cli = dbClientes[cliId]; 
-  if (!cli) return;
+  if (!cli) { alert("Error: Cliente no encontrado"); return; }
   
   document.getElementById('historial-nombre-cliente').textContent = cli.nombre;
-  const saldoActual = calcularSaldoCliente(cliId);
-  document.getElementById('historial-contacto-cliente').textContent = `Tel: ${cli.telefono || 'S/D'} | Email: ${cli.email || 'S/D'} | Saldo Actual: $${saldoActual.toLocaleString()}`;
   
-  document.getElementById('edit-cli-nombre').value = cli.nombre || '';
-  document.getElementById('edit-cli-cuit').value = cli.cuit || '';
-  document.getElementById('edit-cli-direccion').value = cli.direccion || '';
-  document.getElementById('edit-cli-telefono').value = cli.telefono || '';
-  document.getElementById('edit-cli-email').value = cli.email || '';
-
   const modal = document.getElementById('modal-historial-cliente');
   if (modal) {
       modal.classList.remove('hidden');
       modal.className = "fixed-modal-apk";
-      modal.style.display = "flex"; // <--- Forzado para WebView Android
+      modal.style.display = "flex"; 
+      alert("2. El modal debería verse ahora"); // <--- Chivato 2
+  } else {
+      alert("Error crítico: No existe el div #modal-historial-cliente en el HTML");
   }
   
-  const labelSel = document.getElementById('label-selector-cliente');
-  if (labelSel) labelSel.textContent = cli.nombre;
-
-  renderizarTablaHistorialCliente();
+  try {
+      renderizarTablaHistorialCliente();
+  } catch(e) {
+      alert("Error al renderizar la tabla: " + e.message);
+  }
 }
 
 function verHistorialProveedor(provId) {
+  alert("1. Tocó el botón del proveedor: " + provId); // <--- Chivato 1
   proveedorSeleccionadoId = provId; 
   const prv = dbProveedores[provId]; 
-  if (!prv) return;
+  if (!prv) { alert("Error: Proveedor no encontrado"); return; }
   
   document.getElementById('historial-nombre-proveedor').textContent = prv.nombre;
   
-  document.getElementById('edit-prov-nombre').value = prv.nombre || '';
-  document.getElementById('edit-prov-cuit').value = prv.cuit || '';
-  document.getElementById('edit-prov-telefono').value = prv.telefono || '';
-  document.getElementById('edit-prov-rubro').value = prv.rubro || '';
-
   const modal = document.getElementById('modal-historial-proveedor');
   if (modal) {
       modal.classList.remove('hidden');
       modal.className = "fixed-modal-apk";
-      modal.style.display = "flex"; // <--- Forzado para WebView Android
+      modal.style.display = "flex"; 
+      alert("2. El modal de proveedor debería verse ahora"); // <--- Chivato 2
+  } else {
+      alert("Error crítico: No existe el div #modal-historial-proveedor en el HTML");
   }
 
-  const labelSel = document.getElementById('label-selector-proveedor');
-  if (labelSel) labelSel.textContent = prv.nombre;
-
-  renderizarTablaHistorialProveedor();
+  try {
+      renderizarTablaHistorialProveedor();
+  } catch(e) {
+      alert("Error al renderizar la tabla de proveedor: " + e.message);
+  }
 }
     function guardarEdicionCliente() {
       if (!clienteSeleccionadoId || !dbClientes[clienteSeleccionadoId]) return;
