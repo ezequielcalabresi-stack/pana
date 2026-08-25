@@ -2358,14 +2358,14 @@ function renderizarTablaClientes() {
     tr.className = "border-b hover:bg-gray-50";
     const claseSaldo = saldo > 0 ? "font-bold text-red-600" : (saldo < 0 ? "font-bold text-green-700" : "text-gray-500");
 
-    tr.innerHTML = `
-      <td class="p-2 font-bold text-gray-800">${cli.nombre}</td>
-      <td class="p-2 text-gray-600">${cli.telefono || 'S/D'}</td>
-      <td class="p-2 text-right ${claseSaldo}">$${saldo.toLocaleString()}</td>
-      <td class="p-2 text-center">
-        <button type="button" onclick="verHistorialCliente('${cli.id}')" class="bg-amber-700 hover:bg-amber-800 text-white text-xs px-2.5 py-1 rounded-lg font-bold shadow">📋 Abrir Ficha</button>
-      </td>
-    `;
+   tr.innerHTML = `
+  <td class="p-2 font-bold text-gray-800">${cli.nombre}</td>
+  <td class="p-2 text-gray-600">${cli.telefono || 'S/D'}</td>
+  <td class="p-2 text-right ${claseSaldo}">$${saldo.toLocaleString()}</td>
+  <td class="p-2 text-center">
+    <button type="button" onclick="verHistorialCliente('${cli.id}')" ontouchend="verHistorialCliente('${cli.id}'); event.preventDefault();" class="bg-amber-700 text-white text-xs px-3 py-1.5 rounded-lg font-bold shadow active:bg-amber-900">Abrir Ficha</button>
+  </td>
+`;
     tbody.appendChild(tr);
   });
 }
@@ -2385,29 +2385,57 @@ function renderizarTablaClientes() {
     }
 
     function verHistorialCliente(cliId) {
-      clienteSeleccionadoId = cliId; const cli = dbClientes[cliId]; if (!cli) return;
-      document.getElementById('historial-nombre-cliente').textContent = cli.nombre;
-      const saldoActual = calcularSaldoCliente(cliId);
-      document.getElementById('historial-contacto-cliente').textContent = `Tel: ${cli.telefono || 'S/D'} | Email: ${cli.email || 'S/D'} | Saldo Actual: $${saldoActual.toLocaleString()}`;
-      
-      document.getElementById('edit-cli-nombre').value = cli.nombre || '';
-      document.getElementById('edit-cli-cuit').value = cli.cuit || '';
-      document.getElementById('edit-cli-direccion').value = cli.direccion || '';
-      document.getElementById('edit-cli-telefono').value = cli.telefono || '';
-      document.getElementById('edit-cli-email').value = cli.email || '';
+  clienteSeleccionadoId = cliId; 
+  const cli = dbClientes[cliId]; 
+  if (!cli) return;
+  
+  document.getElementById('historial-nombre-cliente').textContent = cli.nombre;
+  const saldoActual = calcularSaldoCliente(cliId);
+  document.getElementById('historial-contacto-cliente').textContent = `Tel: ${cli.telefono || 'S/D'} | Email: ${cli.email || 'S/D'} | Saldo Actual: $${saldoActual.toLocaleString()}`;
+  
+  document.getElementById('edit-cli-nombre').value = cli.nombre || '';
+  document.getElementById('edit-cli-cuit').value = cli.cuit || '';
+  document.getElementById('edit-cli-direccion').value = cli.direccion || '';
+  document.getElementById('edit-cli-telefono').value = cli.telefono || '';
+  document.getElementById('edit-cli-email').value = cli.email || '';
 
-      const modal = document.getElementById('modal-historial-cliente');
-      if (modal) {
-          modal.classList.remove('hidden');
-          modal.className = "fixed-modal-apk";
-      }
-      
-      const labelSel = document.getElementById('label-selector-cliente');
-      if (labelSel) labelSel.textContent = cli.nombre;
+  const modal = document.getElementById('modal-historial-cliente');
+  if (modal) {
+      modal.classList.remove('hidden');
+      modal.className = "fixed-modal-apk";
+      modal.style.display = "flex"; // <--- Forzado para WebView Android
+  }
+  
+  const labelSel = document.getElementById('label-selector-cliente');
+  if (labelSel) labelSel.textContent = cli.nombre;
 
-      renderizarTablaHistorialCliente();
-    }
+  renderizarTablaHistorialCliente();
+}
 
+function verHistorialProveedor(provId) {
+  proveedorSeleccionadoId = provId; 
+  const prv = dbProveedores[provId]; 
+  if (!prv) return;
+  
+  document.getElementById('historial-nombre-proveedor').textContent = prv.nombre;
+  
+  document.getElementById('edit-prov-nombre').value = prv.nombre || '';
+  document.getElementById('edit-prov-cuit').value = prv.cuit || '';
+  document.getElementById('edit-prov-telefono').value = prv.telefono || '';
+  document.getElementById('edit-prov-rubro').value = prv.rubro || '';
+
+  const modal = document.getElementById('modal-historial-proveedor');
+  if (modal) {
+      modal.classList.remove('hidden');
+      modal.className = "fixed-modal-apk";
+      modal.style.display = "flex"; // <--- Forzado para WebView Android
+  }
+
+  const labelSel = document.getElementById('label-selector-proveedor');
+  if (labelSel) labelSel.textContent = prv.nombre;
+
+  renderizarTablaHistorialProveedor();
+}
     function guardarEdicionCliente() {
       if (!clienteSeleccionadoId || !dbClientes[clienteSeleccionadoId]) return;
       const cli = dbClientes[clienteSeleccionadoId];
@@ -2429,16 +2457,29 @@ function renderizarTablaClientes() {
       alert("¡Datos actualizados con éxito!");
     }
 
-    function cerrarHistorialCliente() { 
-      clienteSeleccionadoId = null; 
-      const modal = document.getElementById('modal-historial-cliente');
-      if (modal) {
-          modal.classList.add('hidden');
-          modal.className = "fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 hidden p-4";
-      }
-      const labelSel = document.getElementById('label-selector-cliente');
-      if (labelSel) labelSel.textContent = "🔍 Buscar Cliente...";
-    }
+   function cerrarHistorialCliente() { 
+  clienteSeleccionadoId = null; 
+  const modal = document.getElementById('modal-historial-cliente');
+  if (modal) {
+      modal.classList.add('hidden');
+      modal.className = "fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 hidden p-4";
+      modal.style.display = "none"; // <--- Ocultado forzado
+  }
+  const labelSel = document.getElementById('label-selector-cliente');
+  if (labelSel) labelSel.textContent = "🔍 Buscar Cliente...";
+}
+
+function cerrarHistorialProveedor() { 
+  proveedorSeleccionadoId = null; 
+  const modal = document.getElementById('modal-historial-proveedor');
+  if (modal) {
+      modal.classList.add('hidden');
+      modal.className = "fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 hidden p-4";
+      modal.style.display = "none"; // <--- Ocultado forzado
+  }
+  const labelSel = document.getElementById('label-selector-proveedor');
+  if (labelSel) labelSel.textContent = "🔍 Buscar Proveedor...";
+}
 
     function abrirModalEditarMovCliente(id, origen, fechaOriginal) {
       movClienteEditContext = { id, origen, fechaOriginal };
@@ -2738,14 +2779,14 @@ function renderizarTablaProveedores() {
     tr.className = "border-b hover:bg-gray-50";
     const claseSaldo = saldo > 0 ? "font-bold text-red-600" : "text-gray-500";
 
-    tr.innerHTML = `
-      <td class="p-2 font-bold text-gray-800">${prv.nombre}</td>
-      <td class="p-2 text-gray-600">${prv.rubro || 'General'}</td>
-      <td class="p-2 text-right ${claseSaldo}">$${saldo.toLocaleString()}</td>
-      <td class="p-2 text-center">
-        <button type="button" onclick="verHistorialProveedor('${prv.id}')" class="bg-amber-700 hover:bg-amber-800 text-white text-xs px-2.5 py-1 rounded-lg font-bold shadow">📋 Abrir Ficha</button>
-      </td>
-    `;
+  tr.innerHTML = `
+  <td class="p-2 font-bold text-gray-800">${prv.nombre}</td>
+  <td class="p-2 text-gray-600">${prv.rubro || 'General'}</td>
+  <td class="p-2 text-right ${claseSaldo}">$${saldo.toLocaleString()}</td>
+  <td class="p-2 text-center">
+    <button type="button" onclick="verHistorialProveedor('${prv.id}')" ontouchend="verHistorialProveedor('${prv.id}'); event.preventDefault();" class="bg-amber-700 text-white text-xs px-3 py-1.5 rounded-lg font-bold shadow active:bg-amber-900">Abrir Ficha</button>
+  </td>
+`;
     tbody.appendChild(tr);
   });
 }
