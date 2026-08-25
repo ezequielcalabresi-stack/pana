@@ -2384,54 +2384,78 @@ function renderizarTablaClientes() {
       }
     }
 
-   function verHistorialCliente(cliId) {
-  alert("1. Tocó el botón del cliente: " + cliId); // <--- Chivato 1
+  function verHistorialCliente(cliId) {
   clienteSeleccionadoId = cliId; 
   const cli = dbClientes[cliId]; 
-  if (!cli) { alert("Error: Cliente no encontrado"); return; }
+  if (!cli) return;
   
-  document.getElementById('historial-nombre-cliente').textContent = cli.nombre;
+  const nombreElem = document.getElementById('historial-nombre-cliente');
+  if (nombreElem) nombreElem.textContent = cli.nombre;
+
+  const contactoElem = document.getElementById('historial-contacto-cliente');
+  if (contactoElem) {
+    const saldoActual = calcularSaldoCliente(cliId);
+    contactoElem.textContent = `Tel: ${cli.telefono || 'S/D'} | Email: ${cli.email || 'S/D'} | Saldo Actual: $${saldoActual.toLocaleString()}`;
+  }
   
+  // Asignar campos de edición si existen
+  if(document.getElementById('edit-cli-nombre')) document.getElementById('edit-cli-nombre').value = cli.nombre || '';
+  if(document.getElementById('edit-cli-cuit')) document.getElementById('edit-cli-cuit').value = cli.cuit || '';
+  if(document.getElementById('edit-cli-direccion')) document.getElementById('edit-cli-direccion').value = cli.direccion || '';
+  if(document.getElementById('edit-cli-telefono')) document.getElementById('edit-cli-telefono').value = cli.telefono || '';
+  if(document.getElementById('edit-cli-email')) document.getElementById('edit-cli-email').value = cli.email || '';
+
+  // FORZAR APERTURA DIRECTA DE ESTILOS EN LA APK
   const modal = document.getElementById('modal-historial-cliente');
   if (modal) {
       modal.classList.remove('hidden');
-      modal.className = "fixed-modal-apk";
-      modal.style.display = "flex"; 
-      alert("2. El modal debería verse ahora"); // <--- Chivato 2
-  } else {
-      alert("Error crítico: No existe el div #modal-historial-cliente en el HTML");
+      modal.style.setProperty('display', 'flex', 'important');
+      modal.style.setProperty('position', 'fixed', 'important');
+      modal.style.setProperty('top', '0', 'important');
+      modal.style.setProperty('left', '0', 'important');
+      modal.style.setProperty('width', '100vw', 'important');
+      modal.style.setProperty('height', '100vh', 'important');
+      modal.style.setProperty('z-index', '999999', 'important');
+      modal.style.setProperty('background-color', 'rgba(0, 0, 0, 0.75)', 'important');
   }
-  
-  try {
-      renderizarTablaHistorialCliente();
-  } catch(e) {
-      alert("Error al renderizar la tabla: " + e.message);
-  }
+
+  const labelSel = document.getElementById('label-selector-cliente');
+  if (labelSel) labelSel.textContent = cli.nombre;
+
+  renderizarTablaHistorialCliente();
 }
 
 function verHistorialProveedor(provId) {
-  alert("1. Tocó el botón del proveedor: " + provId); // <--- Chivato 1
   proveedorSeleccionadoId = provId; 
   const prv = dbProveedores[provId]; 
-  if (!prv) { alert("Error: Proveedor no encontrado"); return; }
+  if (!prv) return;
   
-  document.getElementById('historial-nombre-proveedor').textContent = prv.nombre;
+  const nombreElem = document.getElementById('historial-nombre-proveedor');
+  if (nombreElem) nombreElem.textContent = prv.nombre;
   
+  if(document.getElementById('edit-prov-nombre')) document.getElementById('edit-prov-nombre').value = prv.nombre || '';
+  if(document.getElementById('edit-prov-cuit')) document.getElementById('edit-prov-cuit').value = prv.cuit || '';
+  if(document.getElementById('edit-prov-telefono')) document.getElementById('edit-prov-telefono').value = prv.telefono || '';
+  if(document.getElementById('edit-prov-rubro')) document.getElementById('edit-prov-rubro').value = prv.rubro || '';
+
+  // FORZAR APERTURA DIRECTA DE ESTILOS EN LA APK
   const modal = document.getElementById('modal-historial-proveedor');
   if (modal) {
       modal.classList.remove('hidden');
-      modal.className = "fixed-modal-apk";
-      modal.style.display = "flex"; 
-      alert("2. El modal de proveedor debería verse ahora"); // <--- Chivato 2
-  } else {
-      alert("Error crítico: No existe el div #modal-historial-proveedor en el HTML");
+      modal.style.setProperty('display', 'flex', 'important');
+      modal.style.setProperty('position', 'fixed', 'important');
+      modal.style.setProperty('top', '0', 'important');
+      modal.style.setProperty('left', '0', 'important');
+      modal.style.setProperty('width', '100vw', 'important');
+      modal.style.setProperty('height', '100vh', 'important');
+      modal.style.setProperty('z-index', '999999', 'important');
+      modal.style.setProperty('background-color', 'rgba(0, 0, 0, 0.75)', 'important');
   }
 
-  try {
-      renderizarTablaHistorialProveedor();
-  } catch(e) {
-      alert("Error al renderizar la tabla de proveedor: " + e.message);
-  }
+  const labelSel = document.getElementById('label-selector-proveedor');
+  if (labelSel) labelSel.textContent = prv.nombre;
+
+  renderizarTablaHistorialProveedor();
 }
     function guardarEdicionCliente() {
       if (!clienteSeleccionadoId || !dbClientes[clienteSeleccionadoId]) return;
@@ -2454,13 +2478,12 @@ function verHistorialProveedor(provId) {
       alert("¡Datos actualizados con éxito!");
     }
 
-   function cerrarHistorialCliente() { 
+  function cerrarHistorialCliente() { 
   clienteSeleccionadoId = null; 
   const modal = document.getElementById('modal-historial-cliente');
   if (modal) {
       modal.classList.add('hidden');
-      modal.className = "fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 hidden p-4";
-      modal.style.display = "none"; // <--- Ocultado forzado
+      modal.style.display = 'none';
   }
   const labelSel = document.getElementById('label-selector-cliente');
   if (labelSel) labelSel.textContent = "🔍 Buscar Cliente...";
@@ -2471,8 +2494,7 @@ function cerrarHistorialProveedor() {
   const modal = document.getElementById('modal-historial-proveedor');
   if (modal) {
       modal.classList.add('hidden');
-      modal.className = "fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 hidden p-4";
-      modal.style.display = "none"; // <--- Ocultado forzado
+      modal.style.display = 'none';
   }
   const labelSel = document.getElementById('label-selector-proveedor');
   if (labelSel) labelSel.textContent = "🔍 Buscar Proveedor...";
