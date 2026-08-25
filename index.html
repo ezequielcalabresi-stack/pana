@@ -1032,7 +1032,6 @@
       }
       rtdb = firebase.database();
       
-      // --- NUEVO: MONITOR DE CONEXIÓN EN TIEMPO REAL ---
       rtdb.ref(".info/connected").on("value", function(snap) {
         const statusDiv = document.getElementById("status-conexion");
         if (!statusDiv) return;
@@ -1044,8 +1043,6 @@
           statusDiv.className = "text-[10px] bg-red-200 text-red-900 px-2 py-0.5 rounded-full font-bold shadow-sm whitespace-nowrap animate-pulse";
         }
       });
-      // ------------------------------------------------
-      
     } catch (e) {
       console.warn("Modo offline detectado.");
     }
@@ -1054,7 +1051,6 @@
       return `${prefijo}-${Date.now().toString(36)}-${Math.random().toString(36).substr(2, 5)}`;
     }
 
-    // Fecha operativa por defecto (hoy del calendario real)
     let fechaActual = new Date().toISOString().split('T')[0];
     let fechaCuadraActiva = fechaActual;
 
@@ -1096,6 +1092,25 @@
       "Pan Rallado (bolsa x 1 Kgs)": { mostrador: 2800, reparto: 1800, unOcuarto: 1400 }
     };
 
+    // --- VARIABLES DECLARADAS CON VAR PARA EVITAR PROBLEMAS DE INICIALIZACIÓN ---
+    var dbUsuarios = {};
+    var dbPanificados = {};
+    var dbProductos = {};
+    var dbClientes = {};
+    var dbProveedores = {};
+    var dbInsumos = {};
+    var dbRepartos = {};
+    var dbRecurrentes = {};
+    var dbNotasMostrador = {};
+    var dbHistorialClientes = {};
+    var dbHistorialProveedores = {};
+    var dbCajasDiarias = {};
+    var dbEgresosCaja = {};
+    var dbBackupsDiarios = {};
+    var dbRepartosCerrados = {};
+    var usuarioActivoId = 'USR-1';
+    // --------------------------------------------------------------------------
+
     function cargarDB(key, fallback) {
       const data = localStorage.getItem(key);
       let valorInicial = data ? JSON.parse(data) : fallback;
@@ -1131,23 +1146,24 @@
       if (rtdb) rtdb.ref(key).set(data).catch(err => console.warn(err));
     }
 
-    let dbUsuarios = cargarDB('db_usuarios', window.LISTA_USUARIOS_BASE);
-    let dbPanificados = cargarDB('db_panificados', window.LISTA_PANIFICADOS_REPARTO_BASE);
-    let dbProductos = cargarDB('db_productos', window.LISTA_PRODUCTOS_BASE);
-    let dbClientes = cargarDB('db_clientes', {});
-    let dbProveedores = cargarDB('db_proveedores', {});
-    let dbInsumos = cargarDB('db_insumos', {});
-    let dbRepartos = cargarDB('db_repartos', {});
-    let dbRecurrentes = cargarDB('db_recurrentes', {});
-    let dbNotasMostrador = cargarDB('db_notas_mostrador', {});
-    let dbHistorialClientes = cargarDB('db_historial_clientes', {});
-    let dbHistorialProveedores = cargarDB('db_historial_proveedores', {});
-    let dbCajasDiarias = cargarDB('db_cajas_diarias', {});
-    let dbEgresosCaja = cargarDB('db_egresos_caja', {});
-    let dbBackupsDiarios = cargarDB('db_backups_diarios', {});
-    let dbRepartosCerrados = cargarDB('db_repartos_cerrados', {});
+    // Inicialización de bases de datos
+    dbUsuarios = cargarDB('db_usuarios', window.LISTA_USUARIOS_BASE);
+    dbPanificados = cargarDB('db_panificados', window.LISTA_PANIFICADOS_REPARTO_BASE);
+    dbProductos = cargarDB('db_productos', window.LISTA_PRODUCTOS_BASE);
+    dbClientes = cargarDB('db_clientes', {});
+    dbProveedores = cargarDB('db_proveedores', {});
+    dbInsumos = cargarDB('db_insumos', {});
+    dbRepartos = cargarDB('db_repartos', {});
+    dbRecurrentes = cargarDB('db_recurrentes', {});
+    dbNotasMostrador = cargarDB('db_notas_mostrador', {});
+    dbHistorialClientes = cargarDB('db_historial_clientes', {});
+    dbHistorialProveedores = cargarDB('db_historial_proveedores', {});
+    dbCajasDiarias = cargarDB('db_cajas_diarias', {});
+    dbEgresosCaja = cargarDB('db_egresos_caja', {});
+    dbBackupsDiarios = cargarDB('db_backups_diarios', {});
+    dbRepartosCerrados = cargarDB('db_repartos_cerrados', {});
 
-    let usuarioActivoId = cargarDB('usuario_activo_id', 'USR-1');
+    usuarioActivoId = cargarDB('usuario_activo_id', 'USR-1');
     let clienteSeleccionadoId = null;
     let proveedorSeleccionadoId = null;
     
@@ -1160,7 +1176,6 @@
       const inputDestino = document.getElementById('rep-fecha-destino');
       if (inputDestino) inputDestino.value = fechaActual;
 
-      // Inicializar fecha de Cuadra según hora actual (> 15:00 hs = mañana)
       inicializarFechaCuadra();
 
       document.getElementById('reporte-mes-select').value = fechaActual.substring(0, 7);
@@ -1249,7 +1264,6 @@
         fechaActual = input.value;
         actualizarEtiquetasFecha();
         
-        // Sincronizar también por defecto el selector de destino del pedido si el usuario no lo había cambiado a mano
         const inputDestino = document.getElementById('rep-fecha-destino');
         if (inputDestino) inputDestino.value = fechaActual;
 
@@ -1261,7 +1275,6 @@
       }
     }
 
-    // PEDIDOS RECURRENTES Y AUTOMATIZADOS
     function cargarSelectorClientesRecurrentes() {
       const sel = document.getElementById('rec-cliente');
       if (!sel) return;
@@ -1608,7 +1621,6 @@
       });
     }
 
-    // 1. REPARTO
     function cargarSelectorClientesReparto() {
       const selMain = document.getElementById('rep-cliente');
       const selDesp = document.getElementById('rep-despacho-cliente');
@@ -1694,7 +1706,7 @@
       guardarDB('db_repartos', dbRepartos);
       document.getElementById('rep-cantidad').value = '';
       
-      alert(`¡Pedido cargado con éxito para la fecha ${fechaDestino} (sin alterar tu caja operativa actual)!`);
+      alert(`¡Pedido cargado con éxito para la fecha ${fechaDestino}!`);
 
       renderizarPlanillaReparto(); renderizarCuadra(); renderizarReportesMensuales();
     }
@@ -2044,7 +2056,6 @@
       window.print();
     }
 
-    // 2. PRODUCCIÓN / CUADRA
     function renderizarCuadra() {
       const usr = dbUsuarios[usuarioActivoId];
       const boxConsolidado = document.getElementById('box-cuadra-consolidado');
@@ -2116,7 +2127,6 @@
       guardarDB('db_notas_mostrador', dbNotasMostrador); renderizarCuadra();
     }
 
-    // 3. CLIENTES Y CTA CTE
     function guardarCliente() {
       const nombre = document.getElementById('cli-nombre').value.trim(); if (!nombre) return;
       const id = generarID('CLI');
@@ -2377,7 +2387,7 @@
         tr.innerHTML = `<td class="p-2">${tdFecha}</td><td class="p-2">${tdConcepto}</td><td class="p-2 text-right text-red-600">${tdDebito}</td><td class="p-2 text-right text-green-700">${tdCredito}</td><td class="p-2 text-right font-bold text-red-600">$${acumulado.toLocaleString()}</td>
         <td class="p-2 text-center flex justify-center items-center gap-1">
           <button onclick="abrirModalEditarMovCliente('${m.id}', '${m.origen}', '${m.fechaOriginal}')" class="text-[10px] text-blue-600 font-bold border border-blue-600 px-2 py-0.5 rounded hover:bg-blue-50">Editar</button>
-          <button onclick="borrarMovimientoCliente('${m.id}', '${m.origen}', '${m.fechaOriginal}')" class="text-[10px] text-red-600 font-bold border border-red-600 px-2 py-0.5 rounded hover:bg-red-50">Borrar</button>
+          <button onclick="borrarMovimientoCliente('${m.id}', '${m.origen}', '${m.fechaOriginal}')" class="text-[10px] text-red-600 font-bold border border-red-600 px-2 py-0.5 rounded hover:bg-blue-50">Borrar</button>
         </td>`;
         tbody.appendChild(tr);
       });
@@ -2473,7 +2483,6 @@
       window.location.href = `mailto:${emailDestino}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`;
     }
 
-    // 4. PROVEEDORES Y FACTURACIÓN
     function guardarProveedor() {
       const nombre = document.getElementById('prov-nombre').value.trim(); if (!nombre) return;
       const id = generarID('PRV');
@@ -2563,7 +2572,7 @@
       const prv = dbProveedores[proveedorSeleccionadoId];
 
       const nuevoNombre = document.getElementById('edit-prov-nombre').value.trim();
-      if (!nuevoNombre) { alert("El nombre del proveedor não puede estar vacío."); return; }
+      if (!nuevoNombre) { alert("El nombre del proveedor no puede estar vacío."); return; }
 
       prv.nombre = nuevoNombre;
       prv.cuit = document.getElementById('edit-prov-cuit').value.trim();
@@ -2760,7 +2769,6 @@
       window.location.href = `mailto:?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`;
     }
 
-    // 5. CONTROL DE STOCK E INSUMOS
     function cargarSelectorInsumosFactura() {
       const sel = document.getElementById('fact-insumo'); if (!sel) return; sel.innerHTML = '<option value="">-- Insumo --</option>';
       Object.values(dbInsumos).forEach(ins => { const opt = document.createElement('option'); opt.value = ins.id; opt.textContent = ins.nombre; sel.appendChild(opt); });
@@ -2915,7 +2923,6 @@
       });
     }
 
-    // 6. CAJAS INDEPENDIENTES Y REPORTES
     function cargarCajasHoyUI() {
       const usr = dbUsuarios[usuarioActivoId];
       const boxRep = document.getElementById('box-caja-reparto');
@@ -3300,7 +3307,6 @@
       `;
     }
 
-    // 7. CATÁLOGO Y PRECIOS
     function agregarNuevoPanificado() {
       const nombre = document.getElementById('nuevo-panificado-nombre').value.trim();
       const unid = parseInt(document.getElementById('nuevo-panificado-unidades').value);
@@ -3430,7 +3436,6 @@
       document.querySelectorAll('#tabla-catalogo-precios tr').forEach(f => f.style.display = f.innerText.toLowerCase().includes(b) ? '' : 'none'); 
     }
 
-    // 8. USUARIOS Y BACKUPS
     function guardarUsuario() {
       const nombre = document.getElementById('usr-nombre').value.trim(); if (!nombre) return;
       const id = generarID('USR');
@@ -3527,7 +3532,6 @@
       }
     }
 
-    // NUEVA FUNCIÓN: Subir Respaldo JSON desde el dispositivo y guardarlo en Firebase
     function subirBackupManual(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -3536,7 +3540,6 @@
       reader.onload = function(e) {
         try {
           const contenido = JSON.parse(e.target.result);
-          // Dependiendo si sube un JSON de un día específico o algo general
           const bkp = contenido.datos || contenido; 
           
           if (!bkp.dbUsuarios && !bkp.dbCajasDiarias) {
@@ -3567,7 +3570,7 @@
           alert("Error al leer el archivo JSON. Asegurate de que sea el archivo correcto.");
           console.error(error);
         }
-        event.target.value = ""; // Resetear input
+        event.target.value = "";
       };
       reader.readAsText(file);
     }
