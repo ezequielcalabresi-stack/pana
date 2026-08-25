@@ -30,21 +30,21 @@
       background-color: #fef3c7 !important;
     }
     .tab-inactive {
-      color: #4b5563 !important;MainActivity.java
+      color: #4b5563 !important;
       background-color: #ffffff !important;
     }
     .tab-inactive:hover {
       background-color: #f9fafb !important;
     }
 
-    /* Corrección táctil y de capas para APK WebView */
+    /* Corrección táctil y de capas para APK WebView y Ventanas Modales */
     .fixed-modal-apk {
       position: fixed !important;
       top: 0 !important;
       left: 0 !important;
       width: 100vw !important;
       height: 100vh !important;
-      z-index: 99999 !important;
+      z-index: 999999 !important;
       background-color: rgba(0, 0, 0, 0.75) !important;
       display: flex !important;
       align-items: center !important;
@@ -63,7 +63,6 @@
 
     #area-impresion {
       display: none;
-
     }
   </style>
 </head>
@@ -909,207 +908,70 @@
       </div>
     </div>
   </div>
-<!-- MODAL FICHA / HISTORIAL DE CLIENTE -->
-<div id="modal-historial-cliente" class="fixed inset-0 bg-black bg-opacity-75 items-center justify-center z-[999999] p-4 hidden">
-  <div class="bg-white p-5 rounded-2xl shadow-2xl max-w-3xl w-full space-y-4 border border-amber-500 max-h-[90vh] overflow-y-auto">
-    <div class="flex justify-between items-center border-b pb-2">
-      <h3 id="historial-nombre-cliente" class="text-lg font-bold text-amber-900"></h3>
-      <div class="flex flex-wrap items-center gap-2">
-        <button type="button" onclick="enviarResumenWhatsAppCliente()" class="bg-green-600 hover:bg-green-700 text-white text-xs px-2.5 py-1.5 rounded font-bold shadow">📱 WhatsApp</button>
-        <button type="button" onclick="enviarResumenEmailCliente()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-2.5 py-1.5 rounded font-bold shadow">✉️ Mail</button>
-        <button type="button" onclick="cerrarHistorialCliente()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 text-xs px-3 py-1.5 rounded font-bold">✕ Cerrar</button>
-      </div>
-    </div>
 
-    <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 space-y-2">
-      <h3 class="text-xs font-bold text-gray-700">✏️ Editar Datos del Cliente</h3>
-      <div class="grid grid-cols-2 md:grid-cols-5 gap-2">
-        <input type="text" id="edit-cli-nombre" placeholder="Nombre" class="border p-2 rounded text-xs bg-white">
-        <input type="text" id="edit-cli-cuit" placeholder="CUIT / DNI" class="border p-2 rounded text-xs bg-white">
-        <input type="text" id="edit-cli-direccion" placeholder="Dirección" class="border p-2 rounded text-xs bg-white">
-        <input type="text" id="edit-cli-telefono" placeholder="Teléfono" class="border p-2 rounded text-xs bg-white">
-        <input type="email" id="edit-cli-email" placeholder="Email" class="border p-2 rounded text-xs bg-white col-span-2 md:col-span-1">
-      </div>
-      <div class="flex justify-end pt-1">
-        <button type="button" onclick="guardarEdicionCliente()" class="bg-amber-700 text-white font-bold px-3 py-1.5 rounded text-xs hover:bg-amber-800 shadow">Guardar Cambios</button>
-      </div>
-    </div>
-
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-      <div class="bg-red-50 p-3 rounded-lg border border-red-200 space-y-2">
-        <h3 class="text-xs font-bold text-red-900">⬆️ Agregar Cargo Manual</h3>
-        <div class="flex gap-2">
-          <input type="date" id="cargo-cli-fecha" class="border p-2 rounded text-xs bg-white w-full">
-          <input type="number" id="cargo-cli-monto" placeholder="Monto ($)" class="border p-2 rounded text-xs bg-white w-full">
-        </div>
-        <input type="text" id="cargo-cli-concepto" placeholder="Concepto (Ej: Saldo anterior)" class="border p-2 rounded text-xs bg-white w-full">
-        <button type="button" onclick="registrarCargoCliente()" class="bg-red-700 text-white font-bold px-3 py-2 rounded text-xs w-full shadow-sm hover:bg-red-800">Sumar a la Deuda</button>
-      </div>
-
-      <div class="bg-green-50 p-3 rounded-lg border border-green-200 space-y-2">
-        <h3 class="text-xs font-bold text-green-900">⬇️ Registrar Pago</h3>
-        <div class="flex gap-2">
-          <input type="date" id="pago-fecha" class="border p-2 rounded text-xs bg-white w-full">
-          <input type="number" id="pago-monto" placeholder="Abono ($)" class="border p-2 rounded text-xs bg-white w-full">
-        </div>
-        <select id="pago-medio" class="border p-2 rounded text-xs bg-white w-full">
-          <option value="Efectivo">Efectivo</option>
-          <option value="Transferencia">Transferencia</option>
-          <option value="Mercado Pago">Mercado Pago</option>
-          <option value="Cheque">Cheque</option>
-        </select>
-        <button type="button" onclick="registrarPagoCliente()" class="bg-green-700 text-white font-bold px-3 py-2 rounded text-xs w-full shadow-sm hover:bg-green-800">Registrar Pago</button>
-      </div>
-    </div>
-
-    <div class="overflow-x-auto border rounded bg-white">
-      <table class="w-full text-left text-xs">
-        <thead>
-          <tr class="bg-amber-100 border-b text-amber-900 font-bold">
-            <th class="p-2">Fecha</th>
-            <th class="p-2">Concepto</th>
-            <th class="p-2 text-right">Débito</th>
-            <th class="p-2 text-right">Crédito</th>
-            <th class="p-2 text-right">Saldo Acumulado</th>
-            <th class="p-2 text-center">Acción</th>
-          </tr>
-        </thead>
-        <tbody id="tabla-historial-cliente"></tbody>
-      </table>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL FICHA PROVEEDOR -->
-<div id="modal-historial-proveedor" class="fixed inset-0 bg-black bg-opacity-75 items-center justify-center z-[999999] p-4 hidden">
-  <div class="bg-white p-5 rounded-2xl shadow-2xl max-w-3xl w-full space-y-4 border border-amber-500 max-h-[90vh] overflow-y-auto">
-    <div class="flex justify-between items-center border-b pb-2">
-      <h3 id="historial-nombre-proveedor" class="text-lg font-bold text-amber-900"></h3>
-      <div class="flex flex-wrap items-center gap-2">
-        <button type="button" onclick="enviarResumenWhatsAppProveedor()" class="bg-green-600 hover:bg-green-700 text-white text-xs px-2.5 py-1.5 rounded font-bold shadow">📱 WhatsApp</button>
-        <button type="button" onclick="enviarResumenEmailProveedor()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-2.5 py-1.5 rounded font-bold shadow">✉️ Mail</button>
-        <button type="button" onclick="cerrarHistorialProveedor()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 text-xs px-3 py-1.5 rounded font-bold">✕ Cerrar</button>
-      </div>
-    </div>
-
-    <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 space-y-2">
-      <h3 class="text-xs font-bold text-gray-700">✏️ Editar Datos del Proveedor</h3>
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
-        <input type="text" id="edit-prov-nombre" placeholder="Razón Social" class="border p-2 rounded text-xs bg-white">
-        <input type="text" id="edit-prov-cuit" placeholder="CUIT" class="border p-2 rounded text-xs bg-white">
-        <input type="text" id="edit-prov-telefono" placeholder="Teléfono" class="border p-2 rounded text-xs bg-white">
-        <input type="text" id="edit-prov-rubro" placeholder="Rubro" class="border p-2 rounded text-xs bg-white">
-      </div>
-      <div class="flex justify-end pt-1">
-        <button type="button" onclick="guardarEdicionProveedor()" class="bg-amber-700 text-white font-bold px-3 py-1.5 rounded text-xs hover:bg-amber-800 shadow">Guardar Cambios</button>
-      </div>
-    </div>
-
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-      <div class="bg-amber-50 p-3 rounded-lg border border-amber-200 space-y-2">
-        <h3 class="text-xs font-bold text-amber-900">🧾 Cargar Factura de Compra</h3>
-        <div class="flex gap-2">
-          <input type="date" id="fact-fecha" class="border p-2 rounded text-xs bg-white w-full">
-          <input type="text" id="fact-nro" placeholder="N° Factura" class="border p-2 rounded text-xs bg-white w-full">
-        </div>
-        <div class="grid grid-cols-3 gap-1">
-          <select id="fact-insumo" class="border p-2 rounded text-xs bg-white col-span-1"></select>
-          <input type="number" id="fact-cant" placeholder="Cant." class="border p-2 rounded text-xs bg-white">
-          <input type="number" id="fact-precio" placeholder="Precio Un." class="border p-2 rounded text-xs bg-white">
-        </div>
-        <button type="button" onclick="cargarFacturaProveedor()" class="bg-amber-800 text-white font-bold px-3 py-2 rounded text-xs hover:bg-amber-900 w-full shadow-sm">Ingresar Factura y Stock</button>
-      </div>
-
-      <div class="bg-green-50 p-3 rounded-lg border border-green-200 space-y-2">
-        <h3 class="text-xs font-bold text-green-900">💸 Registrar Pago a Proveedor</h3>
-        <div class="flex gap-2">
-          <input type="date" id="pago-prov-fecha" class="border p-2 rounded text-xs bg-white w-full">
-          <input type="number" id="pago-prov-monto" placeholder="Monto ($)" class="border p-2 rounded text-xs bg-white w-full">
-        </div>
-        <select id="pago-prov-medio" class="border p-2 rounded text-xs bg-white w-full">
-          <option value="Efectivo">Efectivo</option>
-          <option value="Transferencia">Transferencia</option>
-          <option value="Cheque">Cheque</option>
-        </select>
-        <button type="button" onclick="registrarPagoProveedor()" class="bg-green-700 text-white font-bold px-3 py-2 rounded text-xs hover:bg-green-800 w-full shadow-sm">Registrar Pago</button>
-      </div>
-    </div>
-
-    <div class="overflow-x-auto border rounded bg-white">
-      <table class="w-full text-left text-xs">
-        <thead>
-          <tr class="bg-amber-100 border-b text-amber-900 font-bold">
-            <th class="p-2">Fecha</th>
-            <th class="p-2">Detalle / N° Factura</th>
-            <th class="p-2 text-right">Facturado</th>
-            <th class="p-2 text-right">Pagado</th>
-            <th class="p-2 text-right">Saldo Deuda</th>
-            <th class="p-2 text-center">Acción</th>
-          </tr>
-        </thead>
-        <tbody id="tabla-historial-proveedor"></tbody>
-      </table>
-    </div>
-  </div>
-</div>      
-  <div class="flex flex-wrap items-center gap-2">
-          <button type="button" onclick="enviarResumenWhatsAppCliente()" class="bg-green-600 hover:bg-green-700 text-white text-[10px] px-2 py-1.5 rounded font-bold shadow">📱 WhatsApp</button>
-          <button type="button" onclick="enviarResumenEmailCliente()" class="bg-blue-600 hover:bg-blue-700 text-white text-[10px] px-2 py-1.5 rounded font-bold shadow">✉️ Mail</button>
-          <button type="button" onclick="cerrarHistorialCliente()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 text-[10px] px-2 py-1.5 rounded font-bold">✕ Cerrar</button>
+  <!-- MODAL FICHA / HISTORIAL DE CLIENTE -->
+  <div id="modal-historial-cliente" class="fixed inset-0 bg-black bg-opacity-75 items-center justify-center z-[999999] p-4 hidden">
+    <div class="bg-white p-5 rounded-2xl shadow-2xl max-w-3xl w-full space-y-4 border border-amber-500 max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b pb-2">
+        <h3 id="historial-nombre-cliente" class="text-lg font-bold text-amber-900"></h3>
+        <div class="flex flex-wrap items-center gap-2">
+          <button type="button" onclick="enviarResumenWhatsAppCliente()" class="bg-green-600 hover:bg-green-700 text-white text-xs px-2.5 py-1.5 rounded font-bold shadow">📱 WhatsApp</button>
+          <button type="button" onclick="enviarResumenEmailCliente()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-2.5 py-1.5 rounded font-bold shadow">✉️ Mail</button>
+          <button type="button" onclick="cerrarHistorialCliente()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 text-xs px-3 py-1.5 rounded font-bold">✕ Cerrar</button>
         </div>
       </div>
 
-      <div class="bg-gray-50 p-2 rounded-lg border border-gray-200 space-y-2">
-        <h3 class="text-[11px] font-bold text-gray-700">✏️ Editar Datos del Cliente</h3>
-        <div class="grid grid-cols-2 md:grid-cols-5 gap-1.5">
-          <input type="text" id="edit-cli-nombre" placeholder="Nombre" class="border p-1.5 rounded text-[11px] bg-white">
-          <input type="text" id="edit-cli-cuit" placeholder="CUIT / DNI" class="border p-1.5 rounded text-[11px] bg-white">
-          <input type="text" id="edit-cli-direccion" placeholder="Dirección" class="border p-1.5 rounded text-[11px] bg-white">
-          <input type="text" id="edit-cli-telefono" placeholder="Teléfono" class="border p-1.5 rounded text-[11px] bg-white">
-          <input type="email" id="edit-cli-email" placeholder="Email" class="border p-1.5 rounded text-[11px] bg-white col-span-2 md:col-span-1">
+      <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 space-y-2">
+        <h3 class="text-xs font-bold text-gray-700">✏️ Editar Datos del Cliente</h3>
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-2">
+          <input type="text" id="edit-cli-nombre" placeholder="Nombre" class="border p-2 rounded text-xs bg-white">
+          <input type="text" id="edit-cli-cuit" placeholder="CUIT / DNI" class="border p-2 rounded text-xs bg-white">
+          <input type="text" id="edit-cli-direccion" placeholder="Dirección" class="border p-2 rounded text-xs bg-white">
+          <input type="text" id="edit-cli-telefono" placeholder="Teléfono" class="border p-2 rounded text-xs bg-white">
+          <input type="email" id="edit-cli-email" placeholder="Email" class="border p-2 rounded text-xs bg-white col-span-2 md:col-span-1">
         </div>
         <div class="flex justify-end pt-1">
-          <button type="button" onclick="guardarEdicionCliente()" class="bg-amber-700 text-white font-bold px-3 py-1.5 rounded text-[10px] hover:bg-amber-800">Guardar Cambios</button>
+          <button type="button" onclick="guardarEdicionCliente()" class="bg-amber-700 text-white font-bold px-3 py-1.5 rounded text-xs hover:bg-amber-800 shadow">Guardar Cambios</button>
         </div>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div class="bg-red-50 p-2.5 rounded-lg border border-red-200 space-y-2">
-          <h3 class="text-[11px] font-bold text-red-900">⬆️ Agregar Cargo Manual</h3>
-          <div class="flex gap-1.5">
-            <input type="date" id="cargo-cli-fecha" class="border p-1.5 rounded text-[11px] bg-white w-full">
-            <input type="number" id="cargo-cli-monto" placeholder="Monto ($)" class="border p-1.5 rounded text-[11px] bg-white w-full">
+        <div class="bg-red-50 p-3 rounded-lg border border-red-200 space-y-2">
+          <h3 class="text-xs font-bold text-red-900">⬆️ Agregar Cargo Manual</h3>
+          <div class="flex gap-2">
+            <input type="date" id="cargo-cli-fecha" class="border p-2 rounded text-xs bg-white w-full">
+            <input type="number" id="cargo-cli-monto" placeholder="Monto ($)" class="border p-2 rounded text-xs bg-white w-full">
           </div>
-          <input type="text" id="cargo-cli-concepto" placeholder="Concepto (Ej: Saldo anterior)" class="border p-1.5 rounded text-[11px] bg-white w-full">
-          <button type="button" onclick="registrarCargoCliente()" class="bg-red-700 text-white font-bold px-3 py-1.5 rounded text-[10px] w-full shadow-sm hover:bg-red-800">Sumar a la Deuda</button>
+          <input type="text" id="cargo-cli-concepto" placeholder="Concepto (Ej: Saldo anterior)" class="border p-2 rounded text-xs bg-white w-full">
+          <button type="button" onclick="registrarCargoCliente()" class="bg-red-700 text-white font-bold px-3 py-2 rounded text-xs w-full shadow-sm hover:bg-red-800">Sumar a la Deuda</button>
         </div>
 
-        <div class="bg-green-50 p-2.5 rounded-lg border border-green-200 space-y-2">
-          <h3 class="text-[11px] font-bold text-green-900">⬇️ Registrar Pago</h3>
-          <div class="flex gap-1.5">
-            <input type="date" id="pago-fecha" class="border p-1.5 rounded text-[11px] bg-white w-full">
-            <input type="number" id="pago-monto" placeholder="Abono ($)" class="border p-1.5 rounded text-[11px] bg-white w-full">
+        <div class="bg-green-50 p-3 rounded-lg border border-green-200 space-y-2">
+          <h3 class="text-xs font-bold text-green-900">⬇️ Registrar Pago</h3>
+          <div class="flex gap-2">
+            <input type="date" id="pago-fecha" class="border p-2 rounded text-xs bg-white w-full">
+            <input type="number" id="pago-monto" placeholder="Abono ($)" class="border p-2 rounded text-xs bg-white w-full">
           </div>
-          <select id="pago-medio" class="border p-1.5 rounded text-[11px] bg-white w-full">
+          <select id="pago-medio" class="border p-2 rounded text-xs bg-white w-full">
             <option value="Efectivo">Efectivo</option>
             <option value="Transferencia">Transferencia</option>
             <option value="Mercado Pago">Mercado Pago</option>
             <option value="Cheque">Cheque</option>
           </select>
-          <button type="button" onclick="registrarPagoCliente()" class="bg-green-700 text-white font-bold px-3 py-1.5 rounded text-[10px] w-full shadow-sm hover:bg-green-800">Registrar Pago</button>
+          <button type="button" onclick="registrarPagoCliente()" class="bg-green-700 text-white font-bold px-3 py-2 rounded text-xs w-full shadow-sm hover:bg-green-800">Registrar Pago</button>
         </div>
       </div>
 
       <div class="overflow-x-auto border rounded bg-white">
-        <table class="w-full text-left text-[11px]">
+        <table class="w-full text-left text-xs">
           <thead>
             <tr class="bg-amber-100 border-b text-amber-900 font-bold">
-              <th class="p-1.5">Fecha</th>
-              <th class="p-1.5">Concepto</th>
-              <th class="p-1.5 text-right">Débito</th>
-              <th class="p-1.5 text-right">Crédito</th>
-              <th class="p-1.5 text-right">Saldo Acumulado</th>
-              <th class="p-1.5 text-center">Acción</th>
+              <th class="p-2">Fecha</th>
+              <th class="p-2">Concepto</th>
+              <th class="p-2 text-right">Débito</th>
+              <th class="p-2 text-right">Crédito</th>
+              <th class="p-2 text-right">Saldo Acumulado</th>
+              <th class="p-2 text-center">Acción</th>
             </tr>
           </thead>
           <tbody id="tabla-historial-cliente"></tbody>
@@ -1118,76 +980,76 @@
     </div>
   </div>
 
-  <!-- MODAL FICHA PROVEEDOR (Agregado aquí junto a los otros modales) -->
-  <div id="modal-historial-proveedor" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 hidden p-4">
-    <div class="bg-white p-4 rounded-2xl shadow-2xl max-w-3xl w-full space-y-4 border border-amber-500 max-h-[90vh] overflow-y-auto">
-        <div class="flex justify-between items-center border-b pb-2">
-          <h2 id="historial-nombre-proveedor" class="text-lg font-bold text-amber-900"></h2>
-          <div class="flex flex-wrap items-center gap-2">
-            <button type="button" onclick="enviarResumenWhatsAppProveedor()" class="bg-green-600 hover:bg-green-700 text-white text-[10px] px-2 py-1.5 rounded font-bold shadow flex items-center gap-1">📱 WhatsApp</button>
-            <button type="button" onclick="enviarResumenEmailProveedor()" class="bg-blue-600 hover:bg-blue-700 text-white text-[10px] px-2 py-1.5 rounded font-bold shadow flex items-center gap-1">✉️ Mail</button>
-            <button type="button" onclick="cerrarHistorialProveedor()" class="bg-gray-300 text-gray-800 text-[10px] px-2 py-1.5 rounded font-bold">✕ Cerrar</button>
+  <!-- MODAL FICHA PROVEEDOR -->
+  <div id="modal-historial-proveedor" class="fixed inset-0 bg-black bg-opacity-75 items-center justify-center z-[999999] p-4 hidden">
+    <div class="bg-white p-5 rounded-2xl shadow-2xl max-w-3xl w-full space-y-4 border border-amber-500 max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b pb-2">
+        <h3 id="historial-nombre-proveedor" class="text-lg font-bold text-amber-900"></h3>
+        <div class="flex flex-wrap items-center gap-2">
+          <button type="button" onclick="enviarResumenWhatsAppProveedor()" class="bg-green-600 hover:bg-green-700 text-white text-xs px-2.5 py-1.5 rounded font-bold shadow">📱 WhatsApp</button>
+          <button type="button" onclick="enviarResumenEmailProveedor()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-2.5 py-1.5 rounded font-bold shadow">✉️ Mail</button>
+          <button type="button" onclick="cerrarHistorialProveedor()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 text-xs px-3 py-1.5 rounded font-bold">✕ Cerrar</button>
+        </div>
+      </div>
+
+      <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 space-y-2">
+        <h3 class="text-xs font-bold text-gray-700">✏️ Editar Datos del Proveedor</h3>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
+          <input type="text" id="edit-prov-nombre" placeholder="Razón Social" class="border p-2 rounded text-xs bg-white">
+          <input type="text" id="edit-prov-cuit" placeholder="CUIT" class="border p-2 rounded text-xs bg-white">
+          <input type="text" id="edit-prov-telefono" placeholder="Teléfono" class="border p-2 rounded text-xs bg-white">
+          <input type="text" id="edit-prov-rubro" placeholder="Rubro" class="border p-2 rounded text-xs bg-white">
+        </div>
+        <div class="flex justify-end pt-1">
+          <button type="button" onclick="guardarEdicionProveedor()" class="bg-amber-700 text-white font-bold px-3 py-1.5 rounded text-xs hover:bg-amber-800 shadow">Guardar Cambios</button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div class="bg-amber-50 p-3 rounded-lg border border-amber-200 space-y-2">
+          <h3 class="text-xs font-bold text-amber-900">🧾 Cargar Factura de Compra</h3>
+          <div class="flex gap-2">
+            <input type="date" id="fact-fecha" class="border p-2 rounded text-xs bg-white w-full">
+            <input type="text" id="fact-nro" placeholder="N° Factura" class="border p-2 rounded text-xs bg-white w-full">
           </div>
+          <div class="grid grid-cols-3 gap-1">
+            <select id="fact-insumo" class="border p-2 rounded text-xs bg-white col-span-1"></select>
+            <input type="number" id="fact-cant" placeholder="Cant." class="border p-2 rounded text-xs bg-white">
+            <input type="number" id="fact-precio" placeholder="Precio Un." class="border p-2 rounded text-xs bg-white">
+          </div>
+          <button type="button" onclick="cargarFacturaProveedor()" class="bg-amber-800 text-white font-bold px-3 py-2 rounded text-xs hover:bg-amber-900 w-full shadow-sm">Ingresar Factura y Stock</button>
         </div>
 
-        <div class="bg-gray-50 p-2 rounded-lg border border-gray-200 space-y-2">
-          <h3 class="text-[11px] font-bold text-gray-700">✏️ Editar Datos del Proveedor</h3>
-          <div class="grid grid-cols-1 md:grid-cols-4 gap-1.5">
-            <input type="text" id="edit-prov-nombre" placeholder="Razón Social" class="border p-1.5 rounded text-[11px] bg-white">
-            <input type="text" id="edit-prov-cuit" placeholder="CUIT" class="border p-1.5 rounded text-[11px] bg-white">
-            <input type="text" id="edit-prov-telefono" placeholder="Teléfono" class="border p-1.5 rounded text-[11px] bg-white">
-            <input type="text" id="edit-prov-rubro" placeholder="Rubro" class="border p-1.5 rounded text-[11px] bg-white">
+        <div class="bg-green-50 p-3 rounded-lg border border-green-200 space-y-2">
+          <h3 class="text-xs font-bold text-green-900">💸 Registrar Pago a Proveedor</h3>
+          <div class="flex gap-2">
+            <input type="date" id="pago-prov-fecha" class="border p-2 rounded text-xs bg-white w-full">
+            <input type="number" id="pago-prov-monto" placeholder="Monto ($)" class="border p-2 rounded text-xs bg-white w-full">
           </div>
-          <div class="flex justify-end gap-2 pt-1">
-            <button type="button" onclick="guardarEdicionProveedor()" class="bg-amber-700 text-white font-bold px-3 py-1.5 rounded text-[10px] hover:bg-amber-800">Guardar Cambios</button>
-          </div>
+          <select id="pago-prov-medio" class="border p-2 rounded text-xs bg-white w-full">
+            <option value="Efectivo">Efectivo</option>
+            <option value="Transferencia">Transferencia</option>
+            <option value="Cheque">Cheque</option>
+          </select>
+          <button type="button" onclick="registrarPagoProveedor()" class="bg-green-700 text-white font-bold px-3 py-2 rounded text-xs hover:bg-green-800 w-full shadow-sm">Registrar Pago</button>
         </div>
+      </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div class="bg-amber-50 p-2.5 rounded-lg border border-amber-200 space-y-2">
-            <h3 class="text-[11px] font-bold text-amber-900">🧾 Cargar Factura de Compra</h3>
-            <div class="flex gap-1.5">
-              <input type="date" id="fact-fecha" class="border p-1.5 rounded text-[11px] bg-white w-full">
-              <input type="text" id="fact-nro" placeholder="N° Factura" class="border p-1.5 rounded text-[11px] bg-white w-full">
-            </div>
-            <div class="grid grid-cols-3 gap-1">
-              <select id="fact-insumo" class="border p-1.5 rounded text-[11px] bg-white col-span-1"></select>
-              <input type="number" id="fact-cant" placeholder="Cant." class="border p-1.5 rounded text-[11px] bg-white">
-              <input type="number" id="fact-precio" placeholder="Precio Un." class="border p-1.5 rounded text-[11px] bg-white">
-            </div>
-            <button type="button" onclick="cargarFacturaProveedor()" class="bg-amber-800 text-white font-bold px-3 py-1.5 rounded text-[10px] hover:bg-amber-900 w-full shadow-sm">Ingresar Factura y Stock</button>
-          </div>
-
-          <div class="bg-green-50 p-2.5 rounded-lg border border-green-200 space-y-2">
-            <h3 class="text-[11px] font-bold text-green-900">💸 Registrar Pago a Proveedor</h3>
-            <div class="flex gap-1.5">
-              <input type="date" id="pago-prov-fecha" class="border p-1.5 rounded text-[11px] bg-white w-full">
-              <input type="number" id="pago-prov-monto" placeholder="Monto ($)" class="border p-1.5 rounded text-[11px] bg-white w-full">
-            </div>
-            <select id="pago-prov-medio" class="border p-1.5 rounded text-[11px] bg-white w-full">
-              <option value="Efectivo">Efectivo</option>
-              <option value="Transferencia">Transferencia</option>
-              <option value="Cheque">Cheque</option>
-            </select>
-            <button type="button" onclick="registrarPagoProveedor()" class="bg-green-700 text-white font-bold px-3 py-1.5 rounded text-[10px] hover:bg-green-800 w-full shadow-sm">Registrar Pago</button>
-          </div>
-        </div>
-
-        <div class="overflow-x-auto border rounded bg-white">
-          <table class="w-full text-left text-[11px]">
-            <thead>
-              <tr class="bg-amber-100 border-b text-amber-900 font-bold">
-                <th class="p-1.5">Fecha</th>
-                <th class="p-1.5">Detalle / N° Factura</th>
-                <th class="p-1.5 text-right">Facturado</th>
-                <th class="p-1.5 text-right">Pagado</th>
-                <th class="p-1.5 text-right">Saldo Deuda</th>
-                <th class="p-1.5 text-center">Acción</th>
-              </tr>
-            </thead>
-            <tbody id="tabla-historial-proveedor"></tbody>
-          </table>
-        </div>
+      <div class="overflow-x-auto border rounded bg-white">
+        <table class="w-full text-left text-xs">
+          <thead>
+            <tr class="bg-amber-100 border-b text-amber-900 font-bold">
+              <th class="p-2">Fecha</th>
+              <th class="p-2">Detalle / N° Factura</th>
+              <th class="p-2 text-right">Facturado</th>
+              <th class="p-2 text-right">Pagado</th>
+              <th class="p-2 text-right">Saldo Deuda</th>
+              <th class="p-2 text-center">Acción</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-historial-proveedor"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
@@ -1401,7 +1263,6 @@
 
     function abrirSelectorModalClientes() {
       const modal = document.getElementById('modal-selector-clientes');
-      modal.classList.remove('hidden');
       modal.className = "fixed-modal-apk";
       document.getElementById('input-filtro-modal-clientes').value = '';
       filtrarModalClientes('');
@@ -1410,7 +1271,6 @@
 
     function cerrarSelectorModalClientes() {
       const modal = document.getElementById('modal-selector-clientes');
-      modal.classList.add('hidden');
       modal.className = "fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 hidden p-4";
     }
 
@@ -1449,7 +1309,6 @@
 
     function abrirSelectorModalProveedores() {
       const modal = document.getElementById('modal-selector-proveedores');
-      modal.classList.remove('hidden');
       modal.className = "fixed-modal-apk";
       document.getElementById('input-filtro-modal-proveedores').value = '';
       filtrarModalProveedores('');
@@ -1458,7 +1317,6 @@
 
     function cerrarSelectorModalProveedores() {
       const modal = document.getElementById('modal-selector-proveedores');
-      modal.classList.add('hidden');
       modal.className = "fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 hidden p-4";
     }
 
@@ -1496,24 +1354,16 @@
     }
 
     function abrirModalAltaCliente() { 
-      const m = document.getElementById('modal-alta-cliente');
-      m.classList.remove('hidden');
-      m.className = "fixed-modal-apk";
+      document.getElementById('modal-alta-cliente').className = "fixed-modal-apk";
     }
     function cerrarModalAltaCliente() { 
-      const m = document.getElementById('modal-alta-cliente');
-      m.classList.add('hidden');
-      m.className = "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden";
+      document.getElementById('modal-alta-cliente').className = "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden";
     }
     function abrirModalAltaProveedor() { 
-      const m = document.getElementById('modal-alta-proveedor');
-      m.classList.remove('hidden');
-      m.className = "fixed-modal-apk";
+      document.getElementById('modal-alta-proveedor').className = "fixed-modal-apk";
     }
     function cerrarModalAltaProveedor() { 
-      const m = document.getElementById('modal-alta-proveedor');
-      m.classList.add('hidden');
-      m.className = "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden";
+      document.getElementById('modal-alta-proveedor').className = "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden";
     }
 
     function inicializarFechaCuadra() {
@@ -1773,16 +1623,12 @@
     }
 
     function abrirModalPedidosAuto() {
-      const m = document.getElementById('modal-pedidos-auto');
-      m.classList.remove('hidden');
-      m.className = "fixed-modal-apk";
+      document.getElementById('modal-pedidos-auto').className = "fixed-modal-apk";
       renderizarTablaPedidosAuto();
     }
 
     function cerrarModalPedidosAuto() {
-      const m = document.getElementById('modal-pedidos-auto');
-      m.classList.add('hidden');
-      m.className = "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden";
+      document.getElementById('modal-pedidos-auto').className = "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden";
     }
 
     function renderizarTablaPedidosAuto() {
@@ -2473,35 +2319,37 @@
       Object.values(dbHistorialClientes[cliId] || {}).forEach(m => { if (m.tipo === 'debito') saldo += m.monto; if (m.tipo === 'credito') saldo -= m.monto; });
       return saldo;
     }
-function renderizarTablaClientes() {
-  const tbody = document.getElementById('tabla-resumen-clientes-deuda'); 
-  if (!tbody) return; 
-  tbody.innerHTML = '';
-  
-  const clientesArr = Object.values(dbClientes || {}).sort((a, b) => a.nombre.localeCompare(b.nombre));
 
-  if (clientesArr.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="4" class="p-3 text-center text-gray-400 italic">No hay clientes registrados en el sistema.</td></tr>';
-    return;
-  }
+    function renderizarTablaClientes() {
+      const tbody = document.getElementById('tabla-resumen-clientes-deuda'); 
+      if (!tbody) return; 
+      tbody.innerHTML = '';
+      
+      const clientesArr = Object.values(dbClientes || {}).sort((a, b) => a.nombre.localeCompare(b.nombre));
 
-  clientesArr.forEach(cli => {
-    const saldo = calcularSaldoCliente(cli.id);
-    const tr = document.createElement('tr'); 
-    tr.className = "border-b hover:bg-gray-50";
-    const claseSaldo = saldo > 0 ? "font-bold text-red-600" : (saldo < 0 ? "font-bold text-green-700" : "text-gray-500");
+      if (clientesArr.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="p-3 text-center text-gray-400 italic">No hay clientes registrados en el sistema.</td></tr>';
+        return;
+      }
 
-   tr.innerHTML = `
-  <td class="p-2 font-bold text-gray-800">${cli.nombre}</td>
-  <td class="p-2 text-gray-600">${cli.telefono || 'S/D'}</td>
-  <td class="p-2 text-right ${claseSaldo}">$${saldo.toLocaleString()}</td>
-  <td class="p-2 text-center">
-    <button type="button" onclick="verHistorialCliente('${cli.id}')" ontouchend="verHistorialCliente('${cli.id}'); event.preventDefault();" class="bg-amber-700 text-white text-xs px-3 py-1.5 rounded-lg font-bold shadow active:bg-amber-900">Abrir Ficha</button>
-  </td>
-`;
-    tbody.appendChild(tr);
-  });
-}
+      clientesArr.forEach(cli => {
+        const saldo = calcularSaldoCliente(cli.id);
+        const tr = document.createElement('tr'); 
+        tr.className = "border-b hover:bg-gray-50";
+        const claseSaldo = saldo > 0 ? "font-bold text-red-600" : (saldo < 0 ? "font-bold text-green-700" : "text-gray-500");
+
+        tr.innerHTML = `
+          <td class="p-2 font-bold text-gray-800">${cli.nombre}</td>
+          <td class="p-2 text-gray-600">${cli.telefono || 'S/D'}</td>
+          <td class="p-2 text-right ${claseSaldo}">$${saldo.toLocaleString()}</td>
+          <td class="p-2 text-center">
+            <button type="button" onclick="verHistorialCliente('${cli.id}')" ontouchend="verHistorialCliente('${cli.id}'); event.preventDefault();" class="bg-amber-700 text-white text-xs px-3 py-1.5 rounded-lg font-bold shadow active:bg-amber-900">Abrir Ficha</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
     function eliminarClienteActual() {
       if (!clienteSeleccionadoId) return;
       const cli = dbClientes[clienteSeleccionadoId];
@@ -2517,70 +2365,31 @@ function renderizarTablaClientes() {
       }
     }
 
-function verHistorialCliente(cliId) {
-    clienteSeleccionadoId = cliId; 
-    const cli = dbClientes[cliId]; 
-    if (!cli) return;
-    
-    const nombreElem = document.getElementById('historial-nombre-cliente');
-    if (nombreElem) nombreElem.textContent = cli.nombre;
+    function verHistorialCliente(cliId) {
+      clienteSeleccionadoId = cliId; 
+      const cli = dbClientes[cliId]; 
+      if (!cli) return;
+      
+      const nombreElem = document.getElementById('historial-nombre-cliente');
+      if (nombreElem) nombreElem.textContent = cli.nombre;
+      
+      if(document.getElementById('edit-cli-nombre')) document.getElementById('edit-cli-nombre').value = cli.nombre || '';
+      if(document.getElementById('edit-cli-cuit')) document.getElementById('edit-cli-cuit').value = cli.cuit || '';
+      if(document.getElementById('edit-cli-direccion')) document.getElementById('edit-cli-direccion').value = cli.direccion || '';
+      if(document.getElementById('edit-cli-telefono')) document.getElementById('edit-cli-telefono').value = cli.telefono || '';
+      if(document.getElementById('edit-cli-email')) document.getElementById('edit-cli-email').value = cli.email || '';
 
-    const contactoElem = document.getElementById('historial-contacto-cliente');
-    if (contactoElem) {
-      const saldoActual = calcularSaldoCliente(cliId);
-      contactoElem.textContent = `Tel: ${cli.telefono || 'S/D'} | Email: ${cli.email || 'S/D'} | Saldo Actual: $${saldoActual.toLocaleString()}`;
+      const modal = document.getElementById('modal-historial-cliente');
+      if (modal) {
+          modal.className = "fixed-modal-apk";
+      }
+
+      const labelSel = document.getElementById('label-selector-cliente');
+      if (labelSel) labelSel.textContent = cli.nombre;
+
+      renderizarTablaHistorialCliente();
     }
-    
-    if(document.getElementById('edit-cli-nombre')) document.getElementById('edit-cli-nombre').value = cli.nombre || '';
-    if(document.getElementById('edit-cli-cuit')) document.getElementById('edit-cli-cuit').value = cli.cuit || '';
-    if(document.getElementById('edit-cli-direccion')) document.getElementById('edit-cli-direccion').value = cli.direccion || '';
-    if(document.getElementById('edit-cli-telefono')) document.getElementById('edit-cli-telefono').value = cli.telefono || '';
-    if(document.getElementById('edit-cli-email')) document.getElementById('edit-cli-email').value = cli.email || '';
 
-    const modal = document.getElementById('modal-historial-cliente');
-    if (modal) {
-        modal.classList.remove('hidden');
-        modal.style.setProperty('display', 'flex', 'important');
-    }
-
-    const labelSel = document.getElementById('label-selector-cliente');
-    if (labelSel) labelSel.textContent = cli.nombre;
-
-    renderizarTablaHistorialCliente();
-  }
-
-function verHistorialProveedor(provId) {
-  proveedorSeleccionadoId = provId; 
-  const prv = dbProveedores[provId]; 
-  if (!prv) return;
-  
-  const nombreElem = document.getElementById('historial-nombre-proveedor');
-  if (nombreElem) nombreElem.textContent = prv.nombre;
-  
-  if(document.getElementById('edit-prov-nombre')) document.getElementById('edit-prov-nombre').value = prv.nombre || '';
-  if(document.getElementById('edit-prov-cuit')) document.getElementById('edit-prov-cuit').value = prv.cuit || '';
-  if(document.getElementById('edit-prov-telefono')) document.getElementById('edit-prov-telefono').value = prv.telefono || '';
-  if(document.getElementById('edit-prov-rubro')) document.getElementById('edit-prov-rubro').value = prv.rubro || '';
-
-  // FORZAR APERTURA DIRECTA DE ESTILOS EN LA APK
-  const modal = document.getElementById('modal-historial-proveedor');
-  if (modal) {
-      modal.classList.remove('hidden');
-      modal.style.setProperty('display', 'flex', 'important');
-      modal.style.setProperty('position', 'fixed', 'important');
-      modal.style.setProperty('top', '0', 'important');
-      modal.style.setProperty('left', '0', 'important');
-      modal.style.setProperty('width', '100vw', 'important');
-      modal.style.setProperty('height', '100vh', 'important');
-      modal.style.setProperty('z-index', '999999', 'important');
-      modal.style.setProperty('background-color', 'rgba(0, 0, 0, 0.75)', 'important');
-  }
-
-  const labelSel = document.getElementById('label-selector-proveedor');
-  if (labelSel) labelSel.textContent = prv.nombre;
-
-  renderizarTablaHistorialProveedor();
-}
     function guardarEdicionCliente() {
       if (!clienteSeleccionadoId || !dbClientes[clienteSeleccionadoId]) return;
       const cli = dbClientes[clienteSeleccionadoId];
@@ -2602,27 +2411,15 @@ function verHistorialProveedor(provId) {
       alert("¡Datos actualizados con éxito!");
     }
 
-  function cerrarHistorialCliente() { 
-  clienteSeleccionadoId = null; 
-  const modal = document.getElementById('modal-historial-cliente');
-  if (modal) {
-      modal.classList.add('hidden');
-      modal.style.setProperty('display', 'none', 'important'); // Lo oculta por completo
-  }
-  const labelSel = document.getElementById('label-selector-cliente');
-  if (labelSel) labelSel.textContent = "🔍 Buscar Cliente...";
-}
-
-function cerrarHistorialProveedor() { 
-  proveedorSeleccionadoId = null; 
-  const modal = document.getElementById('modal-historial-proveedor');
-  if (modal) {
-      modal.classList.add('hidden');
-      modal.style.display = 'none';
-  }
-  const labelSel = document.getElementById('label-selector-proveedor');
-  if (labelSel) labelSel.textContent = "🔍 Buscar Proveedor...";
-}
+    function cerrarHistorialCliente() { 
+      clienteSeleccionadoId = null; 
+      const modal = document.getElementById('modal-historial-cliente');
+      if (modal) {
+          modal.className = "fixed inset-0 bg-black bg-opacity-75 items-center justify-center z-[999999] p-4 hidden";
+      }
+      const labelSel = document.getElementById('label-selector-cliente');
+      if (labelSel) labelSel.textContent = "🔍 Buscar Cliente...";
+    }
 
     function abrirModalEditarMovCliente(id, origen, fechaOriginal) {
       movClienteEditContext = { id, origen, fechaOriginal };
@@ -2646,15 +2443,11 @@ function cerrarHistorialProveedor() {
           document.getElementById('mod-cli-monto').value = m.monto;
         }
       }
-      const md = document.getElementById('modal-editar-mov-cliente');
-      md.classList.remove('hidden');
-      md.className = "fixed-modal-apk";
+      document.getElementById('modal-editar-mov-cliente').className = "fixed-modal-apk";
     }
 
     function cerrarModalEditarMovCliente() {
-      const md = document.getElementById('modal-editar-mov-cliente');
-      md.classList.add('hidden');
-      md.className = "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden";
+      document.getElementById('modal-editar-mov-cliente').className = "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden";
       movClienteEditContext = null;
     }
 
@@ -2904,35 +2697,36 @@ function cerrarHistorialProveedor() {
       return saldo;
     }
 
-function renderizarTablaProveedores() {
-  const tbody = document.getElementById('tabla-resumen-proveedores-deuda'); 
-  if (!tbody) return; 
-  tbody.innerHTML = '';
-  
-  const prvArr = Object.values(dbProveedores || {}).sort((a, b) => a.nombre.localeCompare(b.nombre));
+    function renderizarTablaProveedores() {
+      const tbody = document.getElementById('tabla-resumen-proveedores-deuda'); 
+      if (!tbody) return; 
+      tbody.innerHTML = '';
+      
+      const prvArr = Object.values(dbProveedores || {}).sort((a, b) => a.nombre.localeCompare(b.nombre));
 
-  if (prvArr.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="4" class="p-3 text-center text-gray-400 italic">No hay proveedores registrados en el sistema.</td></tr>';
-    return;
-  }
+      if (prvArr.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="p-3 text-center text-gray-400 italic">No hay proveedores registrados en el sistema.</td></tr>';
+        return;
+      }
 
-  prvArr.forEach(prv => {
-    const saldo = calcularSaldoProveedor(prv.id);
-    const tr = document.createElement('tr'); 
-    tr.className = "border-b hover:bg-gray-50";
-    const claseSaldo = saldo > 0 ? "font-bold text-red-600" : "text-gray-500";
+      prvArr.forEach(prv => {
+        const saldo = calcularSaldoProveedor(prv.id);
+        const tr = document.createElement('tr'); 
+        tr.className = "border-b hover:bg-gray-50";
+        const claseSaldo = saldo > 0 ? "font-bold text-red-600" : "text-gray-500";
 
-  tr.innerHTML = `
-  <td class="p-2 font-bold text-gray-800">${prv.nombre}</td>
-  <td class="p-2 text-gray-600">${prv.rubro || 'General'}</td>
-  <td class="p-2 text-right ${claseSaldo}">$${saldo.toLocaleString()}</td>
-  <td class="p-2 text-center">
-    <button type="button" onclick="verHistorialProveedor('${prv.id}')" ontouchend="verHistorialProveedor('${prv.id}'); event.preventDefault();" class="bg-amber-700 text-white text-xs px-3 py-1.5 rounded-lg font-bold shadow active:bg-amber-900">Abrir Ficha</button>
-  </td>
-`;
-    tbody.appendChild(tr);
-  });
-}
+        tr.innerHTML = `
+          <td class="p-2 font-bold text-gray-800">${prv.nombre}</td>
+          <td class="p-2 text-gray-600">${prv.rubro || 'General'}</td>
+          <td class="p-2 text-right ${claseSaldo}">$${saldo.toLocaleString()}</td>
+          <td class="p-2 text-center">
+            <button type="button" onclick="verHistorialProveedor('${prv.id}')" ontouchend="verHistorialProveedor('${prv.id}'); event.preventDefault();" class="bg-amber-700 text-white text-xs px-3 py-1.5 rounded-lg font-bold shadow active:bg-amber-900">Abrir Ficha</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
     function eliminarProveedorActual() {
       if (!proveedorSeleccionadoId) return;
       const prv = dbProveedores[proveedorSeleccionadoId];
@@ -2947,17 +2741,20 @@ function renderizarTablaProveedores() {
     }
 
     function verHistorialProveedor(provId) {
-      proveedorSeleccionadoId = provId; const prv = dbProveedores[provId]; if (!prv) return;
-      document.getElementById('historial-nombre-proveedor').textContent = prv.nombre;
+      proveedorSeleccionadoId = provId; 
+      const prv = dbProveedores[provId]; 
+      if (!prv) return;
       
-      document.getElementById('edit-prov-nombre').value = prv.nombre || '';
-      document.getElementById('edit-prov-cuit').value = prv.cuit || '';
-      document.getElementById('edit-prov-telefono').value = prv.telefono || '';
-      document.getElementById('edit-prov-rubro').value = prv.rubro || '';
+      const nombreElem = document.getElementById('historial-nombre-proveedor');
+      if (nombreElem) nombreElem.textContent = prv.nombre;
+      
+      if(document.getElementById('edit-prov-nombre')) document.getElementById('edit-prov-nombre').value = prv.nombre || '';
+      if(document.getElementById('edit-prov-cuit')) document.getElementById('edit-prov-cuit').value = prv.cuit || '';
+      if(document.getElementById('edit-prov-telefono')) document.getElementById('edit-prov-telefono').value = prv.telefono || '';
+      if(document.getElementById('edit-prov-rubro')) document.getElementById('edit-prov-rubro').value = prv.rubro || '';
 
       const modal = document.getElementById('modal-historial-proveedor');
       if (modal) {
-          modal.classList.remove('hidden');
           modal.className = "fixed-modal-apk";
       }
 
@@ -2989,8 +2786,7 @@ function renderizarTablaProveedores() {
       proveedorSeleccionadoId = null; 
       const modal = document.getElementById('modal-historial-proveedor');
       if (modal) {
-          modal.classList.add('hidden');
-          modal.className = "fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 hidden p-4";
+          modal.className = "fixed inset-0 bg-black bg-opacity-75 items-center justify-center z-[999999] p-4 hidden";
       }
       const labelSel = document.getElementById('label-selector-proveedor');
       if (labelSel) labelSel.textContent = "🔍 Buscar Proveedor...";
@@ -3046,16 +2842,12 @@ function renderizarTablaProveedores() {
             document.getElementById('mod-prov-concepto').value = m.medio || '';
         }
         document.getElementById('mod-prov-monto').value = m.monto;
-        const md = document.getElementById('modal-editar-mov-proveedor');
-        md.classList.remove('hidden');
-        md.className = "fixed-modal-apk";
+        document.getElementById('modal-editar-mov-proveedor').className = "fixed-modal-apk";
       }
     }
 
     function cerrarModalEditarMovProveedor() {
-      const md = document.getElementById('modal-editar-mov-proveedor');
-      md.classList.add('hidden');
-      md.className = "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden";
+      document.getElementById('modal-editar-mov-proveedor').className = "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden";
       movProvEditContext = null;
     }
 
@@ -3216,16 +3008,12 @@ function renderizarTablaProveedores() {
         document.getElementById('mod-ins-stock').value = ins.stock;
         document.getElementById('mod-ins-minimo').value = ins.minimo;
         document.getElementById('mod-ins-unidad').value = ins.unidad;
-        const md = document.getElementById('modal-editar-insumo');
-        md.classList.remove('hidden');
-        md.className = "fixed-modal-apk";
+        document.getElementById('modal-editar-insumo').className = "fixed-modal-apk";
       }
     }
 
     function cerrarModalEditarInsumo() {
-      const md = document.getElementById('modal-editar-insumo');
-      md.classList.add('hidden');
-      md.className = "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden";
+      document.getElementById('modal-editar-insumo').className = "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden";
       insumoEditContext = null;
     }
 
@@ -3511,15 +3299,11 @@ function renderizarTablaProveedores() {
 
       document.getElementById('admin-edit-alem').value = vAlem;
       document.getElementById('admin-edit-espiga').value = vEspiga;
-      const md = document.getElementById('modal-editar-caja-admin');
-      md.classList.remove('hidden');
-      md.className = "fixed-modal-apk";
+      document.getElementById('modal-editar-caja-admin').className = "fixed-modal-apk";
     }
 
     function cerrarModalEditarCajaAdmin() {
-      const md = document.getElementById('modal-editar-caja-admin');
-      md.classList.add('hidden');
-      md.className = "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden";
+      document.getElementById('modal-editar-caja-admin').className = "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden";
     }
 
     function guardarCorreccionCajaAdmin() {
