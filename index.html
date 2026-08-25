@@ -37,6 +37,21 @@
       background-color: #f9fafb !important;
     }
 
+    /* Corrección táctil y de capas para APK WebView */
+    .fixed-modal-apk {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      z-index: 99999 !important;
+      background-color: rgba(0, 0, 0, 0.75) !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      padding: 12px !important;
+    }
+
     #area-impresion {
       display: none;
     }
@@ -66,7 +81,7 @@
 <body class="bg-gray-100 font-sans min-h-screen overflow-x-hidden">
 
   <!-- HEADER IDÉNTICO A GITHUB PAGES -->
-  <header class="bg-amber-900 text-white p-3 shadow-lg flex flex-col md:flex-row items-center justify-between gap-3">
+  <header class="bg-amber-900 text-white p-3 shadow-lg flex flex-col md:flex-row items-center justify-between gap-3 relative z-30">
     <div>
       <h1 class="text-xl font-bold md:text-2xl">La Casa del Pan & La Espiga de Oro</h1>
       <p class="text-xs text-amber-200">Sistema Integrado de Producción, Logística, Proveedores, Cajas y Reportes</p>
@@ -90,7 +105,7 @@
   </header>
 
   <!-- NAVEGACIÓN SUPERIOR HORIZONTAL -->
-  <nav class="flex border-b border-gray-300 bg-white sticky top-0 z-10 text-xs md:text-sm font-semibold overflow-x-auto nav-buttons shadow-sm">
+  <nav class="flex border-b border-gray-300 bg-white sticky top-0 z-20 text-xs md:text-sm font-semibold overflow-x-auto nav-buttons shadow-sm">
     <button onclick="verPestaña('reparto')" id="btn-reparto" class="tab-active">🚚 Reparto y Cobros</button>
     <button onclick="verPestaña('cuadra')" id="btn-cuadra" class="tab-inactive">👨‍🍳 Cuadra</button>
     <button onclick="verPestaña('clientes')" id="btn-clientes" class="tab-inactive">👥 Clientes / Cta. Cte.</button>
@@ -1258,14 +1273,18 @@
     }
 
     function abrirSelectorModalClientes() {
-      document.getElementById('modal-selector-clientes').classList.remove('hidden');
+      const modal = document.getElementById('modal-selector-clientes');
+      modal.classList.remove('hidden');
+      modal.className = "fixed-modal-apk";
       document.getElementById('input-filtro-modal-clientes').value = '';
       filtrarModalClientes('');
       setTimeout(() => document.getElementById('input-filtro-modal-clientes').focus(), 100);
     }
 
     function cerrarSelectorModalClientes() {
-      document.getElementById('modal-selector-clientes').classList.add('hidden');
+      const modal = document.getElementById('modal-selector-clientes');
+      modal.classList.add('hidden');
+      modal.className = "fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 hidden p-4";
     }
 
     function filtrarModalClientes(filtro) {
@@ -1302,14 +1321,18 @@
     }
 
     function abrirSelectorModalProveedores() {
-      document.getElementById('modal-selector-proveedores').classList.remove('hidden');
+      const modal = document.getElementById('modal-selector-proveedores');
+      modal.classList.remove('hidden');
+      modal.className = "fixed-modal-apk";
       document.getElementById('input-filtro-modal-proveedores').value = '';
       filtrarModalProveedores('');
       setTimeout(() => document.getElementById('input-filtro-modal-proveedores').focus(), 100);
     }
 
     function cerrarSelectorModalProveedores() {
-      document.getElementById('modal-selector-proveedores').classList.add('hidden');
+      const modal = document.getElementById('modal-selector-proveedores');
+      modal.classList.add('hidden');
+      modal.className = "fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 hidden p-4";
     }
 
     function filtrarModalProveedores(filtro) {
@@ -1345,10 +1368,26 @@
       });
     }
 
-    function abrirModalAltaCliente() { document.getElementById('modal-alta-cliente').classList.remove('hidden'); }
-    function cerrarModalAltaCliente() { document.getElementById('modal-alta-cliente').classList.add('hidden'); }
-    function abrirModalAltaProveedor() { document.getElementById('modal-alta-proveedor').classList.remove('hidden'); }
-    function cerrarModalAltaProveedor() { document.getElementById('modal-alta-proveedor').classList.add('hidden'); }
+    function abrirModalAltaCliente() { 
+      const m = document.getElementById('modal-alta-cliente');
+      m.classList.remove('hidden');
+      m.className = "fixed-modal-apk";
+    }
+    function cerrarModalAltaCliente() { 
+      const m = document.getElementById('modal-alta-cliente');
+      m.classList.add('hidden');
+      m.className = "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden";
+    }
+    function abrirModalAltaProveedor() { 
+      const m = document.getElementById('modal-alta-proveedor');
+      m.classList.remove('hidden');
+      m.className = "fixed-modal-apk";
+    }
+    function cerrarModalAltaProveedor() { 
+      const m = document.getElementById('modal-alta-proveedor');
+      m.classList.add('hidden');
+      m.className = "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden";
+    }
 
     function inicializarFechaCuadra() {
       const ahora = new Date();
@@ -1607,12 +1646,16 @@
     }
 
     function abrirModalPedidosAuto() {
-      document.getElementById('modal-pedidos-auto').classList.remove('hidden');
+      const m = document.getElementById('modal-pedidos-auto');
+      m.classList.remove('hidden');
+      m.className = "fixed-modal-apk";
       renderizarTablaPedidosAuto();
     }
 
     function cerrarModalPedidosAuto() {
-      document.getElementById('modal-pedidos-auto').classList.add('hidden');
+      const m = document.getElementById('modal-pedidos-auto');
+      m.classList.add('hidden');
+      m.className = "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden";
     }
 
     function renderizarTablaPedidosAuto() {
@@ -2416,11 +2459,15 @@
           document.getElementById('mod-cli-monto').value = m.monto;
         }
       }
-      document.getElementById('modal-editar-mov-cliente').classList.remove('hidden');
+      const md = document.getElementById('modal-editar-mov-cliente');
+      md.classList.remove('hidden');
+      md.className = "fixed-modal-apk";
     }
 
     function cerrarModalEditarMovCliente() {
-      document.getElementById('modal-editar-mov-cliente').classList.add('hidden');
+      const md = document.getElementById('modal-editar-mov-cliente');
+      md.classList.add('hidden');
+      md.className = "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden";
       movClienteEditContext = null;
     }
 
@@ -2802,12 +2849,16 @@
             document.getElementById('mod-prov-concepto').value = m.medio || '';
         }
         document.getElementById('mod-prov-monto').value = m.monto;
-        document.getElementById('modal-editar-mov-proveedor').classList.remove('hidden');
+        const md = document.getElementById('modal-editar-mov-proveedor');
+        md.classList.remove('hidden');
+        md.className = "fixed-modal-apk";
       }
     }
 
     function cerrarModalEditarMovProveedor() {
-      document.getElementById('modal-editar-mov-proveedor').classList.add('hidden');
+      const md = document.getElementById('modal-editar-mov-proveedor');
+      md.classList.add('hidden');
+      md.className = "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden";
       movProvEditContext = null;
     }
 
@@ -2968,12 +3019,16 @@
         document.getElementById('mod-ins-stock').value = ins.stock;
         document.getElementById('mod-ins-minimo').value = ins.minimo;
         document.getElementById('mod-ins-unidad').value = ins.unidad;
-        document.getElementById('modal-editar-insumo').classList.remove('hidden');
+        const md = document.getElementById('modal-editar-insumo');
+        md.classList.remove('hidden');
+        md.className = "fixed-modal-apk";
       }
     }
 
     function cerrarModalEditarInsumo() {
-      document.getElementById('modal-editar-insumo').classList.add('hidden');
+      const md = document.getElementById('modal-editar-insumo');
+      md.classList.add('hidden');
+      md.className = "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden";
       insumoEditContext = null;
     }
 
@@ -3259,11 +3314,15 @@
 
       document.getElementById('admin-edit-alem').value = vAlem;
       document.getElementById('admin-edit-espiga').value = vEspiga;
-      document.getElementById('modal-editar-caja-admin').classList.remove('hidden');
+      const md = document.getElementById('modal-editar-caja-admin');
+      md.classList.remove('hidden');
+      md.className = "fixed-modal-apk";
     }
 
     function cerrarModalEditarCajaAdmin() {
-      document.getElementById('modal-editar-caja-admin').classList.add('hidden');
+      const md = document.getElementById('modal-editar-caja-admin');
+      md.classList.add('hidden');
+      md.className = "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden";
     }
 
     function guardarCorreccionCajaAdmin() {
