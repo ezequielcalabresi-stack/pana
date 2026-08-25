@@ -37,19 +37,33 @@
       background-color: #f9fafb !important;
     }
 
-    /* Solución definitiva para APK WebView: Forzar overlay absoluto por encima de todo */
+   /* Estilo definitivo y mejorado para modales de ficha en APK/Móvil */
     .apk-modal-activo {
-      position: absolute !important;
+      position: fixed !important;
       top: 0 !important;
       left: 0 !important;
       width: 100vw !important;
-      min-height: 100vh !important;
+      height: 100vh !important;
       z-index: 2147483647 !important;
-      background-color: rgba(0, 0, 0, 0.8) !important;
+      background-color: rgba(0, 0, 0, 0.85) !important;
       display: flex !important;
       align-items: center !important;
       justify-content: center !important;
-      padding: 10px !important;
+      padding: 12px !important;
+      box-sizing: border-box !important;
+      overflow-y: auto !important;
+    }
+
+    .apk-modal-contenido {
+      background: #ffffff !important;
+      width: 100% !important;
+      max-width: 700px !important;
+      max-height: 92vh !important;
+      border-radius: 16px !important;
+      padding: 16px !important;
+      overflow-y: auto !important;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3) !important;
+      border: 2px solid #d97706 !important;
       box-sizing: border-box !important;
     }
 
@@ -905,61 +919,60 @@
       </div>
     </div>
   </div>
-
-  <!-- MODAL FICHA / HISTORIAL DE CLIENTE -->
+<!-- MODAL FICHA / HISTORIAL DE CLIENTE -->
   <div id="modal-historial-cliente" class="fixed inset-0 bg-black bg-opacity-75 items-center justify-center z-[999999] p-4 hidden">
-    <div class="bg-white p-5 rounded-2xl shadow-2xl max-w-3xl w-full space-y-4 border border-amber-500 max-h-[90vh] overflow-y-auto">
-      <div class="flex justify-between items-center border-b pb-2">
-        <h3 id="historial-nombre-cliente" class="text-lg font-bold text-amber-900"></h3>
-        <div class="flex flex-wrap items-center gap-2">
-          <button type="button" onclick="enviarResumenWhatsAppCliente()" class="bg-green-600 hover:bg-green-700 text-white text-xs px-2.5 py-1.5 rounded font-bold shadow">📱 WhatsApp</button>
-          <button type="button" onclick="enviarResumenEmailCliente()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-2.5 py-1.5 rounded font-bold shadow">✉️ Mail</button>
-          <button type="button" onclick="cerrarHistorialCliente()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 text-xs px-3 py-1.5 rounded font-bold">✕ Cerrar</button>
+    <div class="apk-modal-contenido space-y-4">
+      <div class="flex justify-between items-center border-b pb-3 sticky top-0 bg-white z-10">
+        <h3 id="historial-nombre-cliente" class="text-base md:text-lg font-extrabold text-amber-900 truncate pr-2"></h3>
+        <div class="flex items-center gap-1.5 shrink-0">
+          <button type="button" onclick="enviarResumenWhatsAppCliente()" class="bg-green-600 hover:bg-green-700 text-white text-[11px] px-2.5 py-1.5 rounded-lg font-bold shadow">📱 WA</button>
+          <button type="button" onclick="enviarResumenEmailCliente()" class="bg-blue-600 hover:bg-blue-700 text-white text-[11px] px-2.5 py-1.5 rounded-lg font-bold shadow">✉️ Mail</button>
+          <button type="button" onclick="cerrarHistorialCliente()" class="bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1.5 rounded-lg font-bold">✕ Cerrar</button>
         </div>
       </div>
 
-      <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 space-y-2">
+      <div class="bg-gray-50 p-3 rounded-xl border border-gray-200 space-y-2">
         <h3 class="text-xs font-bold text-gray-700">✏️ Editar Datos del Cliente</h3>
-        <div class="grid grid-cols-2 md:grid-cols-5 gap-2">
-          <input type="text" id="edit-cli-nombre" placeholder="Nombre" class="border p-2 rounded text-xs bg-white">
-          <input type="text" id="edit-cli-cuit" placeholder="CUIT / DNI" class="border p-2 rounded text-xs bg-white">
-          <input type="text" id="edit-cli-direccion" placeholder="Dirección" class="border p-2 rounded text-xs bg-white">
-          <input type="text" id="edit-cli-telefono" placeholder="Teléfono" class="border p-2 rounded text-xs bg-white">
-          <input type="email" id="edit-cli-email" placeholder="Email" class="border p-2 rounded text-xs bg-white col-span-2 md:col-span-1">
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-2">
+          <input type="text" id="edit-cli-nombre" placeholder="Nombre" class="border p-2 rounded-lg text-xs bg-white">
+          <input type="text" id="edit-cli-cuit" placeholder="CUIT / DNI" class="border p-2 rounded-lg text-xs bg-white">
+          <input type="text" id="edit-cli-direccion" placeholder="Dirección" class="border p-2 rounded-lg text-xs bg-white">
+          <input type="text" id="edit-cli-telefono" placeholder="Teléfono" class="border p-2 rounded-lg text-xs bg-white">
+          <input type="email" id="edit-cli-email" placeholder="Email" class="border p-2 rounded-lg text-xs bg-white col-span-1 md:col-span-1">
         </div>
         <div class="flex justify-end pt-1">
-          <button type="button" onclick="guardarEdicionCliente()" class="bg-amber-700 text-white font-bold px-3 py-1.5 rounded text-xs hover:bg-amber-800 shadow">Guardar Cambios</button>
+          <button type="button" onclick="guardarEdicionCliente()" class="bg-amber-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs hover:bg-amber-800 shadow">Guardar Cambios</button>
         </div>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div class="bg-red-50 p-3 rounded-lg border border-red-200 space-y-2">
+        <div class="bg-red-50 p-3 rounded-xl border border-red-200 space-y-2">
           <h3 class="text-xs font-bold text-red-900">⬆️ Agregar Cargo Manual</h3>
           <div class="flex gap-2">
-            <input type="date" id="cargo-cli-fecha" class="border p-2 rounded text-xs bg-white w-full">
-            <input type="number" id="cargo-cli-monto" placeholder="Monto ($)" class="border p-2 rounded text-xs bg-white w-full">
+            <input type="date" id="cargo-cli-fecha" class="border p-2 rounded-lg text-xs bg-white w-full">
+            <input type="number" id="cargo-cli-monto" placeholder="Monto ($)" class="border p-2 rounded-lg text-xs bg-white w-full">
           </div>
-          <input type="text" id="cargo-cli-concepto" placeholder="Concepto (Ej: Saldo anterior)" class="border p-2 rounded text-xs bg-white w-full">
-          <button type="button" onclick="registrarCargoCliente()" class="bg-red-700 text-white font-bold px-3 py-2 rounded text-xs w-full shadow-sm hover:bg-red-800">Sumar a la Deuda</button>
+          <input type="text" id="cargo-cli-concepto" placeholder="Concepto (Ej: Saldo anterior)" class="border p-2 rounded-lg text-xs bg-white w-full">
+          <button type="button" onclick="registrarCargoCliente()" class="bg-red-700 text-white font-bold px-3 py-2 rounded-lg text-xs w-full shadow-sm hover:bg-red-800">Sumar a la Deuda</button>
         </div>
 
-        <div class="bg-green-50 p-3 rounded-lg border border-green-200 space-y-2">
+        <div class="bg-green-50 p-3 rounded-xl border border-green-200 space-y-2">
           <h3 class="text-xs font-bold text-green-900">⬇️ Registrar Pago</h3>
           <div class="flex gap-2">
-            <input type="date" id="pago-fecha" class="border p-2 rounded text-xs bg-white w-full">
-            <input type="number" id="pago-monto" placeholder="Abono ($)" class="border p-2 rounded text-xs bg-white w-full">
+            <input type="date" id="pago-fecha" class="border p-2 rounded-lg text-xs bg-white w-full">
+            <input type="number" id="pago-monto" placeholder="Abono ($)" class="border p-2 rounded-lg text-xs bg-white w-full">
           </div>
-          <select id="pago-medio" class="border p-2 rounded text-xs bg-white w-full">
+          <select id="pago-medio" class="border p-2 rounded-lg text-xs bg-white w-full">
             <option value="Efectivo">Efectivo</option>
             <option value="Transferencia">Transferencia</option>
             <option value="Mercado Pago">Mercado Pago</option>
             <option value="Cheque">Cheque</option>
           </select>
-          <button type="button" onclick="registrarPagoCliente()" class="bg-green-700 text-white font-bold px-3 py-2 rounded text-xs w-full shadow-sm hover:bg-green-800">Registrar Pago</button>
+          <button type="button" onclick="registrarPagoCliente()" class="bg-green-700 text-white font-bold px-3 py-2 rounded-lg text-xs w-full shadow-sm hover:bg-green-800">Registrar Pago</button>
         </div>
       </div>
 
-      <div class="overflow-x-auto border rounded bg-white">
+      <div class="overflow-x-auto border rounded-xl bg-white">
         <table class="w-full text-left text-xs">
           <thead>
             <tr class="bg-amber-100 border-b text-amber-900 font-bold">
@@ -976,63 +989,62 @@
       </div>
     </div>
   </div>
-
   <!-- MODAL FICHA PROVEEDOR -->
   <div id="modal-historial-proveedor" class="fixed inset-0 bg-black bg-opacity-75 items-center justify-center z-[999999] p-4 hidden">
-    <div class="bg-white p-5 rounded-2xl shadow-2xl max-w-3xl w-full space-y-4 border border-amber-500 max-h-[90vh] overflow-y-auto">
-      <div class="flex justify-between items-center border-b pb-2">
-        <h3 id="historial-nombre-proveedor" class="text-lg font-bold text-amber-900"></h3>
-        <div class="flex flex-wrap items-center gap-2">
-          <button type="button" onclick="enviarResumenWhatsAppProveedor()" class="bg-green-600 hover:bg-green-700 text-white text-xs px-2.5 py-1.5 rounded font-bold shadow">📱 WhatsApp</button>
-          <button type="button" onclick="enviarResumenEmailProveedor()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-2.5 py-1.5 rounded font-bold shadow">✉️ Mail</button>
-          <button type="button" onclick="cerrarHistorialProveedor()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 text-xs px-3 py-1.5 rounded font-bold">✕ Cerrar</button>
+    <div class="apk-modal-contenido space-y-4">
+      <div class="flex justify-between items-center border-b pb-3 sticky top-0 bg-white z-10">
+        <h3 id="historial-nombre-proveedor" class="text-base md:text-lg font-extrabold text-amber-900 truncate pr-2"></h3>
+        <div class="flex items-center gap-1.5 shrink-0">
+          <button type="button" onclick="enviarResumenWhatsAppProveedor()" class="bg-green-600 hover:bg-green-700 text-white text-[11px] px-2.5 py-1.5 rounded-lg font-bold shadow">📱 WA</button>
+          <button type="button" onclick="enviarResumenEmailProveedor()" class="bg-blue-600 hover:bg-blue-700 text-white text-[11px] px-2.5 py-1.5 rounded-lg font-bold shadow">✉️ Mail</button>
+          <button type="button" onclick="cerrarHistorialProveedor()" class="bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1.5 rounded-lg font-bold">✕ Cerrar</button>
         </div>
       </div>
 
-      <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 space-y-2">
+      <div class="bg-gray-50 p-3 rounded-xl border border-gray-200 space-y-2">
         <h3 class="text-xs font-bold text-gray-700">✏️ Editar Datos del Proveedor</h3>
         <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
-          <input type="text" id="edit-prov-nombre" placeholder="Razón Social" class="border p-2 rounded text-xs bg-white">
-          <input type="text" id="edit-prov-cuit" placeholder="CUIT" class="border p-2 rounded text-xs bg-white">
-          <input type="text" id="edit-prov-telefono" placeholder="Teléfono" class="border p-2 rounded text-xs bg-white">
-          <input type="text" id="edit-prov-rubro" placeholder="Rubro" class="border p-2 rounded text-xs bg-white">
+          <input type="text" id="edit-prov-nombre" placeholder="Razón Social" class="border p-2 rounded-lg text-xs bg-white">
+          <input type="text" id="edit-prov-cuit" placeholder="CUIT" class="border p-2 rounded-lg text-xs bg-white">
+          <input type="text" id="edit-prov-telefono" placeholder="Teléfono" class="border p-2 rounded-lg text-xs bg-white">
+          <input type="text" id="edit-prov-rubro" placeholder="Rubro" class="border p-2 rounded-lg text-xs bg-white">
         </div>
         <div class="flex justify-end pt-1">
-          <button type="button" onclick="guardarEdicionProveedor()" class="bg-amber-700 text-white font-bold px-3 py-1.5 rounded text-xs hover:bg-amber-800 shadow">Guardar Cambios</button>
+          <button type="button" onclick="guardarEdicionProveedor()" class="bg-amber-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs hover:bg-amber-800 shadow">Guardar Cambios</button>
         </div>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div class="bg-amber-50 p-3 rounded-lg border border-amber-200 space-y-2">
+        <div class="bg-amber-50 p-3 rounded-xl border border-amber-200 space-y-2">
           <h3 class="text-xs font-bold text-amber-900">🧾 Cargar Factura de Compra</h3>
           <div class="flex gap-2">
-            <input type="date" id="fact-fecha" class="border p-2 rounded text-xs bg-white w-full">
-            <input type="text" id="fact-nro" placeholder="N° Factura" class="border p-2 rounded text-xs bg-white w-full">
+            <input type="date" id="fact-fecha" class="border p-2 rounded-lg text-xs bg-white w-full">
+            <input type="text" id="fact-nro" placeholder="N° Factura" class="border p-2 rounded-lg text-xs bg-white w-full">
           </div>
           <div class="grid grid-cols-3 gap-1">
-            <select id="fact-insumo" class="border p-2 rounded text-xs bg-white col-span-1"></select>
-            <input type="number" id="fact-cant" placeholder="Cant." class="border p-2 rounded text-xs bg-white">
-            <input type="number" id="fact-precio" placeholder="Precio Un." class="border p-2 rounded text-xs bg-white">
+            <select id="fact-insumo" class="border p-2 rounded-lg text-xs bg-white col-span-1"></select>
+            <input type="number" id="fact-cant" placeholder="Cant." class="border p-2 rounded-lg text-xs bg-white">
+            <input type="number" id="fact-precio" placeholder="Precio Un." class="border p-2 rounded-lg text-xs bg-white">
           </div>
-          <button type="button" onclick="cargarFacturaProveedor()" class="bg-amber-800 text-white font-bold px-3 py-2 rounded text-xs hover:bg-amber-900 w-full shadow-sm">Ingresar Factura y Stock</button>
+          <button type="button" onclick="cargarFacturaProveedor()" class="bg-amber-800 text-white font-bold px-3 py-2 rounded-lg text-xs hover:bg-amber-900 w-full shadow-sm">Ingresar Factura y Stock</button>
         </div>
 
-        <div class="bg-green-50 p-3 rounded-lg border border-green-200 space-y-2">
+        <div class="bg-green-50 p-3 rounded-xl border border-green-200 space-y-2">
           <h3 class="text-xs font-bold text-green-900">💸 Registrar Pago a Proveedor</h3>
           <div class="flex gap-2">
-            <input type="date" id="pago-prov-fecha" class="border p-2 rounded text-xs bg-white w-full">
-            <input type="number" id="pago-prov-monto" placeholder="Monto ($)" class="border p-2 rounded text-xs bg-white w-full">
+            <input type="date" id="pago-prov-fecha" class="border p-2 rounded-lg text-xs bg-white w-full">
+            <input type="number" id="pago-prov-monto" placeholder="Monto ($)" class="border p-2 rounded-lg text-xs bg-white w-full">
           </div>
-          <select id="pago-prov-medio" class="border p-2 rounded text-xs bg-white w-full">
+          <select id="pago-prov-medio" class="border p-2 rounded-lg text-xs bg-white w-full">
             <option value="Efectivo">Efectivo</option>
             <option value="Transferencia">Transferencia</option>
             <option value="Cheque">Cheque</option>
           </select>
-          <button type="button" onclick="registrarPagoProveedor()" class="bg-green-700 text-white font-bold px-3 py-2 rounded text-xs hover:bg-green-800 w-full shadow-sm">Registrar Pago</button>
+          <button type="button" onclick="registrarPagoProveedor()" class="bg-green-700 text-white font-bold px-3 py-2 rounded-lg text-xs hover:bg-green-800 w-full shadow-sm">Registrar Pago</button>
         </div>
       </div>
 
-      <div class="overflow-x-auto border rounded bg-white">
+      <div class="overflow-x-auto border rounded-xl bg-white">
         <table class="w-full text-left text-xs">
           <thead>
             <tr class="bg-amber-100 border-b text-amber-900 font-bold">
