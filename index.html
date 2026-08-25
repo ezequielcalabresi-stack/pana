@@ -12,17 +12,29 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
   <style>
+    .nav-buttons button {
+      flex: 1;
+      padding: 10px 12px;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: none;
+      outline: none;
+    }
     .tab-active {
-      border-bottom: 3px solid #92400e;
-      color: #92400e;
-      background-color: #fef3c7;
+      border-bottom: 3px solid #92400e !important;
+      color: #92400e !important;
+      background-color: #fef3c7 !important;
     }
     .tab-inactive {
-      color: #4b5563;
-      background-color: #ffffff;
+      color: #4b5563 !important;
+      background-color: #ffffff !important;
     }
     .tab-inactive:hover {
-      background-color: #f9fafb;
+      background-color: #f9fafb !important;
     }
 
     #area-impresion {
@@ -53,41 +65,40 @@
 </head>
 <body class="bg-gray-100 font-sans min-h-screen overflow-x-hidden">
 
- <header class="bg-amber-800 text-white p-3 shadow-lg flex flex-col items-center md:flex-row md:justify-between gap-3 w-full box-border">
+  <!-- HEADER IDÉNTICO A GITHUB PAGES -->
+  <header class="bg-amber-900 text-white p-3 shadow-lg flex flex-col md:flex-row items-center justify-between gap-3">
     <div>
       <h1 class="text-xl font-bold md:text-2xl">La Casa del Pan & La Espiga de Oro</h1>
-      <p class="text-xs text-amber-200 md:text-sm">Sistema Integrado de Producción, Logística, Proveedores, Cajas y Reportes</p>
+      <p class="text-xs text-amber-200">Sistema Integrado de Producción, Logística, Proveedores, Cajas y Reportes</p>
     </div>
-    <div class="flex flex-wrap justify-center items-center gap-2 w-full md:w-auto">
-      <div class="flex items-center gap-1 bg-gray-800 p-2 rounded-lg border border-gray-600">
+    <div class="flex flex-wrap items-center gap-3">
+      <div class="flex items-center gap-1 bg-amber-950 p-1.5 rounded-lg border border-amber-700">
         <span id="status-conexion" class="text-[10px] bg-yellow-200 text-yellow-900 px-2 py-0.5 rounded-full font-bold shadow-sm whitespace-nowrap">
           🟡 Conectando...
         </span>
       </div>
-
-      <div class="flex items-center gap-1 bg-amber-950 p-2 rounded-lg border border-amber-700">
+      <div class="flex items-center gap-1 bg-amber-950 p-1.5 rounded-lg border border-amber-700">
         <label class="text-xs font-semibold text-amber-100">👤 Usuario:</label>
-        <select id="select-usuario-activo" onchange="cambiarUsuarioActivo()" class="bg-white text-gray-800 text-xs p-1 rounded font-bold">
-        </select>
+        <select id="select-usuario-activo" onchange="cambiarUsuarioActivo()" class="bg-white text-gray-800 text-xs p-1 rounded font-bold"></select>
         <span id="badge-rol-activo" class="text-[10px] bg-amber-600 text-white px-2 py-0.5 rounded-full font-bold ml-1"></span>
       </div>
-
-      <div class="flex items-center gap-2 bg-amber-900 p-2 rounded-lg border border-amber-700">
+      <div class="flex items-center gap-2 bg-amber-950 p-1.5 rounded-lg border border-amber-700">
         <label class="text-xs font-semibold text-amber-100">Fecha Operativa:</label>
-        <input type="date" id="fecha-operativa" onchange="cambiarFechaOperativa()" class="bg-white text-gray-800 text-sm p-1 rounded font-bold">
+        <input type="date" id="fecha-operativa" onchange="cambiarFechaOperativa()" class="bg-white text-gray-800 text-xs p-1 rounded font-bold">
       </div>
     </div>
   </header>
 
+  <!-- NAVEGACIÓN SUPERIOR HORIZONTAL -->
   <nav class="flex border-b border-gray-300 bg-white sticky top-0 z-10 text-xs md:text-sm font-semibold overflow-x-auto nav-buttons shadow-sm">
-    <button onclick="verPestaña('reparto')" id="btn-reparto" class="flex-1 py-3 px-2 text-center tab-active whitespace-nowrap">🚚 Reparto y Cobros</button>
-    <button onclick="verPestaña('cuadra')" id="btn-cuadra" class="flex-1 py-3 px-2 text-center tab-inactive whitespace-nowrap">👨‍🍳 Cuadra</button>
-    <button onclick="verPestaña('clientes')" id="btn-clientes" class="flex-1 py-3 px-2 text-center tab-inactive whitespace-nowrap">👥 Clientes / Cta. Cte.</button>
-    <button onclick="verPestaña('proveedores')" id="btn-proveedores" class="flex-1 py-3 px-2 text-center tab-inactive whitespace-nowrap">🏭 Proveedores / Facturas</button>
-    <button onclick="verPestaña('stock')" id="btn-stock" class="flex-1 py-3 px-2 text-center tab-inactive whitespace-nowrap">📦 Control de Stock</button>
-    <button onclick="verPestaña('caja')" id="btn-caja" class="flex-1 py-3 px-2 text-center tab-inactive whitespace-nowrap">💰 Cajas y Reportes</button>
-    <button onclick="verPestaña('precios')" id="btn-precios" class="flex-1 py-3 px-2 text-center tab-inactive whitespace-nowrap">⚙️ Catálogo Despacho</button>
-    <button onclick="verPestaña('usuarios')" id="btn-usuarios" class="flex-1 py-3 px-2 text-center tab-inactive whitespace-nowrap">🔐 Usuarios y Backups</button>
+    <button onclick="verPestaña('reparto')" id="btn-reparto" class="tab-active">🚚 Reparto y Cobros</button>
+    <button onclick="verPestaña('cuadra')" id="btn-cuadra" class="tab-inactive">👨‍🍳 Cuadra</button>
+    <button onclick="verPestaña('clientes')" id="btn-clientes" class="tab-inactive">👥 Clientes / Cta. Cte.</button>
+    <button onclick="verPestaña('proveedores')" id="btn-proveedores" class="tab-inactive">🏭 Proveedores / Facturas</button>
+    <button onclick="verPestaña('stock')" id="btn-stock" class="tab-inactive">📦 Control de Stock</button>
+    <button onclick="verPestaña('caja')" id="btn-caja" class="tab-inactive">💰 Cajas y Reportes</button>
+    <button onclick="verPestaña('precios')" id="btn-precios" class="tab-inactive">⚙️ Catálogo Despacho</button>
+    <button onclick="verPestaña('usuarios')" id="btn-usuarios" class="tab-inactive">🔐 Usuarios y Backups</button>
   </nav>
 
   <main class="p-2 md:p-4 max-w-5xl mx-auto space-y-4">
@@ -189,11 +200,11 @@
             <table class="w-full text-left text-xs">
               <thead>
                 <tr class="bg-blue-100 text-blue-950 border-b font-bold">
-                  <th class="p-1.5">Cliente</th>
-                  <th class="p-1.5">Producto</th>
-                  <th class="p-1.5">Cant.</th>
-                  <th class="p-1.5">Frecuencia / Regla</th>
-                  <th class="p-1.5 text-center">Acción</th>
+                  <th class="p-2">Cliente</th>
+                  <th class="p-2">Producto</th>
+                  <th class="p-2">Cant.</th>
+                  <th class="p-2">Frecuencia / Regla</th>
+                  <th class="p-2 text-center">Acción</th>
                 </tr>
               </thead>
               <tbody id="tabla-pedidos-recurrentes"></tbody>
@@ -346,13 +357,12 @@
       <div class="bg-white p-4 rounded-xl shadow border space-y-3">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 mb-3">
           <h2 class="text-base font-bold text-gray-800">Directorio General de Clientes</h2>
-          <div class="flex items-center gap-2 w-full md:w-auto relative">
-            <!-- CAMBIO A BUSCADOR TÁCTIL (INPUT + LISTA FLOTANTE) EN VEZ DE SELECT -->
-            <div class="relative w-full md:w-64">
-              <input type="text" id="input-buscador-cliente" placeholder="🔍 Buscar Cliente..." oninput="filtrarDropdownClientes(this.value)" onclick="toggleDropdownClientes(true)" class="border p-2 rounded text-sm font-semibold bg-amber-50 text-amber-950 w-full">
-              <div id="dropdown-lista-clientes" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border border-amber-300 rounded-lg shadow-xl max-h-56 overflow-y-auto z-50"></div>
-            </div>
-            <button type="button" onclick="abrirModalAltaCliente()" class="bg-amber-700 text-white font-bold px-3 py-2 rounded text-sm shadow whitespace-nowrap">➕ Nuevo Cliente</button>
+          <div class="flex items-center gap-2 w-full md:w-auto">
+            <button type="button" onclick="abrirSelectorModalClientes()" class="border p-2.5 rounded-xl text-sm font-bold bg-amber-50 text-amber-950 w-full md:w-64 flex justify-between items-center shadow-sm border-amber-300">
+              <span id="label-selector-cliente">🔍 Buscar Cliente...</span>
+              <span class="text-xs">▼</span>
+            </button>
+            <button type="button" onclick="abrirModalAltaCliente()" class="bg-amber-700 text-white font-bold px-3 py-2 rounded-xl text-sm shadow whitespace-nowrap">➕ Nuevo Cliente</button>
           </div>
         </div>
         
@@ -377,8 +387,6 @@
 
     <!-- 4. PROVEEDORES Y FACTURACIÓN -->
     <section id="sec-proveedores" class="hidden space-y-4">
-      
-      <!-- Ficha del proveedor seleccionada arriba de todo -->
       <div id="modulo-historial-proveedor" class="bg-white p-4 rounded-xl shadow border border-amber-500 space-y-4 hidden">
         <div class="flex justify-between items-center border-b pb-2">
           <h2 id="historial-nombre-proveedor" class="text-lg font-bold text-amber-900"></h2>
@@ -452,13 +460,12 @@
       <div class="bg-white p-4 rounded-xl shadow border space-y-3">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 mb-3">
           <h2 class="text-base font-bold text-gray-800">Directorio General de Proveedores</h2>
-          <div class="flex items-center gap-2 w-full md:w-auto relative">
-            <!-- CAMBIO A BUSCADOR TÁCTIL (INPUT + LISTA FLOTANTE) EN VEZ DE SELECT -->
-            <div class="relative w-full md:w-64">
-              <input type="text" id="input-buscador-proveedor" placeholder="🔍 Buscar Proveedor..." oninput="filtrarDropdownProveedores(this.value)" onclick="toggleDropdownProveedores(true)" class="border p-2 rounded text-sm font-semibold bg-amber-50 text-amber-950 w-full">
-              <div id="dropdown-lista-proveedores" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border border-amber-300 rounded-lg shadow-xl max-h-56 overflow-y-auto z-50"></div>
-            </div>
-            <button type="button" onclick="abrirModalAltaProveedor()" class="bg-amber-700 text-white font-bold px-3 py-2 rounded text-sm shadow whitespace-nowrap">➕ Nuevo Proveedor</button>
+          <div class="flex items-center gap-2 w-full md:w-auto">
+            <button type="button" onclick="abrirSelectorModalProveedores()" class="border p-2.5 rounded-xl text-sm font-bold bg-amber-50 text-amber-950 w-full md:w-64 flex justify-between items-center shadow-sm border-amber-300">
+              <span id="label-selector-proveedor">🔍 Buscar Proveedor...</span>
+              <span class="text-xs">▼</span>
+            </button>
+            <button type="button" onclick="abrirModalAltaProveedor()" class="bg-amber-700 text-white font-bold px-3 py-2 rounded-xl text-sm shadow whitespace-nowrap">➕ Nuevo Proveedor</button>
           </div>
         </div>
         
@@ -854,6 +861,30 @@
 
   <div id="area-impresion"></div>
 
+  <!-- MODAL SELECTOR TÁCTIL DE CLIENTES -->
+  <div id="modal-selector-clientes" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 hidden p-4">
+    <div class="bg-white p-4 rounded-2xl shadow-2xl max-w-md w-full space-y-3 border border-amber-200">
+      <div class="flex justify-between items-center border-b pb-2">
+        <h3 class="text-base font-bold text-amber-900">👥 Seleccionar Cliente</h3>
+        <button type="button" onclick="cerrarSelectorModalClientes()" class="text-gray-500 font-bold text-lg px-2">✕</button>
+      </div>
+      <input type="text" id="input-filtro-modal-clientes" placeholder="Escriba para filtrar clientes..." oninput="filtrarModalClientes(this.value)" class="border p-2.5 rounded-xl text-sm w-full font-medium bg-amber-50 border-amber-300">
+      <div id="lista-modal-clientes" class="max-h-72 overflow-y-auto space-y-1 divide-y"></div>
+    </div>
+  </div>
+
+  <!-- MODAL SELECTOR TÁCTIL DE PROVEEDORES -->
+  <div id="modal-selector-proveedores" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 hidden p-4">
+    <div class="bg-white p-4 rounded-2xl shadow-2xl max-w-md w-full space-y-3 border border-amber-200">
+      <div class="flex justify-between items-center border-b pb-2">
+        <h3 class="text-base font-bold text-amber-900">🏭 Seleccionar Proveedor</h3>
+        <button type="button" onclick="cerrarSelectorModalProveedores()" class="text-gray-500 font-bold text-lg px-2">✕</button>
+      </div>
+      <input type="text" id="input-filtro-modal-proveedores" placeholder="Escriba para filtrar proveedores..." oninput="filtrarModalProveedores(this.value)" class="border p-2.5 rounded-xl text-sm w-full font-medium bg-amber-50 border-amber-300">
+      <div id="lista-modal-proveedores" class="max-h-72 overflow-y-auto space-y-1 divide-y"></div>
+    </div>
+  </div>
+
   <!-- MODAL EDITAR CAJA ADMIN -->
   <div id="modal-editar-caja-admin" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
     <div class="bg-white p-5 rounded-xl shadow-xl max-w-md w-full space-y-3">
@@ -1044,7 +1075,7 @@
           statusDiv.innerHTML = "🟢 Conectado (Nube)";
           statusDiv.className = "text-[10px] bg-green-200 text-green-900 px-2 py-0.5 rounded-full font-bold shadow-sm whitespace-nowrap";
         } else {
-          statusDiv.innerHTML = "🔴 Desconectado (¡No cargar!)";
+          statusDiv.innerHTML = "🔴 Desconectado";
           statusDiv.className = "text-[10px] bg-red-200 text-red-900 px-2 py-0.5 rounded-full font-bold shadow-sm whitespace-nowrap animate-pulse";
         }
       });
@@ -1134,8 +1165,8 @@
               rtdb.ref(key).set(fallback);
             }
             if (key === 'db_repartos') { dbRepartos = val || fallback; renderizarPlanillaReparto(); renderizarCuadra(); }
-            if (key === 'db_clientes') { dbClientes = val || fallback; renderizarTablaClientes(); cargarSelectorClientesReparto(); cargarDropdownClientes(); cargarSelectorClientesRecurrentes(); }
-            if (key === 'db_proveedores') { dbProveedores = val || fallback; renderizarTablaProveedores(); cargarDropdownProveedores(); }
+            if (key === 'db_clientes') { dbClientes = val || fallback; renderizarTablaClientes(); cargarSelectorClientesReparto(); cargarSelectorClientesRecurrentes(); }
+            if (key === 'db_proveedores') { dbProveedores = val || fallback; renderizarTablaProveedores(); }
             if (key === 'db_insumos') { dbInsumos = val || fallback; renderizarStockInsumos(); cargarSelectorInsumosFactura(); cargarSelectorInsumosMovimiento(); }
             if (key === 'db_panificados') { dbPanificados = val || fallback; renderizarTablaPanificados(); cargarSelectorPanificadosReparto(); cargarSelectorProductosRecurrentes(); }
             if (key === 'db_productos') { dbProductos = val || fallback; renderizarTablaCatalogo(); cargarSelectorDespachoReparto(); cargarSelectorProductosRecurrentes(); }
@@ -1214,27 +1245,10 @@
       renderizarTablaRecurrentes();
       cargarSelectorInsumosFactura();
       cargarSelectorInsumosMovimiento();
-      cargarDropdownClientes();
-      cargarDropdownProveedores();
       cargarCajasHoyUI();
       renderizarTablaEgresosHoy();
       renderizarReportesMensuales();
       renderizarSelectorBackups();
-
-      // Cerrar dropdowns flotantes si hace clic fuera
-      document.addEventListener('click', function(e) {
-        const boxCli = document.getElementById('input-buscador-cliente');
-        const dropCli = document.getElementById('dropdown-lista-clientes');
-        if (boxCli && dropCli && !boxCli.contains(e.target) && !dropCli.contains(e.target)) {
-          dropCli.classList.add('hidden');
-        }
-
-        const boxPrv = document.getElementById('input-buscador-proveedor');
-        const dropPrv = document.getElementById('dropdown-lista-proveedores');
-        if (boxPrv && dropPrv && !boxPrv.contains(e.target) && !dropPrv.contains(e.target)) {
-          dropPrv.classList.add('hidden');
-        }
-      });
     }
 
     if (document.readyState === 'loading') {
@@ -1243,95 +1257,93 @@
       inicializarAplicacion();
     }
 
-    // --- NUEVAS FUNCIONES DE BUSCADOR TÁCTIL FLOTANTE ---
-    function toggleDropdownClientes(mostrar) {
-      const drop = document.getElementById('dropdown-lista-clientes');
-      if (!drop) return;
-      if (mostrar) {
-        drop.classList.remove('hidden');
-        filtrarDropdownClientes(document.getElementById('input-buscador-cliente').value);
-      } else {
-        drop.classList.add('hidden');
-      }
+    function abrirSelectorModalClientes() {
+      document.getElementById('modal-selector-clientes').classList.remove('hidden');
+      document.getElementById('input-filtro-modal-clientes').value = '';
+      filtrarModalClientes('');
+      setTimeout(() => document.getElementById('input-filtro-modal-clientes').focus(), 100);
     }
 
-    function cargarDropdownClientes() {
-      filtrarDropdownClientes('');
+    function cerrarSelectorModalClientes() {
+      document.getElementById('modal-selector-clientes').classList.add('hidden');
     }
 
-    function filtrarDropdownClientes(filtro) {
-      const drop = document.getElementById('dropdown-lista-clientes');
-      if (!drop) return;
-      drop.innerHTML = '';
+    function filtrarModalClientes(filtro) {
+      const contenedor = document.getElementById('lista-modal-clientes');
+      contenedor.innerHTML = '';
       const texto = filtro.toLowerCase();
 
       const clientesArr = Object.values(dbClientes).sort((a, b) => a.nombre.localeCompare(b.nombre));
       const filtrados = clientesArr.filter(c => c.nombre.toLowerCase().includes(texto) || (c.telefono && c.telefono.includes(texto)));
 
       if (filtrados.length === 0) {
-        drop.innerHTML = '<div class="p-2.5 text-xs text-gray-400 italic text-center">No se encontraron clientes</div>';
+        contenedor.innerHTML = '<div class="p-3 text-xs text-gray-400 italic text-center">No se encontraron clientes</div>';
         return;
       }
 
       filtrados.forEach(c => {
         const saldo = calcularSaldoCliente(c.id);
         const div = document.createElement('div');
-        div.className = "p-2.5 hover:bg-amber-100 cursor-pointer border-b text-xs flex justify-between items-center transition-colors";
-        div.innerHTML = `<span class="font-bold text-gray-800">${c.nombre}</span> <span class="font-semibold text-red-600">Saldo: $${saldo.toLocaleString()}</span>`;
+        div.className = "p-3 hover:bg-amber-50 cursor-pointer flex justify-between items-center rounded-xl transition-all";
+        div.innerHTML = `
+          <div>
+            <span class="font-bold text-gray-900 text-sm block">${c.nombre}</span>
+            <span class="text-[11px] text-gray-500">Tel: ${c.telefono || 'S/D'}</span>
+          </div>
+          <span class="font-extrabold text-xs text-red-600 bg-red-50 px-2 py-1 rounded-lg border border-red-100">Saldo: $${saldo.toLocaleString()}</span>
+        `;
         div.onclick = function() {
-          document.getElementById('input-buscador-cliente').value = c.nombre;
-          drop.classList.add('hidden');
-          seleccionarClienteDesdeBuscador(c.id);
+          document.getElementById('label-selector-cliente').textContent = c.nombre;
+          cerrarSelectorModalClientes();
+          verHistorialCliente(c.id);
         };
-        drop.appendChild(div);
+        contenedor.appendChild(div);
       });
-      drop.classList.remove('hidden');
     }
 
-    function toggleDropdownProveedores(mostrar) {
-      const drop = document.getElementById('dropdown-lista-proveedores');
-      if (!drop) return;
-      if (mostrar) {
-        drop.classList.remove('hidden');
-        filtrarDropdownProveedores(document.getElementById('input-buscador-proveedor').value);
-      } else {
-        drop.classList.add('hidden');
-      }
+    function abrirSelectorModalProveedores() {
+      document.getElementById('modal-selector-proveedores').classList.remove('hidden');
+      document.getElementById('input-filtro-modal-proveedores').value = '';
+      filtrarModalProveedores('');
+      setTimeout(() => document.getElementById('input-filtro-modal-proveedores').focus(), 100);
     }
 
-    function cargarDropdownProveedores() {
-      filtrarDropdownProveedores('');
+    function cerrarSelectorModalProveedores() {
+      document.getElementById('modal-selector-proveedores').classList.add('hidden');
     }
 
-    function filtrarDropdownProveedores(filtro) {
-      const drop = document.getElementById('dropdown-lista-proveedores');
-      if (!drop) return;
-      drop.innerHTML = '';
+    function filtrarModalProveedores(filtro) {
+      const contenedor = document.getElementById('lista-modal-proveedores');
+      contenedor.innerHTML = '';
       const texto = filtro.toLowerCase();
 
       const prvArr = Object.values(dbProveedores).sort((a, b) => a.nombre.localeCompare(b.nombre));
       const filtrados = prvArr.filter(p => p.nombre.toLowerCase().includes(texto) || (p.rubro && p.rubro.toLowerCase().includes(texto)));
 
       if (filtrados.length === 0) {
-        drop.innerHTML = '<div class="p-2.5 text-xs text-gray-400 italic text-center">No se encontraron proveedores</div>';
+        contenedor.innerHTML = '<div class="p-3 text-xs text-gray-400 italic text-center">No se encontraron proveedores</div>';
         return;
       }
 
       filtrados.forEach(p => {
         const saldo = calcularSaldoProveedor(p.id);
         const div = document.createElement('div');
-        div.className = "p-2.5 hover:bg-amber-100 cursor-pointer border-b text-xs flex justify-between items-center transition-colors";
-        div.innerHTML = `<span class="font-bold text-gray-800">${p.nombre}</span> <span class="font-semibold text-red-600">Deuda: $${saldo.toLocaleString()}</span>`;
+        div.className = "p-3 hover:bg-amber-50 cursor-pointer flex justify-between items-center rounded-xl transition-all";
+        div.innerHTML = `
+          <div>
+            <span class="font-bold text-gray-900 text-sm block">${p.nombre}</span>
+            <span class="text-[11px] text-gray-500">Rubro: ${p.rubro || 'General'}</span>
+          </div>
+          <span class="font-extrabold text-xs text-red-600 bg-red-50 px-2 py-1 rounded-lg border border-red-100">Deuda: $${saldo.toLocaleString()}</span>
+        `;
         div.onclick = function() {
-          document.getElementById('input-buscador-proveedor').value = p.nombre;
-          drop.classList.add('hidden');
-          seleccionarProveedorDesdeBuscador(p.id);
+          document.getElementById('label-selector-proveedor').textContent = p.nombre;
+          cerrarSelectorModalProveedores();
+          verHistorialProveedor(p.id);
         };
-        drop.appendChild(div);
+        contenedor.appendChild(div);
       });
-      drop.classList.remove('hidden');
     }
-    // ---------------------------------------------------
 
     function abrirModalAltaCliente() { document.getElementById('modal-alta-cliente').classList.remove('hidden'); }
     function cerrarModalAltaCliente() { document.getElementById('modal-alta-cliente').classList.add('hidden'); }
@@ -1770,10 +1782,10 @@
         const btn = document.getElementById(`btn-${p}`);
         const sec = document.getElementById(`sec-${p}`);
         if (p === idPestaña) {
-          if (btn) { btn.classList.add('tab-active'); btn.classList.remove('tab-inactive'); }
+          if (btn) btn.className = "tab-active";
           if (sec) sec.classList.remove('hidden');
         } else {
-          if (btn) { btn.classList.remove('tab-active'); btn.classList.add('tab-inactive'); }
+          if (btn) btn.className = "tab-inactive";
           if (sec) sec.classList.add('hidden');
         }
       });
@@ -2282,7 +2294,6 @@
       cargarSelectorClientesReparto(); 
       cargarSelectorClientesRecurrentes();
       renderizarTablaClientes();
-      cargarDropdownClientes();
       alert("¡Cliente registrado exitosamente!");
     }
 
@@ -2291,11 +2302,6 @@
       Object.values(dbRepartos).forEach(pDia => Object.values(pDia).forEach(p => { if (p.clienteId === cliId && !p.pagado) saldo += p.monto; }));
       Object.values(dbHistorialClientes[cliId] || {}).forEach(m => { if (m.tipo === 'debito') saldo += m.monto; if (m.tipo === 'credito') saldo -= m.monto; });
       return saldo;
-    }
-
-    function seleccionarClienteDesdeBuscador(cliId) {
-      if (!cliId) { cerrarHistorialCliente(); return; }
-      verHistorialCliente(cliId);
     }
 
     function renderizarTablaClientes() {
@@ -2321,7 +2327,6 @@
       if (tbody.innerHTML === '') {
         tbody.innerHTML = '<tr><td colspan="4" class="p-3 text-center text-gray-400 italic">No hay clientes registrados en el sistema.</td></tr>';
       }
-      cargarDropdownClientes();
     }
 
     function eliminarClienteActual() {
@@ -2355,8 +2360,9 @@
       modulo.classList.remove('hidden');
       modulo.scrollIntoView({ behavior: 'smooth', block: 'start' });
       
-      const inputBuscador = document.getElementById('input-buscador-cliente');
-      if (inputBuscador) inputBuscador.value = cli.nombre;
+      const labelSel = document.getElementById('label-selector-cliente');
+      if (labelSel) labelSel.textContent = cli.nombre;
+
       renderizarTablaHistorialCliente();
     }
 
@@ -2384,8 +2390,8 @@
     function cerrarHistorialCliente() { 
       clienteSeleccionadoId = null; 
       document.getElementById('modulo-historial-cliente').classList.add('hidden'); 
-      const inputBuscador = document.getElementById('input-buscador-cliente');
-      if (inputBuscador) inputBuscador.value = "";
+      const labelSel = document.getElementById('label-selector-cliente');
+      if (labelSel) labelSel.textContent = "🔍 Buscar Cliente...";
     }
 
     function abrirModalEditarMovCliente(id, origen, fechaOriginal) {
@@ -2655,7 +2661,6 @@
       guardarDB('db_proveedores', dbProveedores); 
       cerrarModalAltaProveedor();
       renderizarTablaProveedores(); 
-      cargarDropdownProveedores();
       alert("¡Proveedor registrado exitosamente!");
     }
 
@@ -2663,11 +2668,6 @@
       let saldo = 0;
       Object.values(dbHistorialProveedores[provId] || {}).forEach(m => { if (m.tipo === 'factura') saldo += m.monto; if (m.tipo === 'pago') saldo -= m.monto; });
       return saldo;
-    }
-
-    function seleccionarProveedorDesdeBuscador(provId) {
-      if (!provId) { cerrarHistorialProveedor(); return; }
-      verHistorialProveedor(provId);
     }
 
     function renderizarTablaProveedores() {
@@ -2693,7 +2693,6 @@
       if (tbody.innerHTML === '') {
         tbody.innerHTML = '<tr><td colspan="4" class="p-3 text-center text-gray-400 italic">No hay proveedores registrados en el sistema.</td></tr>';
       }
-      cargarDropdownProveedores();
     }
 
     function eliminarProveedorActual() {
@@ -2722,8 +2721,9 @@
       modulo.classList.remove('hidden');
       modulo.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-      const inputBuscador = document.getElementById('input-buscador-proveedor');
-      if (inputBuscador) inputBuscador.value = prv.nombre;
+      const labelSel = document.getElementById('label-selector-proveedor');
+      if (labelSel) labelSel.textContent = prv.nombre;
+
       renderizarTablaHistorialProveedor();
     }
 
@@ -2748,8 +2748,8 @@
     function cerrarHistorialProveedor() { 
       proveedorSeleccionadoId = null; 
       document.getElementById('modulo-historial-proveedor').classList.add('hidden'); 
-      const inputBuscador = document.getElementById('input-buscador-proveedor');
-      if (inputBuscador) inputBuscador.value = "";
+      const labelSel = document.getElementById('label-selector-proveedor');
+      if (labelSel) labelSel.textContent = "🔍 Buscar Proveedor...";
     }
 
     function cargarFacturaProveedor() {
@@ -3726,7 +3726,7 @@
             if (bkp.dbHistorialClientes) guardarDB('db_historial_clientes', bkp.dbHistorialClientes);
             if (bkp.dbHistorialProveedores) guardarDB('db_historial_proveedores', bkp.dbHistorialProveedores);
             if (bkp.dbCajasDiarias) guardarDB('db_cajas_diarias', bkp.dbCajasDiarias);
-            if (bkp.dbEgresosCaja) guardarDB('db_egresos_caja', bkp.dbEgresosCaja);
+            if (bkp.dbEgresosCaja) guardarDB('db_egresos_caja', bkpe.dbEgresosCaja || bkp.dbEgresosCaja);
             if (bkp.dbRepartosCerrados) guardarDB('db_repartos_cerrados', bkp.dbRepartosCerrados);
 
             alert("¡Datos restaurados y subidos a la nube exitosamente!");
