@@ -642,7 +642,7 @@
         </div>
       </div>
     </section>
-
+ 
     <!-- 8. USUARIOS Y BACKUPS -->
     <section id="sec-usuarios" class="hidden space-y-4">
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -2350,32 +2350,35 @@
       Object.values(dbHistorialClientes[cliId] || {}).forEach(m => { if (m.tipo === 'debito') saldo += m.monto; if (m.tipo === 'credito') saldo -= m.monto; });
       return saldo;
     }
+function renderizarTablaClientes() {
+  const tbody = document.getElementById('tabla-resumen-clientes-deuda'); 
+  if (!tbody) return; 
+  tbody.innerHTML = '';
+  
+  const clientesArr = Object.values(dbClientes || {}).sort((a, b) => a.nombre.localeCompare(b.nombre));
 
-    function renderizarTablaClientes() {
-      const tbody = document.getElementById('tabla-resumen-clientes-deuda'); if (!tbody) return; tbody.innerHTML = '';
-      const clientesArr = Object.values(dbClientes).sort((a, b) => a.nombre.localeCompare(b.nombre));
+  if (clientesArr.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" class="p-3 text-center text-gray-400 italic">No hay clientes registrados en el sistema.</td></tr>';
+    return;
+  }
 
-      clientesArr.forEach(cli => {
-        const saldo = calcularSaldoCliente(cli.id);
-        const tr = document.createElement('tr'); tr.className = "border-b hover:bg-gray-50";
-        const claseSaldo = saldo > 0 ? "font-bold text-red-600" : (saldo < 0 ? "font-bold text-green-700" : "text-gray-500");
+  clientesArr.forEach(cli => {
+    const saldo = calcularSaldoCliente(cli.id);
+    const tr = document.createElement('tr'); 
+    tr.className = "border-b hover:bg-gray-50";
+    const claseSaldo = saldo > 0 ? "font-bold text-red-600" : (saldo < 0 ? "font-bold text-green-700" : "text-gray-500");
 
-        tr.innerHTML = `
-          <td class="p-2 font-bold text-gray-800">${cli.nombre}</td>
-          <td class="p-2 text-gray-600">${cli.telefono || 'S/D'}</td>
-          <td class="p-2 text-right ${claseSaldo}">$${saldo.toLocaleString()}</td>
-          <td class="p-2 text-center flex justify-center gap-1">
-            <button onclick="verHistorialCliente('${cli.id}')" class="bg-amber-700 hover:bg-amber-800 text-white text-xs px-2.5 py-1 rounded font-bold shadow">📋 Abrir Ficha</button>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-
-      if (tbody.innerHTML === '') {
-        tbody.innerHTML = '<tr><td colspan="4" class="p-3 text-center text-gray-400 italic">No hay clientes registrados en el sistema.</td></tr>';
-      }
-    }
-
+    tr.innerHTML = `
+      <td class="p-2 font-bold text-gray-800">${cli.nombre}</td>
+      <td class="p-2 text-gray-600">${cli.telefono || 'S/D'}</td>
+      <td class="p-2 text-right ${claseSaldo}">$${saldo.toLocaleString()}</td>
+      <td class="p-2 text-center">
+        <button type="button" onclick="verHistorialCliente('${cli.id}')" class="bg-amber-700 hover:bg-amber-800 text-white text-xs px-2.5 py-1 rounded-lg font-bold shadow">📋 Abrir Ficha</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
     function eliminarClienteActual() {
       if (!clienteSeleccionadoId) return;
       const cli = dbClientes[clienteSeleccionadoId];
@@ -2727,31 +2730,35 @@
       return saldo;
     }
 
-    function renderizarTablaProveedores() {
-      const tbody = document.getElementById('tabla-resumen-proveedores-deuda'); if (!tbody) return; tbody.innerHTML = '';
-      const prvArr = Object.values(dbProveedores).sort((a, b) => a.nombre.localeCompare(b.nombre));
+function renderizarTablaProveedores() {
+  const tbody = document.getElementById('tabla-resumen-proveedores-deuda'); 
+  if (!tbody) return; 
+  tbody.innerHTML = '';
+  
+  const prvArr = Object.values(dbProveedores || {}).sort((a, b) => a.nombre.localeCompare(b.nombre));
 
-      prvArr.forEach(prv => {
-        const saldo = calcularSaldoProveedor(prv.id);
-        const tr = document.createElement('tr'); tr.className = "border-b hover:bg-gray-50";
-        const claseSaldo = saldo > 0 ? "font-bold text-red-600" : "text-gray-500";
+  if (prvArr.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" class="p-3 text-center text-gray-400 italic">No hay proveedores registrados en el sistema.</td></tr>';
+    return;
+  }
 
-        tr.innerHTML = `
-          <td class="p-2 font-bold text-gray-800">${prv.nombre}</td>
-          <td class="p-2 text-gray-600">${prv.rubro || 'General'}</td>
-          <td class="p-2 text-right ${claseSaldo}">$${saldo.toLocaleString()}</td>
-          <td class="p-2 text-center flex justify-center gap-1">
-            <button onclick="verHistorialProveedor('${prv.id}')" class="bg-amber-700 hover:bg-amber-800 text-white text-xs px-2.5 py-1 rounded font-bold shadow">📋 Abrir Ficha</button>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
+  prvArr.forEach(prv => {
+    const saldo = calcularSaldoProveedor(prv.id);
+    const tr = document.createElement('tr'); 
+    tr.className = "border-b hover:bg-gray-50";
+    const claseSaldo = saldo > 0 ? "font-bold text-red-600" : "text-gray-500";
 
-      if (tbody.innerHTML === '') {
-        tbody.innerHTML = '<tr><td colspan="4" class="p-3 text-center text-gray-400 italic">No hay proveedores registrados en el sistema.</td></tr>';
-      }
-    }
-
+    tr.innerHTML = `
+      <td class="p-2 font-bold text-gray-800">${prv.nombre}</td>
+      <td class="p-2 text-gray-600">${prv.rubro || 'General'}</td>
+      <td class="p-2 text-right ${claseSaldo}">$${saldo.toLocaleString()}</td>
+      <td class="p-2 text-center">
+        <button type="button" onclick="verHistorialProveedor('${prv.id}')" class="bg-amber-700 hover:bg-amber-800 text-white text-xs px-2.5 py-1 rounded-lg font-bold shadow">📋 Abrir Ficha</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
     function eliminarProveedorActual() {
       if (!proveedorSeleccionadoId) return;
       const prv = dbProveedores[proveedorSeleccionadoId];
