@@ -264,54 +264,17 @@
       <div class="bg-white p-4 rounded-xl shadow border">
         <h2 class="text-base font-bold text-gray-800 mb-2">🏪 Pedidos Especiales y Mostrador</h2>
         <div class="panel-carga-pedido flex gap-2 mb-3">
-          <input type="text" id="nota-mostrador" placeholder="Ej: 2 Frolas membrillo, 3 docenas medialunas" class="border p-2 rounded w-full text-sm">
+          <input type="text" id="nota-mostrador" placeholder="Ej: 2 Frolas membrillo, 3 docenas medialunas" class="border p-2 rounded w-full text-base">
           <button type="button" onclick="agregarNotaMostrador()" class="bg-amber-700 text-white font-bold px-4 rounded text-sm">Añadir</button>
         </div>
-        <ul id="lista-notas-mostrador" class="list-disc pl-5 text-sm space-y-1 text-gray-700"></ul>
+        <ul id="lista-notas-mostrador" class="list-disc pl-5 text-base space-y-1 text-gray-700"></ul>
       </div>
     </section>
 
     <!-- 3. CLIENTES Y CUENTA CORRIENTE -->
     <section id="sec-clientes" class="hidden space-y-4">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div class="bg-white p-4 rounded-xl shadow border md:col-span-1">
-          <h2 class="text-base font-bold text-gray-800 mb-3">Alta de Cliente</h2>
-          <div class="space-y-2 mb-3">
-            <input type="text" id="cli-nombre" placeholder="Nombre / Razón Social" class="border p-2 rounded w-full text-sm">
-            <input type="text" id="cli-cuit" placeholder="CUIT / DNI" class="border p-2 rounded w-full text-sm">
-            <input type="text" id="cli-direccion" placeholder="Dirección" class="border p-2 rounded w-full text-sm">
-            <input type="text" id="cli-telefono" placeholder="Teléfono / WhatsApp" class="border p-2 rounded w-full text-sm">
-            <input type="email" id="cli-email" placeholder="Correo electrónico (Opcional)" class="border p-2 rounded w-full text-sm">
-          </div>
-          <button type="button" onclick="guardarCliente()" class="bg-amber-700 text-white font-bold px-4 py-2 rounded text-sm hover:bg-amber-800 w-full">Registrar Cliente</button>
-        </div>
-
-        <div class="bg-white p-4 rounded-xl shadow border md:col-span-2 space-y-3">
-          <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
-            <h2 class="text-base font-bold text-gray-800">Seleccionar Cliente para ver Cta. Cte.</h2>
-            <select id="select-buscador-cliente" onchange="seleccionarClienteDesdeBuscador(this.value)" class="border p-2 rounded text-sm font-semibold bg-amber-50 text-amber-950 w-full md:w-64">
-              <option value="">-- Buscar / Elegir Cliente --</option>
-            </select>
-          </div>
-          
-          <div class="bg-gray-50 p-3 rounded-lg border">
-            <h3 class="text-xs font-bold text-gray-700 mb-2">Resumen General de Clientes con Deuda Pendiente</h3>
-            <div class="overflow-x-auto max-h-48 overflow-y-auto">
-              <table class="w-full text-left text-xs">
-                <thead>
-                  <tr class="bg-gray-200 border-b">
-                    <th class="p-1.5">Cliente</th>
-                    <th class="p-1.5 text-right">Saldo Deuda</th>
-                    <th class="p-1.5 text-center">Acción</th>
-                  </tr>
-                </thead>
-                <tbody id="tabla-resumen-clientes-deuda"></tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
-
+      
+      <!-- Ficha del cliente seleccionada arriba de todo -->
       <div id="módulo-historial-cliente" class="bg-white p-4 rounded-xl shadow border border-amber-500 space-y-4 hidden">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 border-b pb-2">
           <div>
@@ -371,48 +334,40 @@
           </table>
         </div>
       </div>
+
+      <div class="bg-white p-4 rounded-xl shadow border space-y-3">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 mb-3">
+          <h2 class="text-base font-bold text-gray-800">Seleccionar Cliente para ver Cta. Cte.</h2>
+          <div class="flex items-center gap-2 w-full md:w-auto">
+            <select id="select-buscador-cliente" onchange="seleccionarClienteDesdeBuscador(this.value)" class="border p-2 rounded text-sm font-semibold bg-amber-50 text-amber-950 w-full md:w-64">
+              <option value="">-- Buscar / Elegir Cliente --</option>
+            </select>
+            <button type="button" onclick="abrirModalAltaCliente()" class="bg-amber-700 text-white font-bold px-3 py-2 rounded text-sm shadow whitespace-nowrap">➕ Nuevo Cliente</button>
+          </div>
+        </div>
+        
+        <div class="bg-gray-50 p-3 rounded-lg border">
+          <h3 class="text-xs font-bold text-gray-700 mb-2">Resumen General de Clientes con Deuda Pendiente</h3>
+          <div class="overflow-x-auto max-h-48 overflow-y-auto">
+            <table class="w-full text-left text-xs">
+              <thead>
+                <tr class="bg-gray-200 border-b">
+                  <th class="p-1.5">Cliente</th>
+                  <th class="p-1.5 text-right">Saldo Deuda</th>
+                  <th class="p-1.5 text-center">Acción</th>
+                </tr>
+              </thead>
+              <tbody id="tabla-resumen-clientes-deuda"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- 4. PROVEEDORES Y FACTURACIÓN -->
     <section id="sec-proveedores" class="hidden space-y-4">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div class="bg-white p-4 rounded-xl shadow border md:col-span-1">
-          <h2 class="text-base font-bold text-gray-800 mb-3">Alta de Proveedor</h2>
-          <div class="space-y-2 mb-3">
-            <input type="text" id="prov-nombre" placeholder="Razón Social / Proveedor" class="border p-2 rounded w-full text-sm">
-            <input type="text" id="prov-cuit" placeholder="CUIT" class="border p-2 rounded w-full text-sm">
-            <input type="text" id="prov-telefono" placeholder="Teléfono" class="border p-2 rounded w-full text-sm">
-            <input type="text" id="prov-rubro" placeholder="Rubro" class="border p-2 rounded w-full text-sm">
-          </div>
-          <button type="button" onclick="guardarProveedor()" class="bg-amber-700 text-white font-bold px-4 py-2 rounded text-sm hover:bg-amber-800 w-full">Registrar Proveedor</button>
-        </div>
-
-        <div class="bg-white p-4 rounded-xl shadow border md:col-span-2 space-y-3">
-          <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
-            <h2 class="text-base font-bold text-gray-800">Seleccionar Proveedor</h2>
-            <select id="select-buscador-proveedor" onchange="seleccionarProveedorDesdeBuscador(this.value)" class="border p-2 rounded text-sm font-semibold bg-amber-50 text-amber-950 w-full md:w-64">
-              <option value="">-- Buscar / Elegir Proveedor --</option>
-            </select>
-          </div>
-          
-          <div class="bg-gray-50 p-3 rounded-lg border">
-            <h3 class="text-xs font-bold text-gray-700 mb-2">Resumen General de Proveedores con Deuda</h3>
-            <div class="overflow-x-auto max-h-48 overflow-y-auto">
-              <table class="w-full text-left text-xs">
-                <thead>
-                  <tr class="bg-gray-200 border-b">
-                    <th class="p-1.5">Proveedor</th>
-                    <th class="p-1.5 text-right">Saldo Deuda</th>
-                    <th class="p-1.5 text-center">Acción</th>
-                  </tr>
-                </thead>
-                <tbody id="tabla-resumen-proveedores-deuda"></tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
-
+      
+      <!-- Ficha del proveedor seleccionada arriba de todo -->
       <div id="módulo-historial-proveedor" class="bg-white p-4 rounded-xl shadow border border-amber-500 space-y-4 hidden">
         <div class="flex justify-between items-center border-b pb-2">
           <h2 id="historial-nombre-proveedor" class="text-lg font-bold text-amber-900"></h2>
@@ -481,6 +436,34 @@
             </thead>
             <tbody id="tabla-historial-proveedor"></tbody>
           </table>
+        </div>
+      </div>
+
+      <div class="bg-white p-4 rounded-xl shadow border space-y-3">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 mb-3">
+          <h2 class="text-base font-bold text-gray-800">Seleccionar Proveedor</h2>
+          <div class="flex items-center gap-2 w-full md:w-auto">
+            <select id="select-buscador-proveedor" onchange="seleccionarProveedorDesdeBuscador(this.value)" class="border p-2 rounded text-sm font-semibold bg-amber-50 text-amber-950 w-full md:w-64">
+              <option value="">-- Buscar / Elegir Proveedor --</option>
+            </select>
+            <button type="button" onclick="abrirModalAltaProveedor()" class="bg-amber-700 text-white font-bold px-3 py-2 rounded text-sm shadow whitespace-nowrap">➕ Nuevo Proveedor</button>
+          </div>
+        </div>
+        
+        <div class="bg-gray-50 p-3 rounded-lg border">
+          <h3 class="text-xs font-bold text-gray-700 mb-2">Resumen General de Proveedores con Deuda</h3>
+          <div class="overflow-x-auto max-h-48 overflow-y-auto">
+            <table class="w-full text-left text-xs">
+              <thead>
+                <tr class="bg-gray-200 border-b">
+                  <th class="p-1.5">Proveedor</th>
+                  <th class="p-1.5 text-right">Saldo Deuda</th>
+                  <th class="p-1.5 text-center">Acción</th>
+                </tr>
+              </thead>
+              <tbody id="tabla-resumen-proveedores-deuda"></tbody>
+            </table>
+          </div>
         </div>
       </div>
     </section>
@@ -986,6 +969,41 @@
     </div>
   </div>
 
+  <!-- MODAL ALTA CLIENTE -->
+  <div id="modal-alta-cliente" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white p-5 rounded-xl shadow-xl max-w-md w-full space-y-3">
+      <h3 class="text-base font-bold text-amber-900 border-b pb-2">➕ Alta de Nuevo Cliente</h3>
+      <div class="space-y-2">
+        <input type="text" id="cli-nombre" placeholder="Nombre / Razón Social" class="border p-2 rounded w-full text-sm">
+        <input type="text" id="cli-cuit" placeholder="CUIT / DNI" class="border p-2 rounded w-full text-sm">
+        <input type="text" id="cli-direccion" placeholder="Dirección" class="border p-2 rounded w-full text-sm">
+        <input type="text" id="cli-telefono" placeholder="Teléfono / WhatsApp" class="border p-2 rounded w-full text-sm">
+        <input type="email" id="cli-email" placeholder="Correo electrónico (Opcional)" class="border p-2 rounded w-full text-sm">
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button type="button" onclick="cerrarModalAltaCliente()" class="bg-gray-300 text-gray-800 text-xs px-4 py-2 rounded font-bold">Cancelar</button>
+        <button type="button" onclick="guardarCliente()" class="bg-amber-700 text-white font-bold px-4 py-2 rounded text-sm hover:bg-amber-800">Registrar Cliente</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL ALTA PROVEEDOR -->
+  <div id="modal-alta-proveedor" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white p-5 rounded-xl shadow-xl max-w-md w-full space-y-3">
+      <h3 class="text-base font-bold text-amber-900 border-b pb-2">➕ Alta de Nuevo Proveedor</h3>
+      <div class="space-y-2">
+        <input type="text" id="prov-nombre" placeholder="Razón Social / Proveedor" class="border p-2 rounded w-full text-sm">
+        <input type="text" id="prov-cuit" placeholder="CUIT" class="border p-2 rounded w-full text-sm">
+        <input type="text" id="prov-telefono" placeholder="Teléfono" class="border p-2 rounded w-full text-sm">
+        <input type="text" id="prov-rubro" placeholder="Rubro" class="border p-2 rounded w-full text-sm">
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button type="button" onclick="cerrarModalAltaProveedor()" class="bg-gray-300 text-gray-800 text-xs px-4 py-2 rounded font-bold">Cancelar</button>
+        <button type="button" onclick="guardarProveedor()" class="bg-amber-700 text-white font-bold px-4 py-2 rounded text-sm hover:bg-amber-800">Registrar Proveedor</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const firebaseConfig = {
       databaseURL: "https://panaderia-sync-281a5-default-rtdb.firebaseio.com/"
@@ -1144,6 +1162,11 @@
       renderizarReportesMensuales();
       renderizarSelectorBackups();
     });
+
+    function abrirModalAltaCliente() { document.getElementById('modal-alta-cliente').classList.remove('hidden'); }
+    function cerrarModalAltaCliente() { document.getElementById('modal-alta-cliente').classList.add('hidden'); }
+    function abrirModalAltaProveedor() { document.getElementById('modal-alta-proveedor').classList.remove('hidden'); }
+    function cerrarModalAltaProveedor() { document.getElementById('modal-alta-proveedor').classList.add('hidden'); }
 
     function inicializarFechaCuadra() {
       const ahora = new Date();
@@ -1838,25 +1861,37 @@
       let produccionHtml = '';
       const lista = Object.entries(consolidados).sort((a, b) => a[0].localeCompare(b[0]));
       
+      let totalUnidadesPrint = 0;
+
       if (lista.length === 0) {
         produccionHtml = '<tr><td colspan="2" style="padding: 12px; text-align: center; color: #6b7280; font-style: italic; border-bottom: 1px solid #e5e7eb;">Sin pedidos de cuadra cargados.</td></tr>';
       } else {
         lista.forEach(([prodNombre, cantUnidades]) => {
+          totalUnidadesPrint += cantUnidades;
           produccionHtml += `
             <tr style="border-bottom: 1px solid #e5e7eb;">
               <td style="padding: 10px 14px; font-size: 13px; font-weight: 600; color: #1f2937; text-align: left;">${prodNombre}</td>
-              <td style="padding: 10px 14px; text-align: center; font-size: 14px; font-weight: 800; color: #78350f; background-color: #fef3c7; width: 140px;">${cantUnidades} un.</td>
+              <td style="padding: 10px 14px; text-align: center; font-size: 14px; font-weight: 800; color: #78350f; background-color: #fef3c7; width: 140px;">${cantUnidades}</td>
             </tr>
           `;
         });
+        
+        produccionHtml += `
+            <tr style="border-bottom: 1px solid #e5e7eb; background-color: #fde68a;">
+              <td style="padding: 10px 14px; font-size: 13px; font-weight: 800; color: #78350f; text-align: left;">TOTAL PRODUCTOS</td>
+              <td style="padding: 10px 14px; text-align: center; font-size: 15px; font-weight: 900; color: #78350f; width: 140px;">${totalUnidadesPrint}</td>
+            </tr>
+          `;
       }
 
       let notasHtml = '';
-      const notasHoy = dbNotasMostrador[fechaCuadraActiva] || [];
-      notasHoy.forEach((nota) => {
+      let notasArr = (dbNotasMostrador[fechaCuadraActiva] || []).map((nota) => nota);
+      notasArr.sort((a, b) => a.localeCompare(b));
+      
+      notasArr.forEach((nota) => {
         notasHtml += `<li style="margin-bottom: 6px; font-size: 12px; color: #374151; font-weight: 500;">${nota}</li>`;
       });
-      if (notasHoy.length === 0) {
+      if (notasArr.length === 0) {
         notasHtml = '<p style="color: #9ca3af; font-style: italic; margin: 0; font-size: 12px;">Sin notas ni pedidos especiales registrados.</p>';
       }
 
@@ -2007,21 +2042,32 @@
       });
 
       const lista = Object.entries(consolidados).sort((a, b) => a[0].localeCompare(b[0]));
+      
+      let totalUnidadesCuadra = 0;
+
       if (lista.length === 0) contTotales.innerHTML = '<p class="text-sm text-gray-500 italic">No hay pedidos de cuadra cargados para esta fecha.</p>';
       else {
         lista.forEach(([prodNombre, cantUnidades]) => {
+          totalUnidadesCuadra += cantUnidades;
           const card = document.createElement('div'); card.className = "p-3 bg-amber-50 rounded-lg border border-amber-200 flex justify-between items-center";
-          card.innerHTML = `<h4 class="font-bold text-amber-950">${prodNombre}</h4><span class="text-xl font-extrabold text-amber-900">${cantUnidades} un.</span>`;
+          card.innerHTML = `<h4 class="text-lg font-bold text-amber-950">${prodNombre}</h4><span class="text-2xl font-extrabold text-amber-900">${cantUnidades}</span>`;
           contTotales.appendChild(card);
         });
+        
+        const totalCard = document.createElement('div'); totalCard.className = "p-3 bg-amber-200 rounded-lg border border-amber-400 flex justify-between items-center mt-2";
+        totalCard.innerHTML = `<h4 class="text-lg font-black text-amber-950">TOTAL PRODUCTOS</h4><span class="text-2xl font-black text-amber-900">${totalUnidadesCuadra}</span>`;
+        contTotales.appendChild(totalCard);
       }
 
       const listaNotas = document.getElementById('lista-notas-mostrador');
       if (listaNotas) {
         listaNotas.innerHTML = '';
-        (dbNotasMostrador[fechaCuadraActiva] || []).forEach((nota, idx) => {
+        let notasArr = (dbNotasMostrador[fechaCuadraActiva] || []).map((nota, idx) => ({ texto: nota, originalIndex: idx }));
+        notasArr.sort((a, b) => a.texto.localeCompare(b.texto));
+        
+        notasArr.forEach((item) => {
           const li = document.createElement('li'); li.className = "flex justify-between items-center bg-gray-50 p-2 rounded border mb-1";
-          li.innerHTML = `<span>${nota}</span><button onclick="eliminarNotaMostrador(${idx})" class="text-xs text-red-600 font-bold">Eliminar</button>`;
+          li.innerHTML = `<span>${item.texto}</span><button onclick="eliminarNotaMostrador(${item.originalIndex})" class="text-xs text-red-600 font-bold">Eliminar</button>`;
           listaNotas.appendChild(li);
         });
       }
@@ -2057,10 +2103,13 @@
       if(document.getElementById('cli-direccion')) document.getElementById('cli-direccion').value = '';
       if(document.getElementById('cli-telefono')) document.getElementById('cli-telefono').value = '';
       if(document.getElementById('cli-email')) document.getElementById('cli-email').value = '';
+      
+      cerrarModalAltaCliente();
       cargarSelectorClientesReparto(); 
       cargarSelectorClientesRecurrentes();
       renderizarTablaClientes();
       cargarBuscadorClientes();
+      alert("¡Cliente registrado exitosamente!");
     }
 
     function calcularSaldoCliente(cliId) {
@@ -2136,7 +2185,10 @@
       document.getElementById('edit-cli-telefono').value = cli.telefono || '';
       document.getElementById('edit-cli-email').value = cli.email || '';
 
-      document.getElementById('módulo-historial-cliente').classList.remove('hidden');
+      const modulo = document.getElementById('módulo-historial-cliente');
+      modulo.classList.remove('hidden');
+      modulo.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      
       const selBuscador = document.getElementById('select-buscador-cliente');
       if (selBuscador) selBuscador.value = cliId;
       renderizarTablaHistorialCliente();
@@ -2246,10 +2298,19 @@
       verHistorialCliente(clienteSeleccionadoId);
     }
 
-    function borrarMovimientoCliente(movId) {
+    function borrarMovimientoCliente(movId, origen, fechaOriginal) {
       if(confirm("¿Seguro que querés borrar este movimiento?")) {
-        dbHistorialClientes[clienteSeleccionadoId] = dbHistorialClientes[clienteSeleccionadoId].filter(m => m.id !== movId);
-        guardarDB('db_historial_clientes', dbHistorialClientes);
+        if (origen === 'reparto') {
+           if (dbRepartos[fechaOriginal]) {
+               dbRepartos[fechaOriginal] = dbRepartos[fechaOriginal].filter(p => p.id !== movId);
+               guardarDB('db_repartos', dbRepartos);
+               renderizarPlanillaReparto();
+               renderizarCuadra();
+           }
+        } else {
+           dbHistorialClientes[clienteSeleccionadoId] = dbHistorialClientes[clienteSeleccionadoId].filter(m => m.id !== movId);
+           guardarDB('db_historial_clientes', dbHistorialClientes);
+        }
         renderizarTablaHistorialCliente();
         renderizarTablaClientes();
         verHistorialCliente(clienteSeleccionadoId);
@@ -2285,7 +2346,7 @@
         tr.innerHTML = `<td class="p-2">${tdFecha}</td><td class="p-2">${tdConcepto}</td><td class="p-2 text-right text-red-600">${tdDebito}</td><td class="p-2 text-right text-green-700">${tdCredito}</td><td class="p-2 text-right font-bold text-red-600">$${acumulado.toLocaleString()}</td>
         <td class="p-2 text-center flex justify-center items-center gap-1">
           <button onclick="abrirModalEditarMovCliente('${m.id}', '${m.origen}', '${m.fechaOriginal}')" class="text-[10px] text-blue-600 font-bold border border-blue-600 px-2 py-0.5 rounded hover:bg-blue-50">Editar</button>
-          ${m.origen === 'pago' ? `<button onclick="borrarMovimientoCliente('${m.id}')" class="text-[10px] text-red-600 font-bold border border-red-600 px-2 py-0.5 rounded hover:bg-blue-50">Borrar</button>` : ''}
+          <button onclick="borrarMovimientoCliente('${m.id}', '${m.origen}', '${m.fechaOriginal}')" class="text-[10px] text-red-600 font-bold border border-red-600 px-2 py-0.5 rounded hover:bg-red-50">Borrar</button>
         </td>`;
         tbody.appendChild(tr);
       });
@@ -2386,7 +2447,11 @@
       const nombre = document.getElementById('prov-nombre').value.trim(); if (!nombre) return;
       const id = generarID('PRV');
       dbProveedores[id] = { id, nombre, cuit: document.getElementById('prov-cuit').value.trim(), telefono: document.getElementById('prov-telefono').value.trim(), rubro: document.getElementById('prov-rubro').value.trim() };
-      guardarDB('db_proveedores', dbProveedores); renderizarTablaProveedores(); cargarBuscadorProveedores();
+      guardarDB('db_proveedores', dbProveedores); 
+      cerrarModalAltaProveedor();
+      renderizarTablaProveedores(); 
+      cargarBuscadorProveedores();
+      alert("¡Proveedor registrado exitosamente!");
     }
 
     function calcularSaldoProveedor(provId) {
@@ -2453,7 +2518,10 @@
       document.getElementById('edit-prov-telefono').value = prv.telefono || '';
       document.getElementById('edit-prov-rubro').value = prv.rubro || '';
 
-      document.getElementById('módulo-historial-proveedor').classList.remove('hidden');
+      const modulo = document.getElementById('módulo-historial-proveedor');
+      modulo.classList.remove('hidden');
+      modulo.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
       const selBuscador = document.getElementById('select-buscador-proveedor');
       if (selBuscador) selBuscador.value = provId;
       renderizarTablaHistorialProveedor();
