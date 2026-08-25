@@ -53,14 +53,14 @@
     }
   </style>
 </head>
-<body class="bg-gray-100 font-sans min-h-screen">
+<body class="bg-gray-100 font-sans min-h-screen overflow-x-hidden">
 
-  <header class="bg-amber-800 text-white p-4 shadow-lg flex flex-col md:flex-row justify-between items-center gap-2">
+ <header class="bg-amber-800 text-white p-3 shadow-lg flex flex-col items-center md:flex-row md:justify-between gap-3 w-full box-border">
     <div>
       <h1 class="text-xl font-bold md:text-2xl">La Casa del Pan & La Espiga de Oro</h1>
       <p class="text-xs text-amber-200 md:text-sm">Sistema Integrado de Producción, Logística, Proveedores, Cajas y Reportes</p>
     </div>
-    <div class="flex flex-wrap items-center gap-2">
+    <div class="flex flex-wrap justify-center items-center gap-2 w-full md:w-auto">
       <!-- INDICADOR DE CONEXIÓN A LA NUBE -->
       <div class="flex items-center gap-1 bg-gray-800 p-2 rounded-lg border border-gray-600">
         <span id="status-conexion" class="text-[10px] bg-yellow-200 text-yellow-900 px-2 py-0.5 rounded-full font-bold shadow-sm whitespace-nowrap">
@@ -82,7 +82,7 @@
     </div>
   </header>
 
-  <nav class="flex border-b border-gray-300 bg-white sticky top-0 z-10 text-xs md:text-sm font-semibold overflow-x-auto nav-buttons">
+  <nav class="flex border-b border-gray-300 bg-white sticky top-0 z-10 text-xs md:text-sm font-semibold overflow-x-auto nav-buttons shadow-sm">
     <button onclick="verPestaña('reparto')" id="btn-reparto" class="flex-1 py-3 px-2 text-center tab-active whitespace-nowrap">🚚 Reparto y Cobros</button>
     <button onclick="verPestaña('cuadra')" id="btn-cuadra" class="flex-1 py-3 px-2 text-center tab-inactive whitespace-nowrap">👨‍🍳 Cuadra</button>
     <button onclick="verPestaña('clientes')" id="btn-clientes" class="flex-1 py-3 px-2 text-center tab-inactive whitespace-nowrap">👥 Clientes / Cta. Cte.</button>
@@ -93,7 +93,8 @@
     <button onclick="verPestaña('usuarios')" id="btn-usuarios" class="flex-1 py-3 px-2 text-center tab-inactive whitespace-nowrap">🔐 Usuarios y Backups</button>
   </nav>
 
-  <main class="p-3 max-w-5xl mx-auto space-y-4">
+  <!-- CONTENEDOR PRINCIPAL REESTABLECIDO PARA EVITAR DESBORDES -->
+  <main class="p-2 md:p-4 max-w-5xl mx-auto space-y-4">
 
     <!-- 1. MÓDULO REPARTO Y LOGÍSTICA -->
     <section id="sec-reparto" class="space-y-4">
@@ -310,7 +311,7 @@
           </div>
         </div>
 
-     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <!-- PANEL 1: CARGO MANUAL (Suma Deuda) -->
           <div class="bg-red-50 p-3 rounded-lg border border-red-200 space-y-2">
             <h3 class="text-xs font-bold text-red-900">⬆️ Agregar pedidos / Cargo Manual</h3>
