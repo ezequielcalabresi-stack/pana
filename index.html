@@ -2360,34 +2360,17 @@ function renderizarTablaClientes() {
         tr.className = "border-b hover:bg-gray-50";
         const claseSaldo = saldo > 0 ? "font-bold text-red-600" : (saldo < 0 ? "font-bold text-green-700" : "text-gray-500");
 
+        // Inyección directa por HTML plano para compatibilidad total con WebView Android
         tr.innerHTML = `
           <td class="p-2 font-bold text-gray-800">${cli.nombre}</td>
           <td class="p-2 text-gray-600">${cli.telefono || 'S/D'}</td>
           <td class="p-2 text-right ${claseSaldo}">$${saldo.toLocaleString()}</td>
-          <td class="p-2 text-center"></td>
+          <td class="p-2 text-center">
+            <button type="button" onclick="verHistorialCliente('${cli.id}')" class="bg-amber-700 text-white text-xs px-3 py-1.5 rounded-lg font-bold shadow active:bg-amber-900">
+              Abrir Ficha
+            </button>
+          </td>
         `;
-        
-        const tdAccion = tr.querySelector('td:last-child');
-        const btnFicha = document.createElement('button');
-        btnFicha.type = "button";
-        btnFicha.className = "bg-amber-700 text-white text-xs px-3 py-1.5 rounded-lg font-bold shadow active:bg-amber-900";
-        btnFicha.textContent = "Abrir Ficha";
-        btnFicha.onclick = function() {
-          verHistorialCliente(cli.id);
-        };
-        tdAccion.appendChild(btnFicha);
-        
-        // Manejador infalible para APK y Web
-        const abrirAccion = (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          verHistorialCliente(cli.id);
-        };
-
-        btnFicha.onclick = abrirAccion;
-        btnFicha.ontouchend = abrirAccion;
-
-        tdAccion.appendChild(btnFicha);
         tbody.appendChild(tr);
       });
     }
@@ -2765,34 +2748,20 @@ function renderizarTablaProveedores() {
         tr.className = "border-b hover:bg-gray-50";
         const claseSaldo = saldo > 0 ? "font-bold text-red-600" : "text-gray-500";
 
+        // Inyección directa por HTML plano para compatibilidad total con WebView Android
         tr.innerHTML = `
           <td class="p-2 font-bold text-gray-800">${prv.nombre}</td>
           <td class="p-2 text-gray-600">${prv.rubro || 'General'}</td>
           <td class="p-2 text-right ${claseSaldo}">$${saldo.toLocaleString()}</td>
-          <td class="p-2 text-center"></td>
+          <td class="p-2 text-center">
+            <button type="button" onclick="verHistorialProveedor('${prv.id}')" class="bg-amber-700 text-white text-xs px-3 py-1.5 rounded-lg font-bold shadow active:bg-amber-900">
+              Abrir Ficha
+            </button>
+          </td>
         `;
-
-        const tdAccion = tr.querySelector('td:last-child');
-        const btnFicha = document.createElement('button');
-        btnFicha.type = "button";
-        btnFicha.className = "bg-amber-700 text-white text-xs px-3 py-1.5 rounded-lg font-bold shadow active:bg-amber-900";
-        btnFicha.textContent = "Abrir Ficha";
-        
-        // Manejador infalible para APK y Web
-        const abrirAccion = (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          verHistorialProveedor(prv.id);
-        };
-
-        btnFicha.onclick = abrirAccion;
-        btnFicha.ontouchend = abrirAccion;
-
-        tdAccion.appendChild(btnFicha);
         tbody.appendChild(tr);
       });
-    }
-    function eliminarProveedorActual() {
+    }    function eliminarProveedorActual() {
       if (!proveedorSeleccionadoId) return;
       const prv = dbProveedores[proveedorSeleccionadoId];
       const nombrePrv = prv ? prv.nombre : 'este proveedor';
