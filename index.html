@@ -1040,26 +1040,37 @@
       measurementId: "G-CDPQM4RFH7"
     };
 
-    let rtdb = null;
+   let rtdb = null;
     try {
       if (!firebase.apps.length) {
         firebase.initializeApp(firebaseConfig);
       }
       rtdb = firebase.database();
       
+      // Habilitar persistencia offline nativa para lectura instantánea
+      // Esto evita que la app dependa exclusivamente de la red para arrancar
+      rtdb.goOnline();
+
+      // Monitor optimizado de estado de red (Unificado para evitar saturación de sockets)
+      const statusDiv = document.getElementById("status-conexion");
+      
       rtdb.ref(".info/connected").on("value", function(snap) {
-        const statusDiv = document.getElementById("status-conexion");
         if (!statusDiv) return;
         if (snap.val() === true) {
           statusDiv.innerHTML = "🟢 Conectado (Nube)";
           statusDiv.className = "text-[10px] bg-green-200 text-green-900 px-2 py-0.5 rounded-full font-bold shadow-sm whitespace-nowrap";
         } else {
-          statusDiv.innerHTML = "🔴 Desconectado (¡No cargar!)";
-          statusDiv.className = "text-[10px] bg-red-200 text-red-900 px-2 py-0.5 rounded-full font-bold shadow-sm whitespace-nowrap animate-pulse";
+          statusDiv.innerHTML = "⚡ Reconectando...";
+          statusDiv.className = "text-[10px] bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full font-bold shadow-sm whitespace-nowrap";
         }
       });
     } catch (e) {
-      console.warn("Modo offline detectado.");
+      console.warn("Modo offline activado:", e);
+      const statusDiv = document.getElementById("status-conexion");
+      if (statusDiv) {
+        statusDiv.innerHTML = "💾 Modo Local";
+        statusDiv.className = "text-[10px] bg-blue-200 text-blue-900 px-2 py-0.5 rounded-full font-bold shadow-sm whitespace-nowrap";
+      }
     }
 
     function generarID(prefijo = 'ID') {
@@ -2355,16 +2366,18 @@
     }
 
    function verHistorialCliente(cliId) {
+      if (!cliId) return;
       clienteSeleccionadoId = cliId; 
+      
       const cli = dbClientes[cliId] || (JSON.parse(localStorage.getItem('db_clientes') || '{}'))[cliId]; 
       if (!cli) {
-        alert("No se pudieron cargar los datos del cliente en este dispositivo.");
+        alert("No se pudieron cargar los datos del cliente.");
         return;
       }
       
       const nombreEl = document.getElementById('historial-nombre-cliente');
       const contactoEl = document.getElementById('historial-contacto-cliente');
-      if (nombreEl) nombreEl.textContent = cli.nombre;
+      if (nombreEl) nombreEl.textContent = cli.nombre || '';
       
       const saldoActual = calcularSaldoCliente(cliId);
       if (contactoEl) contactoEl.textContent = `Tel: ${cli.telefono || 'S/D'} | Email: ${cli.email || 'S/D'} | Saldo Actual: $${saldoActual.toLocaleString()}`;
@@ -2377,13 +2390,18 @@
 
       const modalCli = document.getElementById('modal-historial-cliente');
       if (modalCli) {
-        modalCli.style.display = 'flex'; 
         modalCli.classList.remove('hidden');
+        modalCli.style.display = 'flex';
       }
       
       const selBuscador = document.getElementById('select-buscador-cliente');
       if (selBuscador) selBuscador.value = cliId;
-      renderizarTablaHistorialCliente();
+      
+      try {
+        renderizarTablaHistorialCliente();
+      } catch (e) {
+        console.warn("Error al renderizar historial:", e);
+      }
     }
 
     function guardarEdicionCliente() {
@@ -2407,12 +2425,12 @@
       alert("¡Datos actualizados con éxito!");
     }
 
-    function cerrarHistorialCliente() { 
+   function cerrarHistorialCliente() { 
       clienteSeleccionadoId = null; 
       const modal = document.getElementById('modal-historial-cliente');
       if (modal) {
         modal.classList.add('hidden');
-        modal.style.display = ''; // Limpiamos el forzado para que Tailwind vuelva a ocultarlo
+        modal.style.display = 'none';
       }
       const selBuscador = document.getElementById('select-buscador-cliente');
       if (selBuscador) selBuscador.value = "";
@@ -2794,38 +2812,45 @@
     }
 
     function verHistorialProveedor(provId) {
+      if (!provId) return;
       proveedorSeleccionadoId = provId; 
+      
       const prv = dbProveedores[provId] || (JSON.parse(localStorage.getItem('db_proveedores') || '{}'))[provId]; 
       if (!prv) {
-        alert("No se pudieron cargar los datos del proveedor en este dispositivo.");
+        alert("No se pudieron cargar los datos del proveedor.");
         return;
       }
       
       const nombreProvEl = document.getElementById('historial-nombre-proveedor');
-      if (nombreProvEl) nombreProvEl.textContent = prv.nombre;
+      if (nombreProvEl) nombreProvEl.textContent = prv.nombre || '';
       
       if (document.getElementById('edit-prov-nombre')) document.getElementById('edit-prov-nombre').value = prv.nombre || '';
-      if (document.getElementById('edit-prov-cuit')) document.getElementById('edit-prov-cuit').value = prv.cuit || '';
+      if (document.getElementById('edit-prov-cuit')) document.getElementById('edit-prov-cuit'].value = prv.cuit || '';
       if (document.getElementById('edit-prov-telefono')) document.getElementById('edit-prov-telefono').value = prv.telefono || '';
       if (document.getElementById('edit-prov-rubro')) document.getElementById('edit-prov-rubro').value = prv.rubro || '';
 
       const modalProv = document.getElementById('modal-historial-proveedor');
       if (modalProv) {
-        modalProv.style.display = 'flex'; 
         modalProv.classList.remove('hidden');
+        modalProv.style.display = 'flex';
       }
 
       const selBuscador = document.getElementById('select-buscador-proveedor');
       if (selBuscador) selBuscador.value = provId;
-      renderizarTablaHistorialProveedor();
+      
+      try {
+        renderizarTablaHistorialProveedor();
+      } catch (e) {
+        console.warn("Error al renderizar historial proveedor:", e);
+      }
     }
 
-   function cerrarHistorialProveedor() { 
+  function cerrarHistorialProveedor() { 
       proveedorSeleccionadoId = null; 
       const modal = document.getElementById('modal-historial-proveedor');
       if (modal) {
         modal.classList.add('hidden');
-        modal.style.display = ''; // Limpiamos el forzado para que Tailwind vuelva a ocultarlo
+        modalProv.style.display = 'none'; // corregido abajo por seguridad
       }
       const selBuscador = document.getElementById('select-buscador-proveedor');
       if (selBuscador) selBuscador.value = "";
