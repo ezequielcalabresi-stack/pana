@@ -2354,19 +2354,32 @@
       }
     }
 
-    function verHistorialCliente(cliId) {
-      clienteSeleccionadoId = cliId; const cli = dbClientes[cliId]; if (!cli) return;
-      document.getElementById('historial-nombre-cliente').textContent = cli.nombre;
-      const saldoActual = calcularSaldoCliente(cliId);
-      document.getElementById('historial-contacto-cliente').textContent = `Tel: ${cli.telefono || 'S/D'} | Email: ${cli.email || 'S/D'} | Saldo Actual: $${saldoActual.toLocaleString()}`;
+   function verHistorialCliente(cliId) {
+      clienteSeleccionadoId = cliId; 
+      const cli = dbClientes[cliId] || (JSON.parse(localStorage.getItem('db_clientes') || '{}'))[cliId]; 
+      if (!cli) {
+        alert("No se pudieron cargar los datos del cliente en este dispositivo.");
+        return;
+      }
       
-      document.getElementById('edit-cli-nombre').value = cli.nombre || '';
-      document.getElementById('edit-cli-cuit').value = cli.cuit || '';
-      document.getElementById('edit-cli-direccion').value = cli.direccion || '';
-      document.getElementById('edit-cli-telefono').value = cli.telefono || '';
-      document.getElementById('edit-cli-email').value = cli.email || '';
+      const nombreEl = document.getElementById('historial-nombre-cliente');
+      const contactoEl = document.getElementById('historial-contacto-cliente');
+      if (nombreEl) nombreEl.textContent = cli.nombre;
+      
+      const saldoActual = calcularSaldoCliente(cliId);
+      if (contactoEl) contactoEl.textContent = `Tel: ${cli.telefono || 'S/D'} | Email: ${cli.email || 'S/D'} | Saldo Actual: $${saldoActual.toLocaleString()}`;
+      
+      if (document.getElementById('edit-cli-nombre')) document.getElementById('edit-cli-nombre').value = cli.nombre || '';
+      if (document.getElementById('edit-cli-cuit')) document.getElementById('edit-cli-cuit').value = cli.cuit || '';
+      if (document.getElementById('edit-cli-direccion')) document.getElementById('edit-cli-direccion').value = cli.direccion || '';
+      if (document.getElementById('edit-cli-telefono')) document.getElementById('edit-cli-telefono').value = cli.telefono || '';
+      if (document.getElementById('edit-cli-email')) document.getElementById('edit-cli-email').value = cli.email || '';
 
-      document.getElementById('modal-historial-cliente').classList.remove('hidden');
+      const modalCli = document.getElementById('modal-historial-cliente');
+      if (modalCli) {
+        modalCli.style.display = 'flex'; 
+        modalCli.classList.remove('hidden');
+      }
       
       const selBuscador = document.getElementById('select-buscador-cliente');
       if (selBuscador) selBuscador.value = cliId;
@@ -2396,7 +2409,11 @@
 
     function cerrarHistorialCliente() { 
       clienteSeleccionadoId = null; 
-      document.getElementById('modal-historial-cliente').classList.add('hidden'); 
+      const modal = document.getElementById('modal-historial-cliente');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = ''; // Limpiamos el forzado para que Tailwind vuelva a ocultarlo
+      }
       const selBuscador = document.getElementById('select-buscador-cliente');
       if (selBuscador) selBuscador.value = "";
     }
@@ -2777,42 +2794,39 @@
     }
 
     function verHistorialProveedor(provId) {
-      proveedorSeleccionadoId = provId; const prv = dbProveedores[provId]; if (!prv) return;
-      document.getElementById('historial-nombre-proveedor').textContent = prv.nombre;
+      proveedorSeleccionadoId = provId; 
+      const prv = dbProveedores[provId] || (JSON.parse(localStorage.getItem('db_proveedores') || '{}'))[provId]; 
+      if (!prv) {
+        alert("No se pudieron cargar los datos del proveedor en este dispositivo.");
+        return;
+      }
       
-      document.getElementById('edit-prov-nombre').value = prv.nombre || '';
-      document.getElementById('edit-prov-cuit').value = prv.cuit || '';
-      document.getElementById('edit-prov-telefono').value = prv.telefono || '';
-      document.getElementById('edit-prov-rubro').value = prv.rubro || '';
+      const nombreProvEl = document.getElementById('historial-nombre-proveedor');
+      if (nombreProvEl) nombreProvEl.textContent = prv.nombre;
+      
+      if (document.getElementById('edit-prov-nombre')) document.getElementById('edit-prov-nombre').value = prv.nombre || '';
+      if (document.getElementById('edit-prov-cuit')) document.getElementById('edit-prov-cuit').value = prv.cuit || '';
+      if (document.getElementById('edit-prov-telefono')) document.getElementById('edit-prov-telefono').value = prv.telefono || '';
+      if (document.getElementById('edit-prov-rubro')) document.getElementById('edit-prov-rubro').value = prv.rubro || '';
 
-      document.getElementById('modal-historial-proveedor').classList.remove('hidden');
+      const modalProv = document.getElementById('modal-historial-proveedor');
+      if (modalProv) {
+        modalProv.style.display = 'flex'; 
+        modalProv.classList.remove('hidden');
+      }
 
       const selBuscador = document.getElementById('select-buscador-proveedor');
       if (selBuscador) selBuscador.value = provId;
       renderizarTablaHistorialProveedor();
     }
 
-    function guardarEdicionProveedor() {
-      if (!proveedorSeleccionadoId || !dbProveedores[proveedorSeleccionadoId]) return;
-      const prv = dbProveedores[proveedorSeleccionadoId];
-
-      const nuevoNombre = document.getElementById('edit-prov-nombre').value.trim();
-      if (!nuevoNombre) { alert("El nombre del proveedor no puede estar vacío."); return; }
-
-      prv.nombre = nuevoNombre;
-      prv.cuit = document.getElementById('edit-prov-cuit').value.trim();
-      prv.telefono = document.getElementById('edit-prov-telefono').value.trim();
-      prv.rubro = document.getElementById('edit-prov-rubro').value.trim();
-
-      guardarDB('db_proveedores', dbProveedores);
-      renderizarTablaProveedores();
-      verHistorialProveedor(proveedorSeleccionadoId);
-      alert("¡Datos actualizados con éxito!");
-    }
-
-    function cerrarHistorialProveedor() { 
+   function cerrarHistorialProveedor() { 
       proveedorSeleccionadoId = null; 
-      document.getElementById('modal-historial-proveedor').classList.add('hidden'); 
+      const modal = document.getElementById('modal-historial-proveedor');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = ''; // Limpiamos el forzado para que Tailwind vuelva a ocultarlo
+      }
       const selBuscador = document.getElementById('select-buscador-proveedor');
       if (selBuscador) selBuscador.value = "";
     }
