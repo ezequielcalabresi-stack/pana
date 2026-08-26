@@ -795,7 +795,10 @@
   <div id="modal-historial-proveedor" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden p-2">
     <div class="bg-white p-5 rounded-xl shadow-2xl max-w-4xl w-full space-y-4 max-h-[95vh] overflow-y-auto">
       <div class="flex justify-between items-center border-b pb-2">
-        <h2 id="historial-nombre-proveedor" class="text-lg font-bold text-amber-900"></h2>
+        <div>
+          <h2 id="historial-nombre-proveedor" class="text-lg font-bold text-amber-900"></h2>
+          <p id="historial-contacto-proveedor" class="text-xs text-gray-600"></p>
+        </div>
         <div class="flex flex-wrap items-center gap-2">
           <button type="button" onclick="enviarResumenWhatsAppProveedor()" class="bg-green-600 hover:bg-green-700 text-white text-xs px-3 py-2 rounded font-bold shadow flex items-center gap-1">📱 Enviar WhatsApp</button>
           <button type="button" onclick="enviarResumenEmailProveedor()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-2 rounded font-bold shadow flex items-center gap-1">✉️ Enviar Mail</button>
@@ -1040,18 +1043,15 @@
       measurementId: "G-CDPQM4RFH7"
     };
 
-   let rtdb = null;
+    let rtdb = null;
     try {
       if (!firebase.apps.length) {
         firebase.initializeApp(firebaseConfig);
       }
       rtdb = firebase.database();
       
-      // Habilitar persistencia offline nativa para lectura instantánea
-      // Esto evita que la app dependa exclusivamente de la red para arrancar
       rtdb.goOnline();
 
-      // Monitor optimizado de estado de red (Unificado para evitar saturación de sockets)
       const statusDiv = document.getElementById("status-conexion");
       
       rtdb.ref(".info/connected").on("value", function(snap) {
@@ -1077,7 +1077,6 @@
       return `${prefijo}-${Date.now().toString(36)}-${Math.random().toString(36).substr(2, 5)}`;
     }
 
-    // FUNCIÓN PARA OBTENER FECHA LOCAL SIEMPRE CORRECTA (EVITA ADELANTO POR UTC)
     function obtenerFechaHoyLocal() {
       const fecha = new Date();
       fecha.setMinutes(fecha.getMinutes() - fecha.getTimezoneOffset());
@@ -1143,11 +1142,9 @@
     var usuarioActivoId = 'USR-1';
 
     function cargarDB(key, fallback) {
-      // 1. CARGA INMEDIATA DESDE LOCALSTORAGE (Evita pantalla en blanco en la APK)
       const data = localStorage.getItem(key);
       let valorInicial = data ? JSON.parse(data) : fallback;
 
-      // Renderizado inmediato preventivo para que las tablas no arranquen vacías en el WebView
       if (key === 'db_repartos') { dbRepartos = valorInicial; renderizarPlanillaReparto(); renderizarCuadra(); }
       if (key === 'db_clientes') { dbClientes = valorInicial; renderizarTablaClientes(); cargarSelectorClientesReparto(); cargarBuscadorClientes(); cargarSelectorClientesRecurrentes(); }
       if (key === 'db_proveedores') { dbProveedores = valorInicial; renderizarTablaProveedores(); cargarBuscadorProveedores(); }
@@ -1160,7 +1157,6 @@
       if (key === 'db_recurrentes') { dbRecurrentes = valorInicial; renderizarTablaRecurrentes(); }
       if (key === 'db_repartos_cerrados') { dbRepartosCerrados = valorInicial; renderizarPlanillaReparto(); }
 
-      // 2. SINCRONIZACIÓN EN SEGUNDO PLANO CON FIREBASE (Blindada contra borrados en vacío)
       if (rtdb) {
         try {
           rtdb.ref(key).on('value', (snapshot) => {
@@ -1273,7 +1269,6 @@
       inicializarAplicacion();
     }
 
-    // NAVEGACIÓN CON ENTER EN MODALES
     function habilitarNavegacionPorEnterEnModal(modalId) {
       const modal = document.getElementById(modalId);
       if (!modal) return;
@@ -1938,9 +1933,6 @@
 
       const pedidosHoy = dbRepartos[fechaActual] || [];
 
-      // ==========================================
-      // ORDENAMIENTO ALFABÉTICO AUTOMÁTICO (A-Z)
-      // ==========================================
       pedidosHoy.sort((a, b) => {
         let clienteA = (a.clienteNombre || "").toLowerCase();
         let clienteB = (b.clienteNombre || "").toLowerCase();
@@ -2251,7 +2243,6 @@
         return;
       }
 
-      // VALIDACIÓN DE DUPLICADOS
       const nombreLower = nombre.toLowerCase();
       const yaExiste = Object.values(dbClientes).some(c => c.nombre.trim().toLowerCase() === nombreLower);
       if (yaExiste) {
@@ -2272,7 +2263,6 @@
       
       guardarDB('db_clientes', dbClientes);
 
-      // Limpieza automática del modal
       nombreInput.value = ''; 
       if(document.getElementById('cli-cuit')) document.getElementById('cli-cuit').value = '';
       if(document.getElementById('cli-direccion')) document.getElementById('cli-direccion').value = '';
@@ -2338,7 +2328,7 @@
       cargarBuscadorClientes();
     }
 
-  function eliminarClienteActual() {
+    function eliminarClienteActual() {
       if (!clienteSeleccionadoId) return;
       const cli = dbClientes[clienteSeleccionadoId];
       const nombreCli = cli ? cli.nombre : 'este cliente';
@@ -2346,10 +2336,8 @@
       if (confirm(`⚠️ ¿Está completamente seguro que desea borrar al cliente "${nombreCli}"?`)) {
         const idABorrar = clienteSeleccionadoId;
         
-        // 1. Cerramos la ficha primero para liberar los contenedores del DOM
         cerrarHistorialCliente();
         
-        // 2. Eliminamos de la base de datos y guardamos
         delete dbClientes[idABorrar];
         if (dbHistorialClientes[idABorrar]) {
           delete dbHistorialClientes[idABorrar];
@@ -2357,7 +2345,6 @@
         }
         guardarDB('db_clientes', dbClientes);
         
-        // 3. Refrescamos la interfaz general y selectores dependientes
         renderizarTablaClientes();
         cargarSelectorClientesReparto();
         cargarSelectorClientesRecurrentes();
@@ -2365,35 +2352,47 @@
       }
     }
 
-function verHistorialCliente(cliId) {
-  if (!cliId) return;
-  clienteSeleccionadoId = cliId; 
-  
-  const cli = dbClientes[cliId] || (JSON.parse(localStorage.getItem('db_clientes') || '{}'))[cliId]; 
-  if (!cli) {
-    alert("No se pudieron cargar los datos del cliente.");
-    return;
-  }
-  
-  const nombreEl = document.getElementById('historial-nombre-cliente');
-  const contactoEl = document.getElementById('historial-contacto-cliente');
-  if (nombreEl) nombreEl.textContent = cli.nombre || '';
-  
-  const saldoActual = calcularSaldoCliente(cliId);
-  if (contactoEl) contactoEl.textContent = `Tel: ${cli.telefono || 'S/D'} | Email: ${cli.email || 'S/D'} | Saldo Actual: $${saldoActual.toLocaleString()}`;
-  
-  // Forzar apertura visible en Android WebView
-  const modalCli = document.getElementById('modal-historial-cliente');
-  if (modalCli) {
-    modalCli.classList.remove('hidden');
-    modalCli.style.display = 'flex'; // 👈 Fuerza el despliegue visual
-  }
-  
-  renderizarTablaHistorialCliente();
-};
-      } catch (e) {
-        console.warn("Error al renderizar historial:", e);
+    function cerrarHistorialCliente() { 
+      clienteSeleccionadoId = null; 
+      const modal = document.getElementById('modal-historial-cliente');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
       }
+      const selBuscador = document.getElementById('select-buscador-cliente');
+      if (selBuscador) selBuscador.value = "";
+    }
+
+    function verHistorialCliente(cliId) {
+      if (!cliId) return;
+      clienteSeleccionadoId = cliId; 
+      
+      const cli = dbClientes[cliId] || (JSON.parse(localStorage.getItem('db_clientes') || '{}'))[cliId]; 
+      if (!cli) {
+        alert("No se pudieron cargar los datos del cliente.");
+        return;
+      }
+      
+      const nombreEl = document.getElementById('historial-nombre-cliente');
+      const contactoEl = document.getElementById('historial-contacto-cliente');
+      if (nombreEl) nombreEl.textContent = cli.nombre || '';
+      
+      const saldoActual = calcularSaldoCliente(cliId);
+      if (contactoEl) contactoEl.textContent = `Tel: ${cli.telefono || 'S/D'} | Email: ${cli.email || 'S/D'} | Saldo Actual: $${saldoActual.toLocaleString()}`;
+      
+      const modalCli = document.getElementById('modal-historial-cliente');
+      if (modalCli) {
+        modalCli.classList.remove('hidden');
+        modalCli.style.display = 'flex';
+      }
+      
+      document.getElementById('edit-cli-nombre').value = cli.nombre || '';
+      document.getElementById('edit-cli-cuit').value = cli.cuit || '';
+      document.getElementById('edit-cli-direccion').value = cli.direccion || '';
+      document.getElementById('edit-cli-telefono').value = cli.telefono || '';
+      document.getElementById('edit-cli-email').value = cli.email || '';
+
+      renderizarTablaHistorialCliente();
     }
 
     function guardarEdicionCliente() {
@@ -2415,17 +2414,6 @@ function verHistorialCliente(cliId) {
       cargarSelectorClientesRecurrentes();
       verHistorialCliente(clienteSeleccionadoId);
       alert("¡Datos actualizados con éxito!");
-    }
-
-   function cerrarHistorialCliente() { 
-      clienteSeleccionadoId = null; 
-      const modal = document.getElementById('modal-historial-cliente');
-      if (modal) {
-        modal.classList.add('hidden');
-        modal.style.display = 'none';
-      }
-      const selBuscador = document.getElementById('select-buscador-cliente');
-      if (selBuscador) selBuscador.value = "";
     }
 
     function abrirModalEditarMovCliente(id, origen, fechaOriginal) {
@@ -2688,7 +2676,7 @@ function verHistorialCliente(cliId) {
       window.location.href = `mailto:${emailDestino}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`;
     }
 
-   function guardarProveedor() {
+    function guardarProveedor() {
       const nombreInput = document.getElementById('prov-nombre');
       const nombre = nombreInput.value.trim(); 
       if (!nombre) {
@@ -2696,7 +2684,6 @@ function verHistorialCliente(cliId) {
         return;
       }
 
-      // VALIDACIÓN DE DUPLICADOS
       const nombreLower = nombre.toLowerCase();
       const yaExiste = Object.values(dbProveedores).some(p => p.nombre.trim().toLowerCase() === nombreLower);
       if (yaExiste) {
@@ -2716,7 +2703,6 @@ function verHistorialCliente(cliId) {
 
       guardarDB('db_proveedores', dbProveedores); 
 
-      // Limpieza automática y cierre de modal
       nombreInput.value = '';
       document.getElementById('prov-cuit').value = '';
       document.getElementById('prov-telefono').value = '';
@@ -2786,10 +2772,8 @@ function verHistorialCliente(cliId) {
       if (confirm(`⚠️ ¿Está completamente seguro que desea borrar al proveedor "${nombrePrv}"?`)) {
         const idABorrar = proveedorSeleccionadoId;
         
-        // 1. Cerramos la ficha primero para liberar los contenedores del DOM
         cerrarHistorialProveedor();
         
-        // 2. Eliminamos de la base de datos y guardamos
         delete dbProveedores[idABorrar];
         if (dbHistorialProveedores[idABorrar]) {
           delete dbHistorialProveedores[idABorrar];
@@ -2797,51 +2781,67 @@ function verHistorialCliente(cliId) {
         }
         guardarDB('db_proveedores', dbProveedores);
         
-        // 3. Refrescamos la interfaz general
         renderizarTablaProveedores();
         alert("Proveedor eliminado correctamente.");
       }
     }
 
-  function verHistorialProveedor(provId) {
-  if (!provId) return;
-  proveedorSeleccionadoId = provId; 
-  
-  const prov = dbProveedores[provId] || (JSON.parse(localStorage.getItem('db_proveedores') || '{}'))[provId]; 
-  if (!prov) {
-    alert("No se pudieron cargar los datos del proveedor.");
-    return;
-  }
-  
-  const nombreEl = document.getElementById('historial-nombre-proveedor');
-  const contactoEl = document.getElementById('historial-contacto-proveedor');
-  if (nombreEl) nombreEl.textContent = prov.nombre || '';
-  
-  const saldoActual = calcularSaldoProveedor ? calcularSaldoProveedor(provId) : 0;
-  if (contactoEl) contactoEl.textContent = `Tel: ${prov.telefono || 'S/D'} | Email: ${prov.email || 'S/D'} | Saldo Actual: $${saldoActual.toLocaleString()}`;
-  
-  // Forzar apertura visible en Android WebView
-  const modalProv = document.getElementById('modal-historial-proveedor');
-  if (modalProv) {
-    modalProv.classList.remove('hidden');
-    modalProv.style.display = 'flex'; // 👈 Fuerza el despliegue visual
-  }
-  
-  if (typeof renderizarTablaHistorialProveedor === 'function') {
-    renderizarTablaHistorialProveedor();
-  }
-};
-      } catch (e) {
-        console.warn("Error al renderizar historial proveedor:", e);
+    function verHistorialProveedor(provId) {
+      if (!provId) return;
+      proveedorSeleccionadoId = provId; 
+      
+      const prov = dbProveedores[provId] || (JSON.parse(localStorage.getItem('db_proveedores') || '{}'))[provId]; 
+      if (!prov) {
+        alert("No se pudieron cargar los datos del proveedor.");
+        return;
       }
+      
+      const nombreEl = document.getElementById('historial-nombre-proveedor');
+      const contactoEl = document.getElementById('historial-contacto-proveedor');
+      if (nombreEl) nombreEl.textContent = prov.nombre || '';
+      
+      const saldoActual = calcularSaldoProveedor(provId);
+      if (contactoEl) contactoEl.textContent = `Tel: ${prov.telefono || 'S/D'} | CUIT: ${prov.cuit || 'S/D'} | Saldo Deuda: $${saldoActual.toLocaleString()}`;
+      
+      const modalProv = document.getElementById('modal-historial-proveedor');
+      if (modalProv) {
+        modalProv.classList.remove('hidden');
+        modalProv.style.display = 'flex';
+      }
+      
+      document.getElementById('edit-prov-nombre').value = prov.nombre || '';
+      document.getElementById('edit-prov-cuit').value = prov.cuit || '';
+      document.getElementById('edit-prov-telefono').value = prov.telefono || '';
+      document.getElementById('edit-prov-rubro').value = prov.rubro || '';
+
+      renderizarTablaHistorialProveedor();
     }
 
-  function cerrarHistorialProveedor() { 
+    function guardarEdicionProveedor() {
+      if (!proveedorSeleccionadoId || !dbProveedores[proveedorSeleccionadoId]) return;
+      const prov = dbProveedores[proveedorSeleccionadoId];
+
+      const nuevoNombre = document.getElementById('edit-prov-nombre').value.trim();
+      if (!nuevoNombre) { alert("La razón social no puede estar vacía."); return; }
+
+      prov.nombre = nuevoNombre;
+      prov.cuit = document.getElementById('edit-prov-cuit').value.trim();
+      prov.telefono = document.getElementById('edit-prov-telefono').value.trim();
+      prov.rubro = document.getElementById('edit-prov-rubro').value.trim();
+
+      guardarDB('db_proveedores', dbProveedores);
+      renderizarTablaProveedores();
+      cargarBuscadorProveedores();
+      verHistorialProveedor(proveedorSeleccionadoId);
+      alert("¡Datos del proveedor actualizados con éxito!");
+    }
+
+    function cerrarHistorialProveedor() { 
       proveedorSeleccionadoId = null; 
       const modal = document.getElementById('modal-historial-proveedor');
       if (modal) {
         modal.classList.add('hidden');
-        modal.style.display = 'none'; // Limpia el forzado visual
+        modal.style.display = 'none';
       }
       const selBuscador = document.getElementById('select-buscador-proveedor');
       if (selBuscador) selBuscador.value = "";
@@ -3817,7 +3817,7 @@ function verHistorialCliente(cliId) {
             if (bkp.dbProveedores) guardarDB('db_proveedores', bkp.dbProveedores);
             if (bkp.dbInsumos) guardarDB('db_insumos', bkp.dbInsumos);
             if (bkp.dbRepartos) guardarDB('db_repartos', bkp.dbRepartos);
-            if (bkp.dbRecurrentes) guardarDB('db_recurrentes', bkp.dbRecurrentes);
+            if (bkp.dbRecurrentes) guardarDB('db_repartos', bkp.dbRecurrentes);
             if (bkp.dbNotasMostrador) guardarDB('db_notas_mostrador', bkp.dbNotasMostrador);
             if (bkp.dbHistorialClientes) guardarDB('db_historial_clientes', bkp.dbHistorialClientes);
             if (bkp.dbHistorialProveedores) guardarDB('db_historial_proveedores', bkp.dbHistorialProveedores);
