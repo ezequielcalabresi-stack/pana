@@ -1131,30 +1131,48 @@
     var dbRepartosCerrados = {};
     var usuarioActivoId = 'USR-1';
 
-    function cargarDB(key, fallback) {
+   function cargarDB(key, fallback) {
+      // 1. CARGA INMEDIATA DESDE LOCALSTORAGE (Evita pantalla en blanco en la APK)
       const data = localStorage.getItem(key);
       let valorInicial = data ? JSON.parse(data) : fallback;
+
+      // Renderizado inmediato preventivo para que las tablas no arranquen vacías en el WebView
+      if (key === 'db_repartos') { dbRepartos = valorInicial; renderizarPlanillaReparto(); renderizarCuadra(); }
+      if (key === 'db_clientes') { dbClientes = valorInicial; renderizarTablaClientes(); cargarSelectorClientesReparto(); cargarBuscadorClientes(); cargarSelectorClientesRecurrentes(); }
+      if (key === 'db_proveedores') { dbProveedores = valorInicial; renderizarTablaProveedores(); cargarBuscadorProveedores(); }
+      if (key === 'db_insumos') { dbInsumos = valorInicial; renderizarStockInsumos(); cargarSelectorInsumosFactura(); cargarSelectorInsumosMovimiento(); }
+      if (key === 'db_panificados') { dbPanificados = valorInicial; renderizarTablaPanificados(); cargarSelectorPanificadosReparto(); cargarSelectorProductosRecurrentes(); }
+      if (key === 'db_productos') { dbProductos = valorInicial; renderizarTablaCatalogo(); cargarSelectorDespachoReparto(); cargarSelectorProductosRecurrentes(); }
+      if (key === 'db_usuarios') { dbUsuarios = valorInicial; renderizarTablaUsuarios(); renderizarUsuariosSelect(); }
+      if (key === 'db_cajas_diarias') { dbCajasDiarias = valorInicial; cargarCajasHoyUI(); renderizarReportesMensuales(); }
+      if (key === 'db_egresos_caja') { dbEgresosCaja = valorInicial; renderizarTablaEgresosHoy(); renderizarReportesMensuales(); }
+      if (key === 'db_recurrentes') { dbRecurrentes = valorInicial; renderizarTablaRecurrentes(); }
+      if (key === 'db_repartos_cerrados') { dbRepartosCerrados = valorInicial; renderizarPlanillaReparto(); }
+
+      // 2. SINCRONIZACIÓN EN SEGUNDO PLANO CON FIREBASE (Blindada contra borrados en vacío)
       if (rtdb) {
         try {
           rtdb.ref(key).on('value', (snapshot) => {
             const val = snapshot.val();
+            
             if (val !== null && val !== undefined) {
               valorInicial = val;
               localStorage.setItem(key, JSON.stringify(val));
             } else if (!data) {
               rtdb.ref(key).set(fallback);
             }
-            if (key === 'db_repartos') { dbRepartos = val || fallback; renderizarPlanillaReparto(); renderizarCuadra(); }
-            if (key === 'db_clientes') { dbClientes = val || fallback; renderizarTablaClientes(); cargarSelectorClientesReparto(); cargarBuscadorClientes(); cargarSelectorClientesRecurrentes(); }
-            if (key === 'db_proveedores') { dbProveedores = val || fallback; renderizarTablaProveedores(); cargarBuscadorProveedores(); }
-            if (key === 'db_insumos') { dbInsumos = val || fallback; renderizarStockInsumos(); cargarSelectorInsumosFactura(); cargarSelectorInsumosMovimiento(); }
-            if (key === 'db_panificados') { dbPanificados = val || fallback; renderizarTablaPanificados(); cargarSelectorPanificadosReparto(); cargarSelectorProductosRecurrentes(); }
-            if (key === 'db_productos') { dbProductos = val || fallback; renderizarTablaCatalogo(); cargarSelectorDespachoReparto(); cargarSelectorProductosRecurrentes(); }
-            if (key === 'db_usuarios') { dbUsuarios = val || fallback; renderizarTablaUsuarios(); renderizarUsuariosSelect(); }
-            if (key === 'db_cajas_diarias') { dbCajasDiarias = val || fallback; cargarCajasHoyUI(); renderizarReportesMensuales(); }
-            if (key === 'db_egresos_caja') { dbEgresosCaja = val || fallback; renderizarTablaEgresosHoy(); renderizarReportesMensuales(); }
-            if (key === 'db_recurrentes') { dbRecurrentes = val || fallback; renderizarTablaRecurrentes(); }
-            if (key === 'db_repartos_cerrados') { dbRepartosCerrados = val || fallback; renderizarPlanillaReparto(); }
+
+            if (key === 'db_repartos') { dbRepartos = val || valorInicial; renderizarPlanillaReparto(); renderizarCuadra(); }
+            if (key === 'db_clientes') { dbClientes = val || valorInicial; renderizarTablaClientes(); cargarSelectorClientesReparto(); cargarBuscadorClientes(); cargarSelectorClientesRecurrentes(); }
+            if (key === 'db_proveedores') { dbProveedores = val || valorInicial; renderizarTablaProveedores(); cargarBuscadorProveedores(); }
+            if (key === 'db_insumos') { dbInsumos = val || valorInicial; renderizarStockInsumos(); cargarSelectorInsumosFactura(); cargarSelectorInsumosMovimiento(); }
+            if (key === 'db_panificados') { dbPanificados = val || valorInicial; renderizarTablaPanificados(); cargarSelectorPanificadosReparto(); cargarSelectorProductosRecurrentes(); }
+            if (key === 'db_productos') { dbProductos = val || valorInicial; renderizarTablaCatalogo(); cargarSelectorDespachoReparto(); cargarSelectorProductosRecurrentes(); }
+            if (key === 'db_usuarios') { dbUsuarios = val || valorInicial; renderizarTablaUsuarios(); renderizarUsuariosSelect(); }
+            if (key === 'db_cajas_diarias') { dbCajasDiarias = val || valorInicial; cargarCajasHoyUI(); renderizarReportesMensuales(); }
+            if (key === 'db_egresos_caja') { dbEgresosCaja = val || valorInicial; renderizarTablaEgresosHoy(); renderizarReportesMensuales(); }
+            if (key === 'db_recurrentes') { dbRecurrentes = val || valorInicial; renderizarTablaRecurrentes(); }
+            if (key === 'db_repartos_cerrados') { dbRepartosCerrados = val || valorInicial; renderizarPlanillaReparto(); }
           });
         } catch (e) { console.warn("Firebase Offline"); }
       }
@@ -1167,7 +1185,12 @@
     }
     
     function guardarRepartoPorFecha(fecha) {
-       if (rtdb) rtdb.ref('db_repartos/' + fecha).set(dbRepartos[fecha]).catch(err => console.warn(err));
+       if (rtdb) {
+          // En lugar de un .set() masivo que pisa todo el día, 
+          // actualizamos la rama específica de la fecha de forma segura
+          const subNodo = dbRepartos[fecha] || [];
+          rtdb.ref('db_repartos/' + fecha).set(subNodo).catch(err => console.warn(err));
+       }
        localStorage.setItem('db_repartos', JSON.stringify(dbRepartos));
     }
 
@@ -1874,6 +1897,16 @@
       }
 
       const pedidosHoy = dbRepartos[fechaActual] || [];
+
+      // ==========================================
+      // ORDENAMIENTO ALFABÉTICO AUTOMÁTICO (A-Z)
+      // ==========================================
+      pedidosHoy.sort((a, b) => {
+        let clienteA = (a.clienteNombre || "").toLowerCase();
+        let clienteB = (b.clienteNombre || "").toLowerCase();
+        return clienteA.localeCompare(clienteB);
+      });
+
       let totalMonto = 0, totalEfectivo = 0, totalCtaCte = 0;
 
       pedidosHoy.forEach((p) => {
@@ -3612,24 +3645,24 @@
       const fSel = document.getElementById('select-backups-historial').value;
       if (!fSel || !dbBackupsDiarios[fSel]) { alert("Seleccione una fecha válida."); return; }
 
-      if (confirm(`⚠️ ¿Desea restaurar el estado completo a la fecha ${fSel}?`)) {
-        const bkp = dbBackupsDiarios[fSel].datos;
-        guardarDB('db_usuarios', bkp.dbUsuarios);
-        guardarDB('db_panificados', bkp.dbPanificados);
-        guardarDB('db_productos', bkp.dbProductos);
-        guardarDB('db_clientes', bkp.dbClientes);
-        guardarDB('db_proveedores', bkp.dbProveedores);
-        guardarDB('db_insumos', bkp.dbInsumos);
-        guardarDB('db_repartos', bkp.dbRepartos);
-        guardarDB('db_recurrentes', bkp.dbRecurrentes || {});
-        guardarDB('db_notas_mostrador', bkp.dbNotasMostrador);
-        guardarDB('db_historial_clientes', bkp.dbHistorialClientes);
-        guardarDB('db_historial_proveedores', bkp.dbHistorialProveedores);
-        guardarDB('db_cajas_diarias', bkp.dbCajasDiarias);
-        guardarDB('db_egresos_caja', bkp.dbEgresosCaja);
-        guardarDB('db_repartos_cerrados', bkp.dbRepartosCerrados || {});
+      // PREVENCIÓN CRÍTICA: Prohibir restaurar sobre la fecha de hoy para evitar borrados accidentales
+      if (fSel === fechaActual) {
+        alert("⚠️ No se puede restaurar un respaldo del mismo día operativo actual para evitar conflictos de sincronización.");
+        return;
+      }
 
-        alert("¡Sistema restaurado correctamente!");
+      if (confirm(`⚠️ ¿Desea restaurar el estado de las maestras a la fecha ${fSel}? (Los pedidos del día actual se mantendrán protegidos).`)) {
+        const bkp = dbBackupsDiarios[fSel].datos;
+        
+        // Solo restauramos tablas estructurales (clientes, productos, insumos), 
+        // NUNCA pisamos a la fuerza los repartos activos del día con un JSON viejo
+        if (bkp.dbClientes) guardarDB('db_clientes', bkp.dbClientes);
+        if (bkp.dbProveedores) guardarDB('db_proveedores', bkp.dbProveedores);
+        if (bkp.dbInsumos) guardarDB('db_insumos', bkp.dbInsumos);
+        if (bkp.dbPanificados) guardarDB('db_panificados', bkp.dbPanificados);
+        if (bkp.dbProductos) guardarDB('db_productos', bkp.dbProductos);
+
+        alert("¡Tablas maestras restauradas correctamente sin afectar la operación diaria!");
         window.location.reload();
       }
     }
