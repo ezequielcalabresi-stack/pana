@@ -2365,40 +2365,32 @@
       }
     }
 
-   function verHistorialCliente(cliId) {
-      if (!cliId) return;
-      clienteSeleccionadoId = cliId; 
-      
-      const cli = dbClientes[cliId] || (JSON.parse(localStorage.getItem('db_clientes') || '{}'))[cliId]; 
-      if (!cli) {
-        alert("No se pudieron cargar los datos del cliente.");
-        return;
-      }
-      
-      const nombreEl = document.getElementById('historial-nombre-cliente');
-      const contactoEl = document.getElementById('historial-contacto-cliente');
-      if (nombreEl) nombreEl.textContent = cli.nombre || '';
-      
-      const saldoActual = calcularSaldoCliente(cliId);
-      if (contactoEl) contactoEl.textContent = `Tel: ${cli.telefono || 'S/D'} | Email: ${cli.email || 'S/D'} | Saldo Actual: $${saldoActual.toLocaleString()}`;
-      
-      if (document.getElementById('edit-cli-nombre')) document.getElementById('edit-cli-nombre').value = cli.nombre || '';
-      if (document.getElementById('edit-cli-cuit')) document.getElementById('edit-cli-cuit').value = cli.cuit || '';
-      if (document.getElementById('edit-cli-direccion')) document.getElementById('edit-cli-direccion').value = cli.direccion || '';
-      if (document.getElementById('edit-cli-telefono')) document.getElementById('edit-cli-telefono').value = cli.telefono || '';
-      if (document.getElementById('edit-cli-email')) document.getElementById('edit-cli-email').value = cli.email || '';
-
-      const modalCli = document.getElementById('modal-historial-cliente');
-      if (modalCli) {
-        modalCli.classList.remove('hidden');
-        modalCli.style.display = 'flex';
-      }
-      
-      const selBuscador = document.getElementById('select-buscador-cliente');
-      if (selBuscador) selBuscador.value = cliId;
-      
-      try {
-        renderizarTablaHistorialCliente();
+function verHistorialCliente(cliId) {
+  if (!cliId) return;
+  clienteSeleccionadoId = cliId; 
+  
+  const cli = dbClientes[cliId] || (JSON.parse(localStorage.getItem('db_clientes') || '{}'))[cliId]; 
+  if (!cli) {
+    alert("No se pudieron cargar los datos del cliente.");
+    return;
+  }
+  
+  const nombreEl = document.getElementById('historial-nombre-cliente');
+  const contactoEl = document.getElementById('historial-contacto-cliente');
+  if (nombreEl) nombreEl.textContent = cli.nombre || '';
+  
+  const saldoActual = calcularSaldoCliente(cliId);
+  if (contactoEl) contactoEl.textContent = `Tel: ${cli.telefono || 'S/D'} | Email: ${cli.email || 'S/D'} | Saldo Actual: $${saldoActual.toLocaleString()}`;
+  
+  // Forzar apertura visible en Android WebView
+  const modalCli = document.getElementById('modal-historial-cliente');
+  if (modalCli) {
+    modalCli.classList.remove('hidden');
+    modalCli.style.display = 'flex'; // 👈 Fuerza el despliegue visual
+  }
+  
+  renderizarTablaHistorialCliente();
+};
       } catch (e) {
         console.warn("Error al renderizar historial:", e);
       }
@@ -2811,35 +2803,34 @@
       }
     }
 
-    function verHistorialProveedor(provId) {
-      if (!provId) return;
-      proveedorSeleccionadoId = provId; 
-      
-      const prv = dbProveedores[provId] || (JSON.parse(localStorage.getItem('db_proveedores') || '{}'))[provId]; 
-      if (!prv) {
-        alert("No se pudieron cargar los datos del proveedor.");
-        return;
-      }
-      
-      const nombreProvEl = document.getElementById('historial-nombre-proveedor');
-      if (nombreProvEl) nombreProvEl.textContent = prv.nombre || '';
-      
-      if (document.getElementById('edit-prov-nombre')) document.getElementById('edit-prov-nombre').value = prv.nombre || '';
-      if (document.getElementById('edit-prov-cuit')) document.getElementById('edit-prov-cuit'].value = prv.cuit || '';
-      if (document.getElementById('edit-prov-telefono')) document.getElementById('edit-prov-telefono').value = prv.telefono || '';
-      if (document.getElementById('edit-prov-rubro')) document.getElementById('edit-prov-rubro').value = prv.rubro || '';
-
-      const modalProv = document.getElementById('modal-historial-proveedor');
-      if (modalProv) {
-        modalProv.classList.remove('hidden');
-        modalProv.style.display = 'flex';
-      }
-
-      const selBuscador = document.getElementById('select-buscador-proveedor');
-      if (selBuscador) selBuscador.value = provId;
-      
-      try {
-        renderizarTablaHistorialProveedor();
+  function verHistorialProveedor(provId) {
+  if (!provId) return;
+  proveedorSeleccionadoId = provId; 
+  
+  const prov = dbProveedores[provId] || (JSON.parse(localStorage.getItem('db_proveedores') || '{}'))[provId]; 
+  if (!prov) {
+    alert("No se pudieron cargar los datos del proveedor.");
+    return;
+  }
+  
+  const nombreEl = document.getElementById('historial-nombre-proveedor');
+  const contactoEl = document.getElementById('historial-contacto-proveedor');
+  if (nombreEl) nombreEl.textContent = prov.nombre || '';
+  
+  const saldoActual = calcularSaldoProveedor ? calcularSaldoProveedor(provId) : 0;
+  if (contactoEl) contactoEl.textContent = `Tel: ${prov.telefono || 'S/D'} | Email: ${prov.email || 'S/D'} | Saldo Actual: $${saldoActual.toLocaleString()}`;
+  
+  // Forzar apertura visible en Android WebView
+  const modalProv = document.getElementById('modal-historial-proveedor');
+  if (modalProv) {
+    modalProv.classList.remove('hidden');
+    modalProv.style.display = 'flex'; // 👈 Fuerza el despliegue visual
+  }
+  
+  if (typeof renderizarTablaHistorialProveedor === 'function') {
+    renderizarTablaHistorialProveedor();
+  }
+};
       } catch (e) {
         console.warn("Error al renderizar historial proveedor:", e);
       }
@@ -2850,7 +2841,7 @@
       const modal = document.getElementById('modal-historial-proveedor');
       if (modal) {
         modal.classList.add('hidden');
-        modalProv.style.display = 'none'; // corregido abajo por seguridad
+        modal.style.display = 'none'; // Limpia el forzado visual
       }
       const selBuscador = document.getElementById('select-buscador-proveedor');
       if (selBuscador) selBuscador.value = "";
