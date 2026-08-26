@@ -1131,7 +1131,7 @@
     var dbRepartosCerrados = {};
     var usuarioActivoId = 'USR-1';
 
-   function cargarDB(key, fallback) {
+    function cargarDB(key, fallback) {
       // 1. CARGA INMEDIATA DESDE LOCALSTORAGE (Evita pantalla en blanco en la APK)
       const data = localStorage.getItem(key);
       let valorInicial = data ? JSON.parse(data) : fallback;
@@ -1186,8 +1186,6 @@
     
     function guardarRepartoPorFecha(fecha) {
        if (rtdb) {
-          // En lugar de un .set() masivo que pisa todo el día, 
-          // actualizamos la rama específica de la fecha de forma segura
           const subNodo = dbRepartos[fecha] || [];
           rtdb.ref('db_repartos/' + fecha).set(subNodo).catch(err => console.warn(err));
        }
@@ -1264,9 +1262,40 @@
       inicializarAplicacion();
     }
 
-    function abrirModalAltaCliente() { document.getElementById('modal-alta-cliente').classList.remove('hidden'); }
+    // NAVEGACIÓN CON ENTER EN MODALES
+    function habilitarNavegacionPorEnterEnModal(modalId) {
+      const modal = document.getElementById(modalId);
+      if (!modal) return;
+      
+      const inputs = modal.querySelectorAll('input, select');
+      inputs.forEach((input, index) => {
+        input.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            const siguiente = inputs[index + 1];
+            if (siguiente) {
+              siguiente.focus();
+            } else {
+              const btnSubmit = modal.querySelector('button.bg-amber-700, button.bg-amber-800');
+              if (btnSubmit) btnSubmit.click();
+            }
+          }
+        });
+      });
+    }
+
+    function abrirModalAltaCliente() { 
+      document.getElementById('modal-alta-cliente').classList.remove('hidden'); 
+      document.getElementById('cli-nombre').focus();
+      habilitarNavegacionPorEnterEnModal('modal-alta-cliente');
+    }
     function cerrarModalAltaCliente() { document.getElementById('modal-alta-cliente').classList.add('hidden'); }
-    function abrirModalAltaProveedor() { document.getElementById('modal-alta-proveedor').classList.remove('hidden'); }
+    
+    function abrirModalAltaProveedor() { 
+      document.getElementById('modal-alta-proveedor').classList.remove('hidden'); 
+      document.getElementById('prov-nombre').focus();
+      habilitarNavegacionPorEnterEnModal('modal-alta-proveedor');
+    }
     function cerrarModalAltaProveedor() { document.getElementById('modal-alta-proveedor').classList.add('hidden'); }
 
     function inicializarFechaCuadra() {
@@ -1846,7 +1875,7 @@
     
     function cerrarRepartoDelDia() {
       if (dbRepartosCerrados[fechaActual]) { alert("El reparto de este día ya está cerrado."); return; }
-      if (!confirm(`🔒 ¿Desea cerrar el Reparto del día ${fechaActual}?\n\nLos pedidos que queden pendientes pasarán formalmente a la Cuenta Corriente de los clientes y se bloqueará la edición operativa.`)) return;
+      if (!confirm(`🔒 ¿Desea cerrar el Reparto del día ${fechaActual}?\n\nLos pedidos que queden pendientes pasarán formalmente a la Cuenta Corriente los clientes y se bloqueará la edición operativa.`)) return;
 
       dbRepartosCerrados[fechaActual] = true;
       guardarDB('db_repartos_cerrados', dbRepartosCerrados);
@@ -2204,7 +2233,22 @@
     }
 
     function guardarCliente() {
-      const nombre = document.getElementById('cli-nombre').value.trim(); if (!nombre) return;
+      const nombreInput = document.getElementById('cli-nombre');
+      const nombre = nombreInput.value.trim(); 
+      if (!nombre) {
+        alert("Ingrese el nombre o razón social del cliente.");
+        return;
+      }
+
+      // VALIDACIÓN DE DUPLICADOS
+      const nombreLower = nombre.toLowerCase();
+      const yaExiste = Object.values(dbClientes).some(c => c.nombre.trim().toLowerCase() === nombreLower);
+      if (yaExiste) {
+        alert(`⚠️ Ya existe un cliente registrado con el nombre "${nombre}".`);
+        nombreInput.focus();
+        return;
+      }
+
       const id = generarID('CLI');
       dbClientes[id] = { 
         id, 
@@ -2214,8 +2258,11 @@
         telefono: document.getElementById('cli-telefono').value.trim(),
         email: document.getElementById('cli-email')?.value.trim() || '' 
       };
+      
       guardarDB('db_clientes', dbClientes);
-      document.getElementById('cli-nombre').value = ''; 
+
+      // Limpieza automática del modal
+      nombreInput.value = ''; 
       if(document.getElementById('cli-cuit')) document.getElementById('cli-cuit').value = '';
       if(document.getElementById('cli-direccion')) document.getElementById('cli-direccion').value = '';
       if(document.getElementById('cli-telefono')) document.getElementById('cli-telefono').value = '';
@@ -2280,17 +2327,29 @@
       cargarBuscadorClientes();
     }
 
-    function eliminarClienteActual() {
+  function eliminarClienteActual() {
       if (!clienteSeleccionadoId) return;
       const cli = dbClientes[clienteSeleccionadoId];
       const nombreCli = cli ? cli.nombre : 'este cliente';
+      
       if (confirm(`⚠️ ¿Está completamente seguro que desea borrar al cliente "${nombreCli}"?`)) {
-        delete dbClientes[clienteSeleccionadoId];
+        const idABorrar = clienteSeleccionadoId;
+        
+        // 1. Cerramos la ficha primero para liberar los contenedores del DOM
+        cerrarHistorialCliente();
+        
+        // 2. Eliminamos de la base de datos y guardamos
+        delete dbClientes[idABorrar];
+        if (dbHistorialClientes[idABorrar]) {
+          delete dbHistorialClientes[idABorrar];
+          guardarDB('db_historial_clientes', dbHistorialClientes);
+        }
         guardarDB('db_clientes', dbClientes);
+        
+        // 3. Refrescamos la interfaz general y selectores dependientes
         renderizarTablaClientes();
         cargarSelectorClientesReparto();
         cargarSelectorClientesRecurrentes();
-        cerrarHistorialCliente();
         alert("Cliente eliminado correctamente.");
       }
     }
@@ -2602,11 +2661,40 @@
       window.location.href = `mailto:${emailDestino}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`;
     }
 
-    function guardarProveedor() {
-      const nombre = document.getElementById('prov-nombre').value.trim(); if (!nombre) return;
+   function guardarProveedor() {
+      const nombreInput = document.getElementById('prov-nombre');
+      const nombre = nombreInput.value.trim(); 
+      if (!nombre) {
+        alert("Ingrese la razón social o nombre del proveedor.");
+        return;
+      }
+
+      // VALIDACIÓN DE DUPLICADOS
+      const nombreLower = nombre.toLowerCase();
+      const yaExiste = Object.values(dbProveedores).some(p => p.nombre.trim().toLowerCase() === nombreLower);
+      if (yaExiste) {
+        alert(`⚠️ Ya existe un proveedor registrado con el nombre "${nombre}".`);
+        nombreInput.focus();
+        return;
+      }
+
       const id = generarID('PRV');
-      dbProveedores[id] = { id, nombre, cuit: document.getElementById('prov-cuit').value.trim(), telefono: document.getElementById('prov-telefono').value.trim(), rubro: document.getElementById('prov-rubro').value.trim() };
+      dbProveedores[id] = { 
+        id, 
+        nombre, 
+        cuit: document.getElementById('prov-cuit').value.trim(), 
+        telefono: document.getElementById('prov-telefono').value.trim(), 
+        rubro: document.getElementById('prov-rubro').value.trim() 
+      };
+
       guardarDB('db_proveedores', dbProveedores); 
+
+      // Limpieza automática y cierre de modal
+      nombreInput.value = '';
+      document.getElementById('prov-cuit').value = '';
+      document.getElementById('prov-telefono').value = '';
+      document.getElementById('prov-rubro').value = '';
+
       cerrarModalAltaProveedor();
       renderizarTablaProveedores(); 
       cargarBuscadorProveedores();
@@ -2667,11 +2755,23 @@
       if (!proveedorSeleccionadoId) return;
       const prv = dbProveedores[proveedorSeleccionadoId];
       const nombrePrv = prv ? prv.nombre : 'este proveedor';
+      
       if (confirm(`⚠️ ¿Está completamente seguro que desea borrar al proveedor "${nombrePrv}"?`)) {
-        delete dbProveedores[proveedorSeleccionadoId];
-        guardarDB('db_proveedores', dbProveedores);
-        renderizarTablaProveedores();
+        const idABorrar = proveedorSeleccionadoId;
+        
+        // 1. Cerramos la ficha primero para liberar los contenedores del DOM
         cerrarHistorialProveedor();
+        
+        // 2. Eliminamos de la base de datos y guardamos
+        delete dbProveedores[idABorrar];
+        if (dbHistorialProveedores[idABorrar]) {
+          delete dbHistorialProveedores[idABorrar];
+          guardarDB('db_historial_proveedores', dbHistorialProveedores);
+        }
+        guardarDB('db_proveedores', dbProveedores);
+        
+        // 3. Refrescamos la interfaz general
+        renderizarTablaProveedores();
         alert("Proveedor eliminado correctamente.");
       }
     }
@@ -3645,7 +3745,6 @@
       const fSel = document.getElementById('select-backups-historial').value;
       if (!fSel || !dbBackupsDiarios[fSel]) { alert("Seleccione una fecha válida."); return; }
 
-      // PREVENCIÓN CRÍTICA: Prohibir restaurar sobre la fecha de hoy para evitar borrados accidentales
       if (fSel === fechaActual) {
         alert("⚠️ No se puede restaurar un respaldo del mismo día operativo actual para evitar conflictos de sincronización.");
         return;
@@ -3654,8 +3753,6 @@
       if (confirm(`⚠️ ¿Desea restaurar el estado de las maestras a la fecha ${fSel}? (Los pedidos del día actual se mantendrán protegidos).`)) {
         const bkp = dbBackupsDiarios[fSel].datos;
         
-        // Solo restauramos tablas estructurales (clientes, productos, insumos), 
-        // NUNCA pisamos a la fuerza los repartos activos del día con un JSON viejo
         if (bkp.dbClientes) guardarDB('db_clientes', bkp.dbClientes);
         if (bkp.dbProveedores) guardarDB('db_proveedores', bkp.dbProveedores);
         if (bkp.dbInsumos) guardarDB('db_insumos', bkp.dbInsumos);
