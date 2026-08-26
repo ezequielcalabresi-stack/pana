@@ -1860,6 +1860,13 @@
       inputSubtotal.value = Number((precioUnit * valCant).toFixed(2));
     }
 
+    function obtenerSufijoSucursalUsuario() {
+      const usr = dbUsuarios[usuarioActivoId];
+      if (usr && usr.sucursal === 'espiga') return " (E)";
+      if (usr && usr.sucursal === 'alem') return " (A)";
+      return "";
+    }
+
     function agregarPedidoPanificado() {
       const fechaDestino = document.getElementById('rep-fecha-destino').value || fechaActual;
       if (dbRepartosCerrados[fechaDestino]) { alert(`⚠️ El reparto del día ${fechaDestino} ya se encuentra cerrado.`); return; }
@@ -1873,10 +1880,7 @@
       const cliente = dbClientes[cliId]; const panificado = dbPanificados[prodNombre];
       if (!cliente) return;
 
-      const usr = dbUsuarios[usuarioActivoId];
-      let sufijoOrigen = "";
-      if (usr && usr.sucursal === 'espiga') sufijoOrigen = " (E)";
-      else if (usr && usr.sucursal === 'alem') sufijoOrigen = " (A)";
+      const sufijoOrigen = obtenerSufijoSucursalUsuario();
 
       if (!dbRepartos[fechaDestino]) dbRepartos[fechaDestino] = [];
       dbRepartos[fechaDestino].push({
@@ -1908,10 +1912,7 @@
       if (!cliId || !prodNombre || isNaN(cant) || cant <= 0 || isNaN(montoTotal)) { alert("Verifique los datos del adicional."); return; }
       const cliente = dbClientes[cliId]; if (!cliente) return;
 
-      const usr = dbUsuarios[usuarioActivoId];
-      let sufijoOrigen = "";
-      if (usr && usr.sucursal === 'espiga') sufijoOrigen = " (E)";
-      else if (usr && usr.sucursal === 'alem') sufijoOrigen = " (A)";
+      const sufijoOrigen = obtenerSufijoSucursalUsuario();
 
       if (!dbRepartos[fechaDestino]) dbRepartos[fechaDestino] = [];
       dbRepartos[fechaDestino].push({
@@ -1940,8 +1941,11 @@
       const fechaClave = document.getElementById('cuadra-fecha-selector').value || fechaCuadraActiva;
       if (!fechaClave) { alert("⚠️ Por favor, seleccione una Fecha válida."); return; }
 
+      const sufijoOrigen = obtenerSufijoSucursalUsuario();
+      const textoNota = input.value.trim() + sufijoOrigen;
+
       if (!dbNotasMostrador[fechaClave]) dbNotasMostrador[fechaClave] = [];
-      dbNotasMostrador[fechaClave].push(input.value.trim());
+      dbNotasMostrador[fechaClave].push(textoNota);
       
       if (rtdb) rtdb.ref('db_notas_mostrador/' + fechaClave).set(dbNotasMostrador[fechaClave]).catch(e => console.warn(e));
       localStorage.setItem('db_notas_mostrador', JSON.stringify(dbNotasMostrador));
