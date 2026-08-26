@@ -2242,47 +2242,45 @@
     }
 
     function guardarCliente() {
-      const nombreInput = document.getElementById('cli-nombre');
-      const nombre = nombreInput.value.trim(); 
-      if (!nombre) {
-        alert("Ingrese el nombre o razón social del cliente.");
-        return;
-      }
+  const nombreInput = document.getElementById('cli-nombre');
+  const nombre = nombreInput.value.trim(); 
+  if (!nombre) {
+    alert("Ingrese el nombre o razón social del cliente.");
+    return;
+  }
 
-      const nombreLower = nombre.toLowerCase();
-      const yaExiste = Object.values(dbClientes).some(c => c.nombre.trim().toLowerCase() === nombreLower);
-      if (yaExiste) {
-        alert(`⚠️ Ya existe un cliente registrado con el nombre "${nombre}".`);
-        nombreInput.focus();
-        return;
-      }
+  const nombreLower = nombre.toLowerCase();
+  const yaExiste = Object.values(dbClientes).some(c => c.nombre.trim().toLowerCase() === nombreLower);
+  if (yaExiste) {
+    alert(`⚠️ Ya existe un cliente registrado con el nombre "${nombre}".`);
+    nombreInput.focus();
+    return;
+  }
 
-      const id = generarID('CLI');
-      dbClientes[id] = { 
-        id, 
-        nombre, 
-        cuit: document.getElementById('cli-cuit').value.trim(), 
-        direccion: document.getElementById('cli-direccion').value.trim(), 
-        telefono: document.getElementById('cli-telefono').value.trim(),
-        email: document.getElementById('cli-email')?.value.trim() || '' 
-      };
-      
-      guardarDB('db_clientes', dbClientes);
+  const id = generarID('CLI');
+  dbClientes[id] = { 
+    id, 
+    nombre, 
+    cuit: document.getElementById('cli-cuit').value.trim(), 
+    direccion: document.getElementById('cli-direccion').value.trim(), 
+    telefono: document.getElementById('cli-telefono').value.trim(),
+    email: document.getElementById('cli-email')?.value.trim() || '' 
+  };
+  
+  guardarDB('db_clientes', dbClientes);
 
-      nombreInput.value = ''; 
-      if(document.getElementById('cli-cuit')) document.getElementById('cli-cuit').value = '';
-      if(document.getElementById('cli-direccion')) document.getElementById('cli-direccion').value = '';
-      if(document.getElementById('cli-telefono')) document.getElementById('cli-telefono').value = '';
-      if(document.getElementById('cli-email')) document.getElementById('cli-email').value = '';
-      
-      cerrarModalAltaCliente();
-      cargarSelectorClientesReparto(); 
-      cargarSelectorClientesRecurrentes();
-      renderizarTablaClientes();
-      cargarBuscadorClientes();
-      alert("¡Cliente registrado exitosamente!");
-    }
-
+  nombreInput.value = ''; 
+  if(document.getElementById('cli-cuit')) document.getElementById('cli-cuit').value = '';
+  if(document.getElementById('cli-direccion')) document.getElementById('cli-direccion').value = '';
+  if(document.getElementById('cli-telefono')) document.getElementById('cli-telefono').value = '';
+  if(document.getElementById('cli-email')) document.getElementById('cli-email').value = '';
+  
+  cerrarModalAltaCliente();
+  cargarSelectorClientesReparto(); 
+  cargarSelectorClientesRecurrentes();
+  renderizarTablaClientes();
+  cargarBuscadorClientes();
+}
     function calcularSaldoCliente(cliId) {
       let saldo = 0;
       Object.values(dbRepartos).forEach(pDia => Object.values(pDia).forEach(p => { if (p.clienteId === cliId && !p.pagado) saldo += p.monto; }));
@@ -2334,29 +2332,27 @@
       cargarBuscadorClientes();
     }
 
-    function eliminarClienteActual() {
-      if (!clienteSeleccionadoId) return;
-      const cli = dbClientes[clienteSeleccionadoId];
-      const nombreCli = cli ? cli.nombre : 'este cliente';
-      
-      if (confirm(`⚠️ ¿Está completamente seguro que desea borrar al cliente "${nombreCli}"?`)) {
-        const idABorrar = clienteSeleccionadoId;
-        
-        cerrarHistorialCliente();
-        
-        delete dbClientes[idABorrar];
-        if (dbHistorialClientes[idABorrar]) {
-          delete dbHistorialClientes[idABorrar];
-          guardarDB('db_historial_clientes', dbHistorialClientes);
-        }
-        guardarDB('db_clientes', dbClientes);
-        
-        renderizarTablaClientes();
-        cargarSelectorClientesReparto();
-        cargarSelectorClientesRecurrentes();
-        alert("Cliente eliminado correctamente.");
-      }
+  function eliminarClienteActual() {
+  if (!clienteSeleccionadoId) return;
+  const cli = dbClientes[clienteSeleccionadoId];
+  const nombreCli = cli ? cli.nombre : 'este cliente';
+  
+  if (confirm(`⚠️ ¿Está completamente seguro que desea borrar al cliente "${nombreCli}"?`)) {
+    const idABorrar = clienteSeleccionadoId;
+    cerrarHistorialCliente();
+    
+    delete dbClientes[idABorrar];
+    if (dbHistorialClientes[idABorrar]) {
+      delete dbHistorialClientes[idABorrar];
+      guardarDB('db_historial_clientes', dbHistorialClientes);
     }
+    guardarDB('db_clientes', dbClientes);
+    
+    renderizarTablaClientes();
+    cargarSelectorClientesReparto();
+    cargarSelectorClientesRecurrentes();
+  }
+}
 
     function cerrarHistorialCliente() { 
       clienteSeleccionadoId = null; 
@@ -2369,58 +2365,58 @@
       if (selBuscador) selBuscador.value = "";
     }
 
-    function verHistorialCliente(cliId) {
-      if (!cliId) return;
-      clienteSeleccionadoId = cliId; 
-      
-      const cli = dbClientes[cliId] || (JSON.parse(localStorage.getItem('db_clientes') || '{}'))[cliId]; 
-      if (!cli) {
-        alert("No se pudieron cargar los datos del cliente.");
-        return;
-      }
-      
-      const nombreEl = document.getElementById('historial-nombre-cliente');
-      const contactoEl = document.getElementById('historial-contacto-cliente');
-      if (nombreEl) nombreEl.textContent = cli.nombre || '';
-      
-      const saldoActual = calcularSaldoCliente(cliId);
-      if (contactoEl) contactoEl.textContent = `Tel: ${cli.telefono || 'S/D'} | Email: ${cli.email || 'S/D'} | Saldo Actual: $${saldoActual.toLocaleString()}`;
-      
-      const modalCli = document.getElementById('modal-historial-cliente');
-      if (modalCli) {
-        modalCli.classList.remove('hidden');
-        modalCli.style.display = 'flex';
-      }
-      
-      document.getElementById('edit-cli-nombre').value = cli.nombre || '';
-      document.getElementById('edit-cli-cuit').value = cli.cuit || '';
-      document.getElementById('edit-cli-direccion').value = cli.direccion || '';
-      document.getElementById('edit-cli-telefono').value = cli.telefono || '';
-      document.getElementById('edit-cli-email').value = cli.email || '';
+   function verHistorialCliente(cliId) {
+  if (!cliId) return;
+  clienteSeleccionadoId = cliId; 
+  
+  // Forzar recarga desde la fuente de verdad actual
+  const clienteActual = dbClientes[cliId] || JSON.parse(localStorage.getItem('db_clientes') || '{}')[cliId];
+  if (!clienteActual) {
+    alert("No se pudieron cargar los datos del cliente.");
+    return;
+  }
+  
+  const nombreEl = document.getElementById('historial-nombre-cliente');
+  const contactoEl = document.getElementById('historial-contacto-cliente');
+  if (nombreEl) nombreEl.textContent = clienteActual.nombre || '';
+  
+  const saldoActual = calcularSaldoCliente(cliId);
+  if (contactoEl) contactoEl.textContent = `Tel: ${clienteActual.telefono || 'S/D'} | Email: ${clienteActual.email || 'S/D'} | Saldo Actual: $${saldoActual.toLocaleString()}`;
+  
+  const modalCli = document.getElementById('modal-historial-cliente');
+  if (modalCli) {
+    modalCli.classList.remove('hidden');
+    modalCli.style.display = 'flex';
+  }
+  
+  document.getElementById('edit-cli-nombre').value = clienteActual.nombre || '';
+  document.getElementById('edit-cli-cuit').value = clienteActual.cuit || '';
+  document.getElementById('edit-cli-direccion').value = clienteActual.direccion || '';
+  document.getElementById('edit-cli-telefono').value = clienteActual.telefono || '';
+  document.getElementById('edit-cli-email').value = clienteActual.email || '';
 
-      renderizarTablaHistorialCliente();
-    }
+  renderizarTablaHistorialCliente();
+}
 
-    function guardarEdicionCliente() {
-      if (!clienteSeleccionadoId || !dbClientes[clienteSeleccionadoId]) return;
-      const cli = dbClientes[clienteSeleccionadoId];
+   function guardarEdicionCliente() {
+  if (!clienteSeleccionadoId || !dbClientes[clienteSeleccionadoId]) return;
+  const cli = dbClientes[clienteSeleccionadoId];
 
-      const nuevoNombre = document.getElementById('edit-cli-nombre').value.trim();
-      if (!nuevoNombre) { alert("El nombre del cliente no puede estar vacío."); return; }
+  const nuevoNombre = document.getElementById('edit-cli-nombre').value.trim();
+  if (!nuevoNombre) { alert("El nombre del cliente no puede estar vacío."); return; }
 
-      cli.nombre = nuevoNombre;
-      cli.cuit = document.getElementById('edit-cli-cuit').value.trim();
-      cli.direccion = document.getElementById('edit-cli-direccion').value.trim();
-      cli.telefono = document.getElementById('edit-cli-telefono').value.trim();
-      cli.email = document.getElementById('edit-cli-email').value.trim();
+  cli.nombre = nuevoNombre;
+  cli.cuit = document.getElementById('edit-cli-cuit').value.trim();
+  cli.direccion = document.getElementById('edit-cli-direccion').value.trim();
+  cli.telefono = document.getElementById('edit-cli-telefono').value.trim();
+  cli.email = document.getElementById('edit-cli-email').value.trim();
 
-      guardarDB('db_clientes', dbClientes);
-      renderizarTablaClientes();
-      cargarSelectorClientesReparto();
-      cargarSelectorClientesRecurrentes();
-      verHistorialCliente(clienteSeleccionadoId);
-      alert("¡Datos actualizados con éxito!");
-    }
+  guardarDB('db_clientes', dbClientes);
+  renderizarTablaClientes();
+  cargarSelectorClientesReparto();
+  cargarSelectorClientesRecurrentes();
+  verHistorialCliente(clienteSeleccionadoId);
+}
 
     function abrirModalEditarMovCliente(id, origen, fechaOriginal) {
       movClienteEditContext = { id, origen, fechaOriginal };
@@ -2682,43 +2678,42 @@
       window.location.href = `mailto:${emailDestino}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`;
     }
 
-    function guardarProveedor() {
-      const nombreInput = document.getElementById('prov-nombre');
-      const nombre = nombreInput.value.trim(); 
-      if (!nombre) {
-        alert("Ingrese la razón social o nombre del proveedor.");
-        return;
-      }
+function guardarProveedor() {
+  const nombreInput = document.getElementById('prov-nombre');
+  const nombre = nombreInput.value.trim(); 
+  if (!nombre) {
+    alert("Ingrese la razón social o nombre del proveedor.");
+    return;
+  }
 
-      const nombreLower = nombre.toLowerCase();
-      const yaExiste = Object.values(dbProveedores).some(p => p.nombre.trim().toLowerCase() === nombreLower);
-      if (yaExiste) {
-        alert(`⚠️ Ya existe un proveedor registrado con el nombre "${nombre}".`);
-        nombreInput.focus();
-        return;
-      }
+  const nombreLower = nombre.toLowerCase();
+  const yaExiste = Object.values(dbProveedores).some(p => p.nombre.trim().toLowerCase() === nombreLower);
+  if (yaExiste) {
+    alert(`⚠️ Ya existe un proveedor registrado con el nombre "${nombre}".`);
+    nombreInput.focus();
+    return;
+  }
 
-      const id = generarID('PRV');
-      dbProveedores[id] = { 
-        id, 
-        nombre, 
-        cuit: document.getElementById('prov-cuit').value.trim(), 
-        telefono: document.getElementById('prov-telefono').value.trim(), 
-        rubro: document.getElementById('prov-rubro').value.trim() 
-      };
+  const id = generarID('PRV');
+  dbProveedores[id] = { 
+    id, 
+    nombre, 
+    cuit: document.getElementById('prov-cuit').value.trim(), 
+    telefono: document.getElementById('prov-telefono').value.trim(), 
+    rubro: document.getElementById('prov-rubro').value.trim() 
+  };
 
-      guardarDB('db_proveedores', dbProveedores); 
+  guardarDB('db_proveedores', dbProveedores); 
 
-      nombreInput.value = '';
-      document.getElementById('prov-cuit').value = '';
-      document.getElementById('prov-telefono').value = '';
-      document.getElementById('prov-rubro').value = '';
+  nombreInput.value = '';
+  document.getElementById('prov-cuit').value = '';
+  document.getElementById('prov-telefono').value = '';
+  document.getElementById('prov-rubro').value = '';
 
-      cerrarModalAltaProveedor();
-      renderizarTablaProveedores(); 
-      cargarBuscadorProveedores();
-      alert("¡Proveedor registrado exitosamente!");
-    }
+  cerrarModalAltaProveedor();
+  renderizarTablaProveedores(); 
+  cargarBuscadorProveedores();
+}
 
     function calcularSaldoProveedor(provId) {
       let saldo = 0;
@@ -2771,77 +2766,74 @@
     }
 
     function eliminarProveedorActual() {
-      if (!proveedorSeleccionadoId) return;
-      const prv = dbProveedores[proveedorSeleccionadoId];
-      const nombrePrv = prv ? prv.nombre : 'este proveedor';
-      
-      if (confirm(`⚠️ ¿Está completamente seguro que desea borrar al proveedor "${nombrePrv}"?`)) {
-        const idABorrar = proveedorSeleccionadoId;
-        
-        cerrarHistorialProveedor();
-        
-        delete dbProveedores[idABorrar];
-        if (dbHistorialProveedores[idABorrar]) {
-          delete dbHistorialProveedores[idABorrar];
-          guardarDB('db_historial_proveedores', dbHistorialProveedores);
-        }
-        guardarDB('db_proveedores', dbProveedores);
-        
-        renderizarTablaProveedores();
-        alert("Proveedor eliminado correctamente.");
-      }
+  if (!proveedorSeleccionadoId) return;
+  const prv = dbProveedores[proveedorSeleccionadoId];
+  const nombrePrv = prv ? prv.nombre : 'este proveedor';
+  
+  if (confirm(`⚠️ ¿Está completamente seguro que desea borrar al proveedor "${nombrePrv}"?`)) {
+    const idABorrar = proveedorSeleccionadoId;
+    cerrarHistorialProveedor();
+    
+    delete dbProveedores[idABorrar];
+    if (dbHistorialProveedores[idABorrar]) {
+      delete dbHistorialProveedores[idABorrar];
+      guardarDB('db_historial_proveedores', dbHistorialProveedores);
     }
+    guardarDB('db_proveedores', dbProveedores);
+    
+    renderizarTablaProveedores();
+    cargarBuscadorProveedores();
+  }
+}
 
     function verHistorialProveedor(provId) {
-      if (!provId) return;
-      proveedorSeleccionadoId = provId; 
-      
-      const prov = dbProveedores[provId] || (JSON.parse(localStorage.getItem('db_proveedores') || '{}'))[provId]; 
-      if (!prov) {
-        alert("No se pudieron cargar los datos del proveedor.");
-        return;
-      }
-      
-      const nombreEl = document.getElementById('historial-nombre-proveedor');
-      const contactoEl = document.getElementById('historial-contacto-proveedor');
-      if (nombreEl) nombreEl.textContent = prov.nombre || '';
-      
-      const saldoActual = calcularSaldoProveedor(provId);
-      if (contactoEl) contactoEl.textContent = `Tel: ${prov.telefono || 'S/D'} | CUIT: ${prov.cuit || 'S/D'} | Saldo Deuda: $${saldoActual.toLocaleString()}`;
-      
-      const modalProv = document.getElementById('modal-historial-proveedor');
-      if (modalProv) {
-        modalProv.classList.remove('hidden');
-        modalProv.style.display = 'flex';
-      }
-      
-      document.getElementById('edit-prov-nombre').value = prov.nombre || '';
-      document.getElementById('edit-prov-cuit').value = prov.cuit || '';
-      document.getElementById('edit-prov-telefono').value = prov.telefono || '';
-      document.getElementById('edit-prov-rubro').value = prov.rubro || '';
+  if (!provId) return;
+  proveedorSeleccionadoId = provId; 
+  
+  const prov = dbProveedores[provId] || JSON.parse(localStorage.getItem('db_proveedores') || '{}')[provId]; 
+  if (!prov) {
+    alert("No se pudieron cargar los datos del proveedor.");
+    return;
+  }
+  
+  const nombreEl = document.getElementById('historial-nombre-proveedor');
+  const contactoEl = document.getElementById('historial-contacto-proveedor');
+  if (nombreEl) nombreEl.textContent = prov.nombre || '';
+  
+  const saldoActual = calcularSaldoProveedor(provId);
+  if (contactoEl) contactoEl.textContent = `Tel: ${prov.telefono || 'S/D'} | CUIT: ${prov.cuit || 'S/D'} | Saldo Deuda: $${saldoActual.toLocaleString()}`;
+  
+  const modalProv = document.getElementById('modal-historial-proveedor');
+  if (modalProv) {
+    modalProv.classList.remove('hidden');
+    modalProv.style.display = 'flex';
+  }
+  
+  document.getElementById('edit-prov-nombre').value = prov.nombre || '';
+  document.getElementById('edit-prov-cuit').value = prov.cuit || '';
+  document.getElementById('edit-prov-telefono').value = prov.telefono || '';
+  document.getElementById('edit-prov-rubro').value = prov.rubro || '';
 
-      renderizarTablaHistorialProveedor();
-    }
+  renderizarTablaHistorialProveedor();
+}
 
-    function guardarEdicionProveedor() {
-      if (!proveedorSeleccionadoId || !dbProveedores[proveedorSeleccionadoId]) return;
-      const prov = dbProveedores[proveedorSeleccionadoId];
+   function guardarEdicionProveedor() {
+  if (!proveedorSeleccionadoId || !dbProveedores[proveedorSeleccionadoId]) return;
+  const prov = dbProveedores[proveedorSeleccionadoId];
 
-      const nuevoNombre = document.getElementById('edit-prov-nombre').value.trim();
-      if (!nuevoNombre) { alert("La razón social no puede estar vacía."); return; }
+  const nuevoNombre = document.getElementById('edit-prov-nombre').value.trim();
+  if (!nuevoNombre) { alert("La razón social no puede estar vacía."); return; }
 
-      prov.nombre = nuevoNombre;
-      prov.cuit = document.getElementById('edit-prov-cuit').value.trim();
-      prov.telefono = document.getElementById('edit-prov-telefono').value.trim();
-      prov.rubro = document.getElementById('edit-prov-rubro').value.trim();
+  prov.nombre = nuevoNombre;
+  prov.cuit = document.getElementById('edit-prov-cuit').value.trim();
+  prov.telefono = document.getElementById('edit-prov-telefono').value.trim();
+  prov.rubro = document.getElementById('edit-prov-rubro').value.trim();
 
-      guardarDB('db_proveedores', dbProveedores);
-      renderizarTablaProveedores();
-      cargarBuscadorProveedores();
-      verHistorialProveedor(proveedorSeleccionadoId);
-      alert("¡Datos del proveedor actualizados con éxito!");
-    }
-
+  guardarDB('db_proveedores', dbProveedores);
+  renderizarTablaProveedores();
+  cargarBuscadorProveedores();
+  verHistorialProveedor(proveedorSeleccionadoId);
+}
     function cerrarHistorialProveedor() { 
       proveedorSeleccionadoId = null; 
       const modal = document.getElementById('modal-historial-proveedor');
