@@ -1032,6 +1032,14 @@
   </div>
 
   <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(reg => console.log('Service Worker registrado con éxito:', reg.scope))
+          .catch(err => console.log('Error al registrar el Service Worker:', err));
+      });
+    }
+
     const firebaseConfig = {
       apiKey: "AIzaSyBXgZYpJAktv1rV9Cw8xeQYLeqp_i2tASg",
       authDomain: "panaderia-sync-281a5.firebaseapp.com",
@@ -1049,11 +1057,9 @@
         firebase.initializeApp(firebaseConfig);
       }
       rtdb = firebase.database();
-      
       rtdb.goOnline();
 
       const statusDiv = document.getElementById("status-conexion");
-      
       rtdb.ref(".info/connected").on("value", function(snap) {
         if (!statusDiv) return;
         if (snap.val() === true) {
