@@ -2372,6 +2372,10 @@ function renderizarTablaClientes() {
         btnFicha.type = "button";
         btnFicha.className = "bg-amber-700 text-white text-xs px-3 py-1.5 rounded-lg font-bold shadow active:bg-amber-900";
         btnFicha.textContent = "Abrir Ficha";
+        btnFicha.onclick = function() {
+          verHistorialCliente(cli.id);
+        };
+        tdAccion.appendChild(btnFicha);
         
         // Manejador infalible para APK y Web
         const abrirAccion = (e) => {
@@ -2403,9 +2407,14 @@ function renderizarTablaClientes() {
     }
 
     function verHistorialCliente(cliId) {
+      console.log("Intentando abrir cliente ID:", cliId);
       clienteSeleccionadoId = cliId; 
       const cli = dbClientes[cliId]; 
-      if (!cli) return;
+      
+      if (!cli) {
+        alert("Error: No se encontró el cliente en la base de datos.");
+        return;
+      }
       
       const nombreElem = document.getElementById('historial-nombre-cliente');
       if (nombreElem) nombreElem.textContent = cli.nombre;
@@ -2416,15 +2425,19 @@ function renderizarTablaClientes() {
       if(document.getElementById('edit-cli-telefono')) document.getElementById('edit-cli-telefono').value = cli.telefono || '';
       if(document.getElementById('edit-cli-email')) document.getElementById('edit-cli-email').value = cli.email || '';
 
+      renderizarTablaHistorialCliente();
+
+      // Forzar despliegue absoluto con ID de máxima prioridad
       const modal = document.getElementById('modal-historial-cliente');
       if (modal) {
+          modal.style.display = "flex";
           modal.className = "apk-modal-activo";
+      } else {
+          alert("Error crítico: No se encontró el elemento modal-historial-cliente en el DOM.");
       }
 
       const labelSel = document.getElementById('label-selector-cliente');
       if (labelSel) labelSel.textContent = cli.nombre;
-
-      renderizarTablaHistorialCliente();
     }
 
     function guardarEdicionCliente() {
@@ -2452,6 +2465,7 @@ function renderizarTablaClientes() {
       clienteSeleccionadoId = null; 
       const modal = document.getElementById('modal-historial-cliente');
       if (modal) {
+          modal.style.display = "none";
           modal.className = "fixed inset-0 bg-black bg-opacity-75 items-center justify-center z-[999999] p-4 hidden";
       }
       const labelSel = document.getElementById('label-selector-cliente');
@@ -2833,10 +2847,11 @@ function renderizarTablaProveedores() {
       alert("¡Datos actualizados con éxito!");
     }
 
-    function cerrarHistorialProveedor() { 
+function cerrarHistorialProveedor() { 
       proveedorSeleccionadoId = null; 
       const modal = document.getElementById('modal-historial-proveedor');
       if (modal) {
+          modal.style.display = "none";
           modal.className = "fixed inset-0 bg-black bg-opacity-75 items-center justify-center z-[999999] p-4 hidden";
       }
       const labelSel = document.getElementById('label-selector-proveedor');
