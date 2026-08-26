@@ -718,7 +718,7 @@
   <div id="area-impresion"></div>
 
   <!-- MODAL FICHA DE CLIENTE / CUENTA CORRIENTE -->
-  <div id="modal-historial-cliente" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden p-2">
+ <div id="modal-historial-cliente" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden p-2">
     <div class="bg-white p-5 rounded-xl shadow-2xl max-w-4xl w-full space-y-4 max-h-[95vh] overflow-y-auto">
       <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 border-b pb-2">
         <div>
@@ -2354,22 +2354,20 @@
   }
 }
 
-    function cerrarHistorialCliente() { 
-      clienteSeleccionadoId = null; 
-      const modal = document.getElementById('modal-historial-cliente');
-      if (modal) {
-        modal.classList.add('hidden');
-        modal.style.display = 'none';
-      }
-      const selBuscador = document.getElementById('select-buscador-cliente');
-      if (selBuscador) selBuscador.value = "";
-    }
+   function cerrarHistorialCliente() { 
+  clienteSeleccionadoId = null; 
+  const modal = document.getElementById('modal-historial-cliente');
+  if (modal) {
+    modal.classList.add('hidden');
+  }
+  const selBuscador = document.getElementById('select-buscador-cliente');
+  if (selBuscador) selBuscador.value = "";
+}
 
-   function verHistorialCliente(cliId) {
+  function verHistorialCliente(cliId) {
   if (!cliId) return;
   clienteSeleccionadoId = cliId; 
   
-  // Forzar recarga desde la fuente de verdad actual
   const clienteActual = dbClientes[cliId] || JSON.parse(localStorage.getItem('db_clientes') || '{}')[cliId];
   if (!clienteActual) {
     alert("No se pudieron cargar los datos del cliente.");
@@ -2385,8 +2383,7 @@
   
   const modalCli = document.getElementById('modal-historial-cliente');
   if (modalCli) {
-    modalCli.classList.remove('hidden');
-    modalCli.style.display = 'flex';
+    modalCli.classList.remove('hidden'); // Limpiamos y dejamos que flex de Tailwind actúe
   }
   
   document.getElementById('edit-cli-nombre').value = clienteActual.nombre || '';
@@ -2786,7 +2783,7 @@ function guardarProveedor() {
   }
 }
 
-    function verHistorialProveedor(provId) {
+  function verHistorialProveedor(provId) {
   if (!provId) return;
   proveedorSeleccionadoId = provId; 
   
@@ -2806,7 +2803,6 @@ function guardarProveedor() {
   const modalProv = document.getElementById('modal-historial-proveedor');
   if (modalProv) {
     modalProv.classList.remove('hidden');
-    modalProv.style.display = 'flex';
   }
   
   document.getElementById('edit-prov-nombre').value = prov.nombre || '';
@@ -2834,17 +2830,15 @@ function guardarProveedor() {
   cargarBuscadorProveedores();
   verHistorialProveedor(proveedorSeleccionadoId);
 }
-    function cerrarHistorialProveedor() { 
-      proveedorSeleccionadoId = null; 
-      const modal = document.getElementById('modal-historial-proveedor');
-      if (modal) {
-        modal.classList.add('hidden');
-        modal.style.display = 'none';
-      }
-      const selBuscador = document.getElementById('select-buscador-proveedor');
-      if (selBuscador) selBuscador.value = "";
-    }
-
+  function cerrarHistorialProveedor() { 
+  proveedorSeleccionadoId = null; 
+  const modal = document.getElementById('modal-historial-proveedor');
+  if (modal) {
+    modal.classList.add('hidden');
+  }
+  const selBuscador = document.getElementById('select-buscador-proveedor');
+  if (selBuscador) selBuscador.value = "";
+}
     function cargarFacturaProveedor() {
       if (!proveedorSeleccionadoId) return;
       const cant = parseFloat(document.getElementById('fact-cant').value); const precioUn = parseFloat(document.getElementById('fact-precio').value);
