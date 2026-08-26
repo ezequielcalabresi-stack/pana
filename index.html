@@ -83,7 +83,8 @@
   </header>
 
   <nav class="flex border-b border-gray-300 bg-white sticky top-0 z-10 text-xs md:text-sm font-semibold overflow-x-auto nav-buttons shadow-sm">
-    <button onclick="verPestaña('reparto')" id="btn-reparto" class="flex-1 py-3 px-2 text-center tab-active whitespace-nowrap">🚚 Reparto y Cobros</button>
+    <button onclick="verPestaña('reparto')" id="btn-reparto" class="flex-1 py-3 px-2 text-center tab-active whitespace-nowrap">🚚 Pedidos y Reparto</button>
+    <button onclick="verPestaña('hoja-ruta')" id="btn-hoja-ruta" class="flex-1 py-3 px-2 text-center tab-inactive whitespace-nowrap">📋 Hoja de Ruta / Pagos</button>
     <button onclick="verPestaña('cuadra')" id="btn-cuadra" class="flex-1 py-3 px-2 text-center tab-inactive whitespace-nowrap">👨‍🍳 Cuadra</button>
     <button onclick="verPestaña('clientes')" id="btn-clientes" class="flex-1 py-3 px-2 text-center tab-inactive whitespace-nowrap">👥 Clientes / Cta. Cte.</button>
     <button onclick="verPestaña('proveedores')" id="btn-proveedores" class="flex-1 py-3 px-2 text-center tab-inactive whitespace-nowrap">🏭 Proveedores / Facturas</button>
@@ -99,33 +100,16 @@
     <!-- 1. MÓDULO REPARTO Y LOGÍSTICA -->
     <section id="sec-reparto" class="space-y-4">
       
-      <!-- BANNER DE AVISO DE FECHA VISUALIZADA -->
-      <div id="banner-alerta-fecha" class="bg-amber-600 text-white px-4 py-2.5 text-center font-bold text-xs md:text-sm shadow-md rounded-xl flex justify-center items-center gap-2 border-2 border-amber-800">
-        <span>📅 Visualizando planilla de: <span id="texto-fecha-alerta" class="bg-white text-amber-900 px-2.5 py-0.5 rounded text-sm underline uppercase"></span></span>
-      </div>
-
-      <!-- AVISO DE ESTADO DE REPARTO CERRADO -->
-      <div id="banner-reparto-cerrado" class="hidden bg-amber-100 border-l-4 border-amber-800 p-4 rounded-r shadow flex justify-between items-center">
-        <div class="flex items-center gap-2">
-          <span class="text-xl">🔒</span>
-          <div>
-            <h3 class="text-xs font-bold text-amber-900 uppercase">Hoja de Ruta / Reparto Cerrado y Consolidado</h3>
-            <p class="text-[11px] text-amber-800">Los cobros de este día ya fueron cerrados. Los saldos pendientes pasaron a Cuenta Corriente.</p>
-          </div>
-        </div>
-        <div id="contenedor-btn-reabrir-reparto"></div>
-      </div>
-
       <!-- CARGA DE PEDIDO PRINCIPAL CON FECHA EDITABLE DE DESTINO -->
       <div id="panel-carga-panificados" class="bg-white p-4 rounded-xl shadow border border-amber-300 space-y-3">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
           <h2 class="text-base font-bold text-amber-900 flex items-center gap-1">🍞 Cargar Pedido Principal (Panificados / Cuadra)</h2>
           <div class="flex items-center gap-2 bg-amber-50 p-1.5 rounded-lg border border-amber-200">
             <label class="text-xs font-bold text-amber-900">📅 Fecha de Destino del Pedido:</label>
-            <input type="date" id="rep-fecha-destino" class="bg-white text-amber-950 font-bold text-xs p-1 rounded border border-amber-300">
+            <input type="date" id="rep-fecha-destino" onchange="cambiarFechaDestinoPedidos()" class="bg-white text-amber-950 font-bold text-xs p-1 rounded border border-amber-300">
           </div>
         </div>
-        <p class="text-[11px] text-gray-500">ℹ️ Podés elegir la fecha exacta en la que se va a iniciar este pedido sin modificar la fecha operativa de caja.</p>
+        <p class="text-[11px] text-gray-500">ℹ️ Podés elegir la fecha exacta en la que se va a iniciar este pedido y visualizar los pedidos correspondientes a ese día abajo.</p>
         <div class="grid grid-cols-1 md:grid-cols-5 gap-2 text-sm">
           <select id="rep-cliente" class="border p-2 rounded w-full text-sm font-medium text-gray-800 md:col-span-1"><option value="">-- Cliente --</option></select>
           <select id="rep-producto" onchange="actualizarPrecioSugeridoPanificado()" class="border p-2 rounded w-full text-sm font-bold text-amber-900 md:col-span-2"></select>
@@ -213,13 +197,13 @@
         </div>
       </div>
 
+      <!-- VISTA DE PEDIDOS CARGADOS (SIN BOTONES DE PAGO) -->
       <div class="bg-white p-4 rounded-xl shadow border">
         <div class="flex justify-between items-center mb-2">
-          <h2 class="text-base font-bold text-gray-800">Planilla Detallada de Reparto</h2>
+          <h2 class="text-base font-bold text-gray-800">Visualización de Pedidos del Día Seleccionado</h2>
           <div class="flex items-center gap-2">
             <button type="button" onclick="abrirModalPedidosAuto()" class="text-xs bg-blue-600 text-white p-1.5 px-3 rounded font-semibold hover:bg-blue-700 shadow">🤖 Ver Automáticos</button>
             <span id="label-fecha-reparto" class="text-xs bg-amber-100 text-amber-900 px-2 py-1 rounded font-bold"></span>
-            <button type="button" onclick="imprimirReparto()" class="text-xs bg-amber-800 text-white p-1.5 px-3 rounded font-semibold hover:bg-amber-900 shadow">🖨️ Imprimir / Guardar PDF</button>
           </div>
         </div>
         <div class="overflow-x-auto">
@@ -232,16 +216,60 @@
                 <th class="p-2">Cant / Paq</th>
                 <th class="p-2">P. Unit. ($)</th>
                 <th class="p-2">Monto Total</th>
-                <th class="p-2">Estado</th>
                 <th class="p-2 text-center">Acciones</th>
               </tr>
             </thead>
             <tbody id="tabla-reparto"></tbody>
           </table>
         </div>
+      </div>
+    </section>
+
+    <!-- 1.1 MÓDULO HOJA DE RUTA / LOGÍSTICA Y PAGOS (SEPARADO) -->
+    <section id="sec-hoja-ruta" class="hidden space-y-4">
+      <div class="bg-white p-4 rounded-xl shadow border">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 mb-3">
+          <h2 class="text-base font-bold text-gray-800">Hoja de Ruta - Control de Pagos y Logística</h2>
+          <div class="flex flex-wrap items-center gap-2">
+            <div class="flex items-center gap-1 bg-amber-50 p-1.5 rounded-lg border border-amber-200">
+              <label class="text-xs font-bold text-amber-900">📅 Fecha Hoja de Ruta:</label>
+              <input type="date" id="hr-fecha-selector" onchange="cambiarFechaHojaRuta()" class="bg-white text-amber-950 font-bold text-xs p-1 rounded border border-amber-300">
+            </div>
+            <button type="button" onclick="imprimirReparto()" class="text-xs bg-amber-800 text-white p-2 rounded font-semibold hover:bg-amber-900 shadow">🖨️ Imprimir / Guardar PDF</button>
+          </div>
+        </div>
+        
+        <!-- AVISO DE ESTADO DE REPARTO CERRADO -->
+        <div id="banner-reparto-cerrado" class="hidden bg-amber-100 border-l-4 border-amber-800 p-4 rounded-r shadow flex justify-between items-center mb-3">
+          <div class="flex items-center gap-2">
+            <span class="text-xl">🔒</span>
+            <div>
+              <h3 class="text-xs font-bold text-amber-900 uppercase">Hoja de Ruta / Reparto Cerrado y Consolidado</h3>
+              <p class="text-[11px] text-amber-800">Los cobros de este día ya fueron cerrados. Los saldos pendientes pasaron a Cuenta Corriente.</p>
+            </div>
+          </div>
+          <div id="contenedor-btn-reabrir-reparto"></div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs md:text-sm">
+            <thead>
+              <tr class="bg-amber-100 text-amber-900 border-b">
+                <th class="p-2">Cliente</th>
+                <th class="p-2">Producto</th>
+                <th class="p-2">Origen</th>
+                <th class="p-2">Cant / Paq</th>
+                <th class="p-2">Monto Total</th>
+                <th class="p-2">Estado / Pago</th>
+                <th class="p-2 text-center">Acciones / Cobro</th>
+              </tr>
+            </thead>
+            <tbody id="tabla-hoja-ruta"></tbody>
+          </table>
+        </div>
         <div class="mt-3 flex flex-col md:flex-row justify-between items-center gap-3">
           <div class="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs md:text-sm font-bold bg-amber-50 p-3 rounded-lg border border-amber-200 flex-1 w-full">
-            <div>Total Reparto: <span id="tot-rep-monto" class="text-amber-900">$0</span></div>
+            <div>Total Hoja de Ruta: <span id="tot-rep-monto" class="text-amber-900">$0</span></div>
             <div>Cobrado Efectivo: <span id="tot-rep-efectivo" class="text-green-700">$0</span></div>
             <div>Pendiente Cta. Cte.: <span id="tot-rep-ctacte" class="text-red-600">$0</span></div>
           </div>
@@ -255,7 +283,7 @@
       <div id="box-cuadra-consolidado" class="bg-white p-4 rounded-xl shadow border border-amber-500">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 mb-3">
           <div>
-            <h2 class="text-lg font-bold text-gray-800">📋 Producción Consolidada (Solo Cuadra)</h2>
+            <h2 class="text-lg font-bold text-gray-800">📋 Producción Consolidada (Cuadra)</h2>
             <p id="label-fecha-cuadra" class="text-xs text-gray-500 font-semibold"></p>
           </div>
           <div class="flex flex-wrap items-center gap-2">
@@ -1093,9 +1121,9 @@
     let fechaCuadraActiva = fechaActual;
 
     const PERMISOS_ROLES = {
-      admin: { nombre: "Administrador / Dueño", pestanas: ['reparto', 'cuadra', 'clientes', 'proveedores', 'stock', 'caja', 'precios', 'usuarios'] },
-      mostrador: { nombre: "Encargado Mostrador", pestanas: ['reparto', 'cuadra', 'clientes', 'proveedores', 'stock', 'caja', 'precios'] },
-      repartidor: { nombre: "Repartidor", pestanas: ['reparto', 'cuadra', 'clientes'] },
+      admin: { nombre: "Administrador / Dueño", pestanas: ['reparto', 'hoja-ruta', 'cuadra', 'clientes', 'proveedores', 'stock', 'caja', 'precios', 'usuarios'] },
+      mostrador: { nombre: "Encargado Mostrador", pestanas: ['reparto', 'hoja-ruta', 'cuadra', 'clientes', 'proveedores', 'stock', 'caja', 'precios'] },
+      repartidor: { nombre: "Repartidor", pestanas: ['reparto', 'hoja-ruta', 'cuadra', 'clientes'] },
       produccion: { nombre: "Producción / Cuadra", pestanas: ['cuadra', 'stock'] }
     };
 
@@ -1145,7 +1173,14 @@
     var dbEgresosCaja = {};
     var dbBackupsDiarios = {};
     var dbRepartosCerrados = {};
-    var usuarioActivoId = 'USR-1';
+    
+    // GESTIÓN DE ID ÚNICO POR DISPOSITIVO PARA AISLAR LA SESIÓN DE CADA TELÉFONO
+    let dispositivoId = localStorage.getItem('dispositivo_usuario_id');
+    if (!dispositivoId) {
+      dispositivoId = generarID('DEV');
+      localStorage.setItem('dispositivo_usuario_id', dispositivoId);
+    }
+    var usuarioActivoId = localStorage.getItem(`usuario_activo_${dispositivoId}`) || 'USR-1';
 
     function cargarDB(key, fallback) {
       const data = localStorage.getItem(key);
@@ -1221,7 +1256,6 @@
     dbBackupsDiarios = cargarDB('db_backups_diarios', {});
     dbRepartosCerrados = cargarDB('db_repartos_cerrados', {});
 
-    usuarioActivoId = cargarDB('usuario_activo_id', 'USR-1');
     let clienteSeleccionadoId = null;
     let proveedorSeleccionadoId = null;
     
@@ -1234,7 +1268,10 @@
       document.getElementById('fecha-operativa').value = fechaActual;
 
       const inputDestino = document.getElementById('rep-fecha-destino');
-      if (inputDestino) inputDestino.value = fechaActual;
+      if (inputDestino) inputDestino.value = obtenerFechaDestinoPorHora();
+
+      const inputHojaRuta = document.getElementById('hr-fecha-selector');
+      if (inputHojaRuta) inputHojaRuta.value = obtenerFechaDestinoPorHora();
 
       inicializarFechaCuadra();
 
@@ -1273,6 +1310,15 @@
       document.addEventListener('DOMContentLoaded', inicializarAplicacion);
     } else {
       inicializarAplicacion();
+    }
+
+    function obtenerFechaDestinoPorHora() {
+      const ahora = new Date();
+      if (ahora.getHours() >= 15) {
+        ahora.setDate(ahora.getDate() + 1);
+      }
+      ahora.setMinutes(ahora.getMinutes() - ahora.getTimezoneOffset());
+      return ahora.toISOString().split('T')[0];
     }
 
     function habilitarNavegacionPorEnterEnModal(modalId) {
@@ -1334,6 +1380,14 @@
       }
     }
 
+    function cambiarFechaDestinoPedidos() {
+      renderizarPlanillaReparto();
+    }
+
+    function cambiarFechaHojaRuta() {
+      renderizarPlanillaReparto();
+    }
+
     function obtenerFechaConDia(fechaStr) {
       if (!fechaStr) return '';
       const [anio, mes, dia] = fechaStr.split('-').map(Number);
@@ -1344,14 +1398,6 @@
     }
 
     function actualizarEtiquetasFecha() {
-      const fechaFormateada = obtenerFechaConDia(fechaActual);
-      
-      const lblRep = document.getElementById('label-fecha-reparto');
-      if (lblRep) lblRep.innerText = `Fecha: ${fechaFormateada}`;
-      
-      const txtAlerta = document.getElementById('texto-fecha-alerta');
-      if (txtAlerta) txtAlerta.innerText = fechaFormateada;
-
       const inputFecha = document.getElementById('fecha-operativa');
       if (inputFecha && inputFecha.value !== fechaActual) {
         inputFecha.value = fechaActual;
@@ -1363,9 +1409,6 @@
       if (input && input.value) {
         fechaActual = input.value;
         actualizarEtiquetasFecha();
-        
-        const inputDestino = document.getElementById('rep-fecha-destino');
-        if (inputDestino) inputDestino.value = fechaActual;
 
         fechaCuadraActiva = fechaActual;
         const inputCuadra = document.getElementById('cuadra-fecha-selector');
@@ -1455,7 +1498,7 @@
       };
 
       guardarDB('db_recurrentes', dbRecurrentes);
-      document.getElementById('rec-cantidad').value = '';
+      document.getElementById('rec-cantidad').value;
       renderizarTablaRecurrentes();
       procesarPedidosRecurrentesAutomaticos();
       alert("¡Regla recurrente guardada con éxito!");
@@ -1578,12 +1621,13 @@
     function renderizarTablaPedidosAuto() {
       const tbody = document.getElementById('tabla-pedidos-auto');
       tbody.innerHTML = '';
-      const pedidosHoy = dbRepartos[fechaActual] || [];
+      const fechaDestinoActiva = document.getElementById('rep-fecha-destino').value || fechaActual;
+      const pedidosHoy = dbRepartos[fechaDestinoActiva] || [];
       const automaticos = pedidosHoy.filter(p => p.origenAuto);
-      const isCerrado = dbRepartosCerrados[fechaActual] === true;
+      const isCerrado = dbRepartosCerrados[fechaDestinoActiva] === true;
 
       if (automaticos.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="p-3 text-center text-gray-500 italic">No hay pedidos automáticos para hoy.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="p-3 text-center text-gray-500 italic">No hay pedidos automáticos para esta fecha.</td></tr>';
         return;
       }
 
@@ -1603,14 +1647,15 @@
     }
 
     function modificarCantidadPedido(pedidoId, nuevaCantVal) {
-      if (dbRepartosCerrados[fechaActual]) return;
+      const fechaDestinoActiva = document.getElementById('rep-fecha-destino').value || fechaActual;
+      if (dbRepartosCerrados[fechaDestinoActiva]) return;
       const nuevaCant = parseFloat(nuevaCantVal);
       if (isNaN(nuevaCant) || nuevaCant <= 0) return;
-      const pedido = (dbRepartos[fechaActual] || []).find(p => p.id === pedidoId);
+      const pedido = (dbRepartos[fechaDestinoActiva] || []).find(p => p.id === pedidoId);
       if (pedido) { 
         pedido.unidades = nuevaCant; 
         pedido.monto = nuevaCant * pedido.precioUnitario; 
-        guardarRepartoPorFecha(fechaActual);
+        guardarRepartoPorFecha(fechaDestinoActiva);
         renderizarPlanillaReparto(); 
         renderizarReportesMensuales(); 
         if(!document.getElementById('modal-pedidos-auto').classList.contains('hidden')) { renderizarTablaPedidosAuto(); }
@@ -1618,13 +1663,14 @@
     }
 
     function modificarPrecioPedidoDirecto(pedidoId, nuevoPrecioVal) {
-      if (dbRepartosCerrados[fechaActual]) return;
+      const fechaDestinoActiva = document.getElementById('rep-fecha-destino').value || fechaActual;
+      if (dbRepartosCerrados[fechaDestinoActiva]) return;
       const nuevoPrecio = parseFloat(nuevoPrecioVal); if (isNaN(nuevoPrecio)) return;
-      const pedido = (dbRepartos[fechaActual] || []).find(p => p.id === pedidoId);
+      const pedido = (dbRepartos[fechaDestinoActiva] || []).find(p => p.id === pedidoId);
       if (pedido) { 
         pedido.precioUnitario = nuevoPrecio; 
         pedido.monto = pedido.unidades * nuevoPrecio; 
-        guardarRepartoPorFecha(fechaActual);
+        guardarRepartoPorFecha(fechaDestinoActiva);
         renderizarPlanillaReparto(); 
         renderizarReportesMensuales(); 
         if(!document.getElementById('modal-pedidos-auto').classList.contains('hidden')){ renderizarTablaPedidosAuto(); }
@@ -1632,11 +1678,12 @@
     }
 
     function eliminarPedidoReparto(pedidoId, productoNombre) {
-      if (dbRepartosCerrados[fechaActual]) { alert("⚠️ El reparto de este día ya se encuentra cerrado."); return; }
+      const fechaDestinoActiva = document.getElementById('rep-fecha-destino').value || fechaActual;
+      if (dbRepartosCerrados[fechaDestinoActiva]) { alert("⚠️ El reparto de este día ya se encuentra cerrado."); return; }
       if (confirm(`⚠️ ¿Desea eliminar el pedido de "${productoNombre}"?`)) {
-        if (dbRepartos[fechaActual]) {
-          dbRepartos[fechaActual] = dbRepartos[fechaActual].filter(p => p.id !== pedidoId);
-          guardarRepartoPorFecha(fechaActual);
+        if (dbRepartos[fechaDestinoActiva]) {
+          dbRepartos[fechaDestinoActiva] = dbRepartos[fechaDestinoActiva].filter(p => p.id !== pedidoId);
+          guardarRepartoPorFecha(fechaDestinoActiva);
           renderizarPlanillaReparto(); 
           renderizarCuadra(); 
           renderizarReportesMensuales();
@@ -1701,7 +1748,7 @@
       }
 
       usuarioActivoId = nuevoId;
-      guardarDB('usuario_activo_id', usuarioActivoId);
+      localStorage.setItem(`usuario_activo_${dispositivoId}`, usuarioActivoId);
       actualizarBadgeRol();
       renderizarMenuNavegacion();
       cargarCajasHoyUI();
@@ -1715,10 +1762,10 @@
       const usr = dbUsuarios[usuarioActivoId];
       if (!usr) return;
       let permisos = PERMISOS_ROLES[usr.rol]?.pestanas || [];
-      const lista = ['reparto', 'cuadra', 'clientes', 'proveedores', 'stock', 'caja', 'precios', 'usuarios'];
+      const lista = ['reparto', 'hoja-ruta', 'cuadra', 'clientes', 'proveedores', 'stock', 'caja', 'precios', 'usuarios'];
 
       if (usr.sucursal === 'espiga' && usr.rol !== 'admin') {
-        permisos = ['cuadra', 'caja'];
+        permisos = ['reparto', 'hoja-ruta', 'cuadra', 'caja'];
       }
 
       lista.forEach(p => {
@@ -1737,7 +1784,7 @@
     }
 
     function verPestaña(idPestaña) {
-      const lista = ['reparto', 'cuadra', 'clientes', 'proveedores', 'stock', 'caja', 'precios', 'usuarios'];
+      const lista = ['reparto', 'hoja-ruta', 'cuadra', 'clientes', 'proveedores', 'stock', 'caja', 'precios', 'usuarios'];
       lista.forEach(p => {
         const btn = document.getElementById(`btn-${p}`);
         const sec = document.getElementById(`sec-${p}`);
@@ -1826,16 +1873,25 @@
       const cliente = dbClientes[cliId]; const panificado = dbPanificados[prodNombre];
       if (!cliente) return;
 
+      const usr = dbUsuarios[usuarioActivoId];
+      let sufijoOrigen = "";
+      if (usr && usr.sucursal === 'espiga') sufijoOrigen = " (E)";
+      else if (usr && usr.sucursal === 'alem') sufijoOrigen = " (A)";
+
       if (!dbRepartos[fechaDestino]) dbRepartos[fechaDestino] = [];
       dbRepartos[fechaDestino].push({
-        id: generarID('REP'), clienteId: cliId, clienteNombre: cliente.nombre, producto: prodNombre,
+        id: generarID('REP'), clienteId: cliId, clienteNombre: cliente.nombre + sufijoOrigen, producto: prodNombre,
         unidades: cant, unidPorPaq: panificado ? panificado.unidPorPaq : 1, precioUnitario: precioPersonalizado,
         monto: cant * precioPersonalizado, origen: 'cuadra', pagado: false, medioPago: "Pendiente"
       });
 
       guardarRepartoPorFecha(fechaDestino);
       
+      // LIMPIAR CAMPOS AUTOMÁTICAMENTE PARA EVITAR DUPLICADOS
       document.getElementById('rep-cantidad').value = '';
+      document.getElementById('rep-precio-unitario').value = '';
+      document.getElementById('rep-cliente').value = '';
+      
       alert(`¡Pedido cargado con éxito para la fecha ${fechaDestino}!`);
       renderizarPlanillaReparto(); renderizarCuadra(); renderizarReportesMensuales();
     }
@@ -1852,9 +1908,14 @@
       if (!cliId || !prodNombre || isNaN(cant) || cant <= 0 || isNaN(montoTotal)) { alert("Verifique los datos del adicional."); return; }
       const cliente = dbClientes[cliId]; if (!cliente) return;
 
+      const usr = dbUsuarios[usuarioActivoId];
+      let sufijoOrigen = "";
+      if (usr && usr.sucursal === 'espiga') sufijoOrigen = " (E)";
+      else if (usr && usr.sucursal === 'alem') sufijoOrigen = " (A)";
+
       if (!dbRepartos[fechaDestino]) dbRepartos[fechaDestino] = [];
       dbRepartos[fechaDestino].push({
-        id: generarID('REP'), clienteId: cliId, clienteNombre: cliente.nombre, producto: prodNombre,
+        id: generarID('REP'), clienteId: cliId, clienteNombre: cliente.nombre + sufijoOrigen, producto: prodNombre,
         unidades: cant, unidPorPaq: 1, 
         precioUnitario: (montoTotal / cant), 
         monto: montoTotal,
@@ -1863,7 +1924,11 @@
 
       guardarRepartoPorFecha(fechaDestino);
       
+      // LIMPIAR CAMPOS AUTOMÁTICAMENTE
       document.getElementById('rep-despacho-cantidad').value = '';
+      document.getElementById('rep-despacho-precio-unitario').value = '';
+      document.getElementById('rep-despacho-cliente').value = '';
+
       alert(`¡Ítem de despacho cargado con éxito para la fecha ${fechaDestino}!`);
       renderizarPlanillaReparto(); renderizarCuadra(); renderizarReportesMensuales();
     }
@@ -1886,24 +1951,26 @@
     }
     
     function cerrarRepartoDelDia() {
-      if (dbRepartosCerrados[fechaActual]) { alert("El reparto de este día ya está cerrado."); return; }
-      if (!confirm(`🔒 ¿Desea cerrar el Reparto del día ${fechaActual}?\n\nLos pedidos que queden pendientes pasarán formalmente a la Cuenta Corriente los clientes y se bloqueará la edición operativa.`)) return;
+      const fechaDestinoActiva = document.getElementById('rep-fecha-destino').value || fechaActual;
+      if (dbRepartosCerrados[fechaDestinoActiva]) { alert("El reparto de este día ya está cerrado."); return; }
+      if (!confirm(`🔒 ¿Desea cerrar el Reparto del día ${fechaDestinoActiva}?\n\nLos pedidos que queden pendientes pasarán formalmente a la Cuenta Corriente de los clientes y se bloqueará la edición operativa.`)) return;
 
-      dbRepartosCerrados[fechaActual] = true;
+      dbRepartosCerrados[fechaDestinoActiva] = true;
       guardarDB('db_repartos_cerrados', dbRepartosCerrados);
       renderizarPlanillaReparto();
       alert("¡Reparto cerrado con éxito!");
     }
 
     function reabrirRepartoDelDia() {
+      const fechaDestinoActiva = document.getElementById('hr-fecha-selector').value || document.getElementById('rep-fecha-destino').value || fechaActual;
       const usr = dbUsuarios[usuarioActivoId];
       if (!usr || usr.rol !== 'admin') {
         alert("⚠️ Solo el Administrador / Dueño puede reabrir un reparto cerrado.");
         return;
       }
 
-      if (confirm(`🔓 ¿Desea reabrir el Reparto del día ${fechaActual} para correcciones?`)) {
-        dbRepartosCerrados[fechaActual] = false;
+      if (confirm(`🔓 ¿Desea reabrir el Reparto del día ${fechaDestinoActiva} para correcciones?`)) {
+        dbRepartosCerrados[fechaDestinoActiva] = false;
         guardarDB('db_repartos_cerrados', dbRepartosCerrados);
         renderizarPlanillaReparto();
         alert("¡Reparto reabierto con éxito!");
@@ -1912,10 +1979,22 @@
 
     function renderizarPlanillaReparto() {
       const tbody = document.getElementById('tabla-reparto');
-      if (!tbody) return;
-      tbody.innerHTML = '';
+      const tbodyHojaRuta = document.getElementById('tabla-hoja-ruta');
+      if (!tbody && !tbodyHojaRuta) return;
 
-      const isCerrado = dbRepartosCerrados[fechaActual] === true;
+      if (tbody) tbody.innerHTML = '';
+      if (tbodyHojaRuta) tbodyHojaRuta.innerHTML = '';
+
+      const fechaDestinoActiva = document.getElementById('rep-fecha-destino')?.value || fechaActual;
+      const fechaHojaRutaActiva = document.getElementById('hr-fecha-selector')?.value || fechaDestinoActiva;
+      
+      const fechaFormateada = obtenerFechaConDia(fechaDestinoActiva);
+      const fechaHrFormateada = obtenerFechaConDia(fechaHojaRutaActiva);
+
+      const labelFechaRep = document.getElementById('label-fecha-reparto');
+      if (labelFechaRep) labelFechaRep.textContent = `Fecha: ${fechaFormateada}`;
+
+      const isCerrado = dbRepartosCerrados[fechaHojaRutaActiva] === true;
       const usr = dbUsuarios[usuarioActivoId];
       const esAdmin = (usr && usr.rol === 'admin');
 
@@ -1937,61 +2016,89 @@
         if (contReabrir) contReabrir.innerHTML = '';
       }
 
-      const pedidosHoy = dbRepartos[fechaActual] || [];
+      // 1. RENDERIZAR PESTAÑA PEDIDOS (USA fechaDestinoActiva)
+      const pedidosDestino = dbRepartos[fechaDestinoActiva] || [];
+      pedidosDestino.sort((a, b) => (a.clienteNombre || "").toLowerCase().localeCompare((b.clienteNombre || "").toLowerCase()));
 
-      pedidosHoy.sort((a, b) => {
-        let clienteA = (a.clienteNombre || "").toLowerCase();
-        let clienteB = (b.clienteNombre || "").toLowerCase();
-        return clienteA.localeCompare(clienteB);
+      pedidosDestino.forEach((p) => {
+        if (tbody) {
+          const iconoAuto = p.origenAuto ? '🤖 ' : '';
+          const trPed = document.createElement('tr'); 
+          trPed.className = "border-b hover:bg-gray-50 text-xs md:text-sm";
+          trPed.innerHTML = `
+            <td class="p-2 font-semibold text-gray-800">${p.clienteNombre}</td>
+            <td class="p-2">${iconoAuto}${p.producto}</td>
+            <td class="p-2">${p.origen === 'despacho' ? `<span class="bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded text-[10px] font-bold">Despacho</span>` : `<span class="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded text-[10px] font-bold">Cuadra</span>`}</td>
+            <td class="p-2">${p.unidades} un.</td>
+            <td class="p-2 font-bold"><input type="number" step="0.01" value="${p.precioUnitario}" onchange="modificarPrecioPedidoDirecto('${p.id}', this.value)" class="w-16 border rounded p-0.5 text-xs font-bold"></td>
+            <td class="p-2 font-bold text-amber-900">$${p.monto.toLocaleString()}</td>
+            <td class="p-2 text-center">
+              <button onclick="eliminarPedidoReparto('${p.id}', '${p.producto}')" class="bg-red-600 text-white text-xs px-2 py-1 rounded font-bold">✕ Eliminar</button>
+            </td>
+          `;
+          tbody.appendChild(trPed);
+        }
       });
+
+      // 2. RENDERIZAR PESTAÑA HOJA DE RUTA (USA fechaHojaRutaActiva)
+      const pedidosHojaRuta = dbRepartos[fechaHojaRutaActiva] || [];
+      pedidosHojaRuta.sort((a, b) => (a.clienteNombre || "").toLowerCase().localeCompare((b.clienteNombre || "").toLowerCase()));
 
       let totalMonto = 0, totalEfectivo = 0, totalCtaCte = 0;
 
-      pedidosHoy.forEach((p) => {
+      pedidosHojaRuta.forEach((p) => {
         totalMonto += p.monto;
         if (p.pagado && p.medioPago === 'Efectivo') totalEfectivo += p.monto;
         else if (!p.pagado) totalCtaCte += p.monto;
         
         const iconoAuto = p.origenAuto ? '🤖 ' : '';
 
-        const tr = document.createElement('tr'); tr.className = "border-b hover:bg-gray-50 text-xs md:text-sm";
-        
-        let colAcciones = '';
-        if (isCerrado) {
-          colAcciones = p.pagado ? `<span class="text-xs text-gray-500 font-bold">Cobrado (${p.medioPago})</span>` : `<span class="text-xs text-red-600 font-bold">En Cta. Cte.</span>`;
-        } else {
-          colAcciones = !p.pagado ? `
-            <select onchange="marcarPedidoCobrado('${p.id}', this.value)" class="border rounded text-xs p-1">
-              <option value="">-- Pago --</option>
-              <option value="Efectivo">Efectivo</option>
-              <option value="Transferencia">Transferencia</option>
-            </select>
-            <button onclick="eliminarPedidoReparto('${p.id}', '${p.producto}')" class="bg-red-600 text-white text-xs px-2 py-1 rounded font-bold">✕</button>
-          ` : `
-            <button onclick="deshacerCobroPedido('${p.id}')" class="text-xs text-amber-700 underline font-bold">Cambiar</button>
-            <button onclick="eliminarPedidoReparto('${p.id}', '${p.producto}')" class="bg-red-600 text-white text-xs px-2 py-1 rounded font-bold">✕</button>
-          `;
-        }
+        if (tbodyHojaRuta) {
+          const trHr = document.createElement('tr'); 
+          trHr.className = "border-b hover:bg-gray-50 text-xs md:text-sm";
+          
+          let colAccionesHr = '';
+          if (isCerrado) {
+            colAccionesHr = p.pagado ? `<span class="text-xs text-gray-500 font-bold">Cobrado (${p.medioPago})</span>` : `<span class="text-xs text-red-600 font-bold">En Cta. Cte.</span>`;
+          } else {
+            const selectPago = !p.pagado ? `
+              <select onchange="marcarPedidoCobrado('${p.id}', this.value)" class="border rounded text-xs p-1">
+                <option value="">-- Pago --</option>
+                <option value="Efectivo">Efectivo</option>
+                <option value="Transferencia">Transferencia</option>
+              </select>
+            ` : `
+              <button onclick="deshacerCobroPedido('${p.id}')" class="text-xs text-amber-700 underline font-bold">Cambiar</button>
+            `;
 
-        tr.innerHTML = `
-          <td class="p-2 font-semibold text-gray-800">${p.clienteNombre}</td>
-          <td class="p-2">${iconoAuto}${p.producto}</td>
-          <td class="p-2">${p.origen === 'despacho' ? `<span class="bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded text-[10px] font-bold">Despacho</span>` : `<span class="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded text-[10px] font-bold">Cuadra</span>`}</td>
-          <td class="p-2">${p.unidades} un.</td>
-          <td class="p-2 font-bold"><input type="number" step="0.01" value="${p.precioUnitario}" ${isCerrado ? 'disabled' : ''} onchange="modificarPrecioPedidoDirecto('${p.id}', this.value)" class="w-16 border rounded p-0.5 text-xs font-bold"></td>
-          <td class="p-2 font-bold text-amber-900">$${p.monto.toLocaleString()}</td>
-          <td class="p-2">${p.pagado ? `<span class="bg-green-100 text-green-800 px-2 py-0.5 rounded text-[11px] font-bold">Cobrado (${p.medioPago})</span>` : `<span class="bg-red-100 text-red-800 px-2 py-0.5 rounded text-[11px] font-bold">Pendiente</span>`}</td>
-          <td class="p-2 text-center flex items-center justify-center gap-1">${colAcciones}</td>
-        `;
-        tbody.appendChild(tr);
+            const btnCancelarPedido = `<button onclick="eliminarPedidoHojaRuta('${p.id}', '${p.producto}')" class="bg-red-600 hover:bg-red-700 text-white text-xs px-2 py-1 rounded font-bold" title="Cancelar Compra">✕ Borrar</button>`;
+
+            colAccionesHr = `<div class="flex items-center gap-2 justify-center">${selectPago}${btnCancelarPedido}</div>`;
+          }
+
+          trHr.innerHTML = `
+            <td class="p-2 font-semibold text-gray-800">${p.clienteNombre}</td>
+            <td class="p-2">${iconoAuto}${p.producto}</td>
+            <td class="p-2">${p.origen === 'despacho' ? `<span class="bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded text-[10px] font-bold">Despacho</span>` : `<span class="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded text-[10px] font-bold">Cuadra</span>`}</td>
+            <td class="p-2">${p.unidades} un.</td>
+            <td class="p-2 font-bold text-amber-900">$${p.monto.toLocaleString()}</td>
+            <td class="p-2">${p.pagado ? `<span class="bg-green-100 text-green-800 px-2 py-0.5 rounded text-[11px] font-bold">Cobrado (${p.medioPago})</span>` : `<span class="bg-red-100 text-red-800 px-2 py-0.5 rounded text-[11px] font-bold">Pendiente</span>`}</td>
+            <td class="p-2 text-center">${colAccionesHr}</td>
+          `;
+          tbodyHojaRuta.appendChild(trHr);
+        }
       });
 
-      document.getElementById('tot-rep-monto').textContent = `$${totalMonto.toLocaleString()}`;
-      document.getElementById('tot-rep-efectivo').textContent = `$${totalEfectivo.toLocaleString()}`;
-      document.getElementById('tot-rep-ctacte').textContent = `$${totalCtaCte.toLocaleString()}`;
+      const elTotMonto = document.getElementById('tot-rep-monto');
+      const elTotEfec = document.getElementById('tot-rep-efectivo');
+      const elTotCta = document.getElementById('tot-rep-ctacte');
+
+      if (elTotMonto) elTotMonto.textContent = `$${totalMonto.toLocaleString()}`;
+      if (elTotEfec) elTotEfec.textContent = `$${totalEfectivo.toLocaleString()}`;
+      if (elTotCta) elTotCta.textContent = `$${totalCtaCte.toLocaleString()}`;
 
       let totalTransf = 0;
-      pedidosHoy.forEach(p => { if (p.pagado && p.medioPago !== 'Efectivo') totalTransf += p.monto; });
+      pedidosHojaRuta.forEach(p => { if (p.pagado && p.medioPago !== 'Efectivo') totalTransf += p.monto; });
       const elEf = document.getElementById('caja-rep-efectivo'); const elTr = document.getElementById('caja-rep-transf'); const elTot = document.getElementById('caja-rep-total');
       if (elEf) elEf.textContent = `$${totalEfectivo.toLocaleString()}`;
       if (elTr) elTr.textContent = `$${totalTransf.toLocaleString()}`;
@@ -1999,16 +2106,32 @@
     }
     
     function marcarPedidoCobrado(pedidoId, medioPago) {
-      if (dbRepartosCerrados[fechaActual]) return;
+      const fechaHojaRutaActiva = document.getElementById('hr-fecha-selector').value || fechaActual;
+      if (dbRepartosCerrados[fechaHojaRutaActiva]) return;
       if (!medioPago) return;
-      const pedido = (dbRepartos[fechaActual] || []).find(p => p.id === pedidoId);
-      if (pedido) { pedido.pagado = true; pedido.medioPago = medioPago; guardarDB('db_repartos', dbRepartos); renderizarPlanillaReparto(); renderizarReportesMensuales(); }
+      const pedido = (dbRepartos[fechaHojaRutaActiva] || []).find(p => p.id === pedidoId);
+      if (pedido) { pedido.pagado = true; pedido.medioPago = medioPago; guardarRepartoPorFecha(fechaHojaRutaActiva); renderizarPlanillaReparto(); renderizarReportesMensuales(); }
     }
 
     function deshacerCobroPedido(pedidoId) {
-      if (dbRepartosCerrados[fechaActual]) return;
-      const pedido = (dbRepartos[fechaActual] || []).find(p => p.id === pedidoId);
-      if (pedido) { pedido.pagado = false; pedido.medioPago = "Pendiente"; guardarDB('db_repartos', dbRepartos); renderizarPlanillaReparto(); renderizarReportesMensuales(); }
+      const fechaHojaRutaActiva = document.getElementById('hr-fecha-selector').value || fechaActual;
+      if (dbRepartosCerrados[fechaHojaRutaActiva]) return;
+      const pedido = (dbRepartos[fechaHojaRutaActiva] || []).find(p => p.id === pedidoId);
+      if (pedido) { pedido.pagado = false; pedido.medioPago = "Pendiente"; guardarRepartoPorFecha(fechaHojaRutaActiva); renderizarPlanillaReparto(); renderizarReportesMensuales(); }
+    }
+
+    function eliminarPedidoHojaRuta(pedidoId, productoNombre) {
+      const fechaHojaRutaActiva = document.getElementById('hr-fecha-selector').value || fechaActual;
+      if (dbRepartosCerrados[fechaHojaRutaActiva]) { alert("⚠️ El reparto de este día ya se encuentra cerrado."); return; }
+      if (confirm(`⚠️ El cliente canceló la compra. ¿Desea eliminar el pedido de "${productoNombre}" de la Hoja de Ruta?`)) {
+        if (dbRepartos[fechaHojaRutaActiva]) {
+          dbRepartos[fechaHojaRutaActiva] = dbRepartos[fechaHojaRutaActiva].filter(p => p.id !== pedidoId);
+          guardarRepartoPorFecha(fechaHojaRutaActiva);
+          renderizarPlanillaReparto(); 
+          renderizarCuadra(); 
+          renderizarReportesMensuales();
+        }
+      }
     }
    
     function imprimirCuadra() {
@@ -2096,11 +2219,12 @@
     }
 
     function imprimirReparto() {
-      const fechaFormateada = obtenerFechaConDia(fechaActual);
-      const pedidosHoy = dbRepartos[fechaActual] || [];
+      const fechaHojaRutaActiva = document.getElementById('hr-fecha-selector').value || fechaActual;
+      const fechaFormateada = obtenerFechaConDia(fechaHojaRutaActiva);
+      const pedidosHoy = dbRepartos[fechaHojaRutaActiva] || [];
       
       if (pedidosHoy.length === 0) {
-        alert("No hay pedidos cargados para la fecha actual.");
+        alert("No hay pedidos cargados para la fecha seleccionada.");
         return;
       }
 
@@ -2158,10 +2282,10 @@
           <div style="border-bottom: 3px solid #78350f; padding-bottom: 12px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-end;">
             <div>
               <h1 style="font-size: 20px; font-weight: 800; margin: 0; color: #78350f; text-transform: uppercase;">La Casa del Pan & La Espiga de Oro</h1>
-              <p style="font-size: 13px; margin: 4px 0 0 0; color: #4b5563; font-weight: 600;">Planilla Diaria de Reparto y Logística</p>
+              <p style="font-size: 13px; margin: 4px 0 0 0; color: #4b5563; font-weight: 600;">Hoja de Ruta y Control de Pagos</p>
             </div>
             <div style="text-align: right; background-color: #fef3c7; border: 1px solid #fde68a; padding: 6px 12px; border-radius: 6px;">
-              <span style="font-size: 10px; color: #92400e; font-weight: 700; display: block; text-transform: uppercase;">Fecha Operativa</span>
+              <span style="font-size: 10px; color: #92400e; font-weight: 700; display: block; text-transform: uppercase;">Fecha Hoja de Ruta</span>
               <span style="font-size: 13px; font-weight: 800; color: #78350f;">${fechaFormateada}</span>
             </div>
           </div>
@@ -2177,15 +2301,6 @@
     }
 
     function renderizarCuadra() {
-      const usr = dbUsuarios[usuarioActivoId];
-      const boxConsolidado = document.getElementById('box-cuadra-consolidado');
-
-      if (usr && usr.sucursal === 'espiga' && usr.rol !== 'admin') {
-        if (boxConsolidado) boxConsolidado.classList.add('hidden');
-      } else {
-        if (boxConsolidado) boxConsolidado.classList.remove('hidden');
-      }
-
       const fechaFormateada = obtenerFechaConDia(fechaCuadraActiva);
       const lblCua = document.getElementById('label-fecha-cuadra'); if (lblCua) lblCua.innerText = `Fecha de Producción: ${fechaFormateada}`;
       
@@ -2242,45 +2357,46 @@
     }
 
     function guardarCliente() {
-  const nombreInput = document.getElementById('cli-nombre');
-  const nombre = nombreInput.value.trim(); 
-  if (!nombre) {
-    alert("Ingrese el nombre o razón social del cliente.");
-    return;
-  }
+      const nombreInput = document.getElementById('cli-nombre');
+      const nombre = nombreInput.value.trim(); 
+      if (!nombre) {
+        alert("Ingrese el nombre o razón social del cliente.");
+        return;
+      }
 
-  const nombreLower = nombre.toLowerCase();
-  const yaExiste = Object.values(dbClientes).some(c => c.nombre.trim().toLowerCase() === nombreLower);
-  if (yaExiste) {
-    alert(`⚠️ Ya existe un cliente registrado con el nombre "${nombre}".`);
-    nombreInput.focus();
-    return;
-  }
+      const nombreLower = nombre.toLowerCase();
+      const yaExiste = Object.values(dbClientes).some(c => c.nombre.trim().toLowerCase() === nombreLower);
+      if (yaExiste) {
+        alert(`⚠️ Ya existe un cliente registrado con el nombre "${nombre}".`);
+        nombreInput.focus();
+        return;
+      }
 
-  const id = generarID('CLI');
-  dbClientes[id] = { 
-    id, 
-    nombre, 
-    cuit: document.getElementById('cli-cuit').value.trim(), 
-    direccion: document.getElementById('cli-direccion').value.trim(), 
-    telefono: document.getElementById('cli-telefono').value.trim(),
-    email: document.getElementById('cli-email')?.value.trim() || '' 
-  };
-  
-  guardarDB('db_clientes', dbClientes);
+      const id = generarID('CLI');
+      dbClientes[id] = { 
+        id, 
+        nombre, 
+        cuit: document.getElementById('cli-cuit').value.trim(), 
+        direccion: document.getElementById('cli-direccion').value.trim(), 
+        telefono: document.getElementById('cli-telefono').value.trim(),
+        email: document.getElementById('cli-email')?.value.trim() || '' 
+      };
+      
+      guardarDB('db_clientes', dbClientes);
 
-  nombreInput.value = ''; 
-  if(document.getElementById('cli-cuit')) document.getElementById('cli-cuit').value = '';
-  if(document.getElementById('cli-direccion')) document.getElementById('cli-direccion').value = '';
-  if(document.getElementById('cli-telefono')) document.getElementById('cli-telefono').value = '';
-  if(document.getElementById('cli-email')) document.getElementById('cli-email').value = '';
-  
-  cerrarModalAltaCliente();
-  cargarSelectorClientesReparto(); 
-  cargarSelectorClientesRecurrentes();
-  renderizarTablaClientes();
-  cargarBuscadorClientes();
-}
+      nombreInput.value = ''; 
+      if(document.getElementById('cli-cuit')) document.getElementById('cli-cuit').value = '';
+      if(document.getElementById('cli-direccion')) document.getElementById('cli-direccion').value = '';
+      if(document.getElementById('cli-telefono')) document.getElementById('cli-telefono').value = '';
+      if(document.getElementById('cli-email')) document.getElementById('cli-email').value = '';
+      
+      cerrarModalAltaCliente();
+      cargarSelectorClientesReparto(); 
+      cargarSelectorClientesRecurrentes();
+      renderizarTablaClientes();
+      cargarBuscadorClientes();
+    }
+
     function calcularSaldoCliente(cliId) {
       let saldo = 0;
       Object.values(dbRepartos).forEach(pDia => Object.values(pDia).forEach(p => { if (p.clienteId === cliId && !p.pagado) saldo += p.monto; }));
@@ -2332,88 +2448,88 @@
       cargarBuscadorClientes();
     }
 
-  function eliminarClienteActual() {
-  if (!clienteSeleccionadoId) return;
-  const cli = dbClientes[clienteSeleccionadoId];
-  const nombreCli = cli ? cli.nombre : 'este cliente';
-  
-  if (confirm(`⚠️ ¿Está completamente seguro que desea borrar al cliente "${nombreCli}"?`)) {
-    const idABorrar = clienteSeleccionadoId;
-    cerrarHistorialCliente();
-    
-    delete dbClientes[idABorrar];
-    if (dbHistorialClientes[idABorrar]) {
-      delete dbHistorialClientes[idABorrar];
-      guardarDB('db_historial_clientes', dbHistorialClientes);
+    function eliminarClienteActual() {
+      if (!clienteSeleccionadoId) return;
+      const cli = dbClientes[clienteSeleccionadoId];
+      const nombreCli = cli ? cli.nombre : 'este cliente';
+      
+      if (confirm(`⚠️ ¿Está completamente seguro que desea borrar al cliente "${nombreCli}"?`)) {
+        const idABorrar = clienteSeleccionadoId;
+        cerrarHistorialCliente();
+        
+        delete dbClientes[idABorrar];
+        if (dbHistorialClientes[idABorrar]) {
+          delete dbHistorialClientes[idABorrar];
+          guardarDB('db_historial_clientes', dbHistorialClientes);
+        }
+        guardarDB('db_clientes', dbClientes);
+        
+        renderizarTablaClientes();
+        cargarSelectorClientesReparto();
+        cargarSelectorClientesRecurrentes();
+      }
     }
-    guardarDB('db_clientes', dbClientes);
-    
-    renderizarTablaClientes();
-    cargarSelectorClientesReparto();
-    cargarSelectorClientesRecurrentes();
-  }
-}
 
-   function cerrarHistorialCliente() { 
-  clienteSeleccionadoId = null; 
-  const modal = document.getElementById('modal-historial-cliente');
-  if (modal) {
-    modal.classList.add('hidden');
-  }
-  const selBuscador = document.getElementById('select-buscador-cliente');
-  if (selBuscador) selBuscador.value = "";
-}
+    function cerrarHistorialCliente() { 
+      clienteSeleccionadoId = null; 
+      const modal = document.getElementById('modal-historial-cliente');
+      if (modal) {
+        modal.classList.add('hidden');
+      }
+      const selBuscador = document.getElementById('select-buscador-cliente');
+      if (selBuscador) selBuscador.value = "";
+    }
 
-  function verHistorialCliente(cliId) {
-  if (!cliId) return;
-  clienteSeleccionadoId = cliId; 
-  
-  const clienteActual = dbClientes[cliId] || JSON.parse(localStorage.getItem('db_clientes') || '{}')[cliId];
-  if (!clienteActual) {
-    alert("No se pudieron cargar los datos del cliente.");
-    return;
-  }
-  
-  const nombreEl = document.getElementById('historial-nombre-cliente');
-  const contactoEl = document.getElementById('historial-contacto-cliente');
-  if (nombreEl) nombreEl.textContent = clienteActual.nombre || '';
-  
-  const saldoActual = calcularSaldoCliente(cliId);
-  if (contactoEl) contactoEl.textContent = `Tel: ${clienteActual.telefono || 'S/D'} | Email: ${clienteActual.email || 'S/D'} | Saldo Actual: $${saldoActual.toLocaleString()}`;
-  
-  const modalCli = document.getElementById('modal-historial-cliente');
-  if (modalCli) {
-    modalCli.classList.remove('hidden'); // Limpiamos y dejamos que flex de Tailwind actúe
-  }
-  
-  document.getElementById('edit-cli-nombre').value = clienteActual.nombre || '';
-  document.getElementById('edit-cli-cuit').value = clienteActual.cuit || '';
-  document.getElementById('edit-cli-direccion').value = clienteActual.direccion || '';
-  document.getElementById('edit-cli-telefono').value = clienteActual.telefono || '';
-  document.getElementById('edit-cli-email').value = clienteActual.email || '';
+    function verHistorialCliente(cliId) {
+      if (!cliId) return;
+      clienteSeleccionadoId = cliId; 
+      
+      const clienteActual = dbClientes[cliId] || JSON.parse(localStorage.getItem('db_clientes') || '{}')[cliId];
+      if (!clienteActual) {
+        alert("No se pudieron cargar los datos del cliente.");
+        return;
+      }
+      
+      const nombreEl = document.getElementById('historial-nombre-cliente');
+      const contactoEl = document.getElementById('historial-contacto-cliente');
+      if (nombreEl) nombreEl.textContent = clienteActual.nombre || '';
+      
+      const saldoActual = calcularSaldoCliente(cliId);
+      if (contactoEl) contactoEl.textContent = `Tel: ${clienteActual.telefono || 'S/D'} | Email: ${clienteActual.email || 'S/D'} | Saldo Actual: $${saldoActual.toLocaleString()}`;
+      
+      const modalCli = document.getElementById('modal-historial-cliente');
+      if (modalCli) {
+        modalCli.classList.remove('hidden');
+      }
+      
+      document.getElementById('edit-cli-nombre').value = clienteActual.nombre || '';
+      document.getElementById('edit-cli-cuit').value = clienteActual.cuit || '';
+      document.getElementById('edit-cli-direccion').value = clienteActual.direccion || '';
+      document.getElementById('edit-cli-telefono').value = clienteActual.telefono || '';
+      document.getElementById('edit-cli-email').value = clienteActual.email || '';
 
-  renderizarTablaHistorialCliente();
-}
+      renderizarTablaHistorialCliente();
+    }
 
-   function guardarEdicionCliente() {
-  if (!clienteSeleccionadoId || !dbClientes[clienteSeleccionadoId]) return;
-  const cli = dbClientes[clienteSeleccionadoId];
+    function guardarEdicionCliente() {
+      if (!clienteSeleccionadoId || !dbClientes[clienteSeleccionadoId]) return;
+      const cli = dbClientes[clienteSeleccionadoId];
 
-  const nuevoNombre = document.getElementById('edit-cli-nombre').value.trim();
-  if (!nuevoNombre) { alert("El nombre del cliente no puede estar vacío."); return; }
+      const nuevoNombre = document.getElementById('edit-cli-nombre').value.trim();
+      if (!nuevoNombre) { alert("El nombre del cliente no puede estar vacío."); return; }
 
-  cli.nombre = nuevoNombre;
-  cli.cuit = document.getElementById('edit-cli-cuit').value.trim();
-  cli.direccion = document.getElementById('edit-cli-direccion').value.trim();
-  cli.telefono = document.getElementById('edit-cli-telefono').value.trim();
-  cli.email = document.getElementById('edit-cli-email').value.trim();
+      cli.nombre = nuevoNombre;
+      cli.cuit = document.getElementById('edit-cli-cuit').value.trim();
+      cli.direccion = document.getElementById('edit-cli-direccion').value.trim();
+      cli.telefono = document.getElementById('edit-cli-telefono').value.trim();
+      cli.email = document.getElementById('edit-cli-email').value.trim();
 
-  guardarDB('db_clientes', dbClientes);
-  renderizarTablaClientes();
-  cargarSelectorClientesReparto();
-  cargarSelectorClientesRecurrentes();
-  verHistorialCliente(clienteSeleccionadoId);
-}
+      guardarDB('db_clientes', dbClientes);
+      renderizarTablaClientes();
+      cargarSelectorClientesReparto();
+      cargarSelectorClientesRecurrentes();
+      verHistorialCliente(clienteSeleccionadoId);
+    }
 
     function abrirModalEditarMovCliente(id, origen, fechaOriginal) {
       movClienteEditContext = { id, origen, fechaOriginal };
@@ -2472,7 +2588,8 @@
               if (!dbRepartos[valFecha]) dbRepartos[valFecha] = [];
               dbRepartos[valFecha].push(pedido);
           }
-          guardarDB('db_repartos', dbRepartos);
+          guardarRepartoPorFecha(fechaOriginal);
+          if (valFecha !== fechaOriginal) guardarRepartoPorFecha(valFecha);
           renderizarPlanillaReparto(); 
           renderizarCuadra();
         }
@@ -2496,7 +2613,7 @@
         if (origen === 'reparto') {
            if (dbRepartos[fechaOriginal]) {
                dbRepartos[fechaOriginal] = dbRepartos[fechaOriginal].filter(p => p.id !== movId);
-               guardarDB('db_repartos', dbRepartos);
+               guardarRepartoPorFecha(fechaOriginal);
                renderizarPlanillaReparto();
                renderizarCuadra();
            }
@@ -2675,42 +2792,42 @@
       window.location.href = `mailto:${emailDestino}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`;
     }
 
-function guardarProveedor() {
-  const nombreInput = document.getElementById('prov-nombre');
-  const nombre = nombreInput.value.trim(); 
-  if (!nombre) {
-    alert("Ingrese la razón social o nombre del proveedor.");
-    return;
-  }
+    function guardarProveedor() {
+      const nombreInput = document.getElementById('prov-nombre');
+      const nombre = nombreInput.value.trim(); 
+      if (!nombre) {
+        alert("Ingrese la razón social o nombre del proveedor.");
+        return;
+      }
 
-  const nombreLower = nombre.toLowerCase();
-  const yaExiste = Object.values(dbProveedores).some(p => p.nombre.trim().toLowerCase() === nombreLower);
-  if (yaExiste) {
-    alert(`⚠️ Ya existe un proveedor registrado con el nombre "${nombre}".`);
-    nombreInput.focus();
-    return;
-  }
+      const nombreLower = nombre.toLowerCase();
+      const yaExiste = Object.values(dbProveedores).some(p => p.nombre.trim().toLowerCase() === nombreLower);
+      if (yaExiste) {
+        alert(`⚠️ Ya existe un proveedor registrado con el nombre "${nombre}".`);
+        nombreInput.focus();
+        return;
+      }
 
-  const id = generarID('PRV');
-  dbProveedores[id] = { 
-    id, 
-    nombre, 
-    cuit: document.getElementById('prov-cuit').value.trim(), 
-    telefono: document.getElementById('prov-telefono').value.trim(), 
-    rubro: document.getElementById('prov-rubro').value.trim() 
-  };
+      const id = generarID('PRV');
+      dbProveedores[id] = { 
+        id, 
+        nombre, 
+        cuit: document.getElementById('prov-cuit').value.trim(), 
+        telefono: document.getElementById('prov-telefono').value.trim(), 
+        rubro: document.getElementById('prov-rubro').value.trim() 
+      };
 
-  guardarDB('db_proveedores', dbProveedores); 
+      guardarDB('db_proveedores', dbProveedores); 
 
-  nombreInput.value = '';
-  document.getElementById('prov-cuit').value = '';
-  document.getElementById('prov-telefono').value = '';
-  document.getElementById('prov-rubro').value = '';
+      nombreInput.value = '';
+      document.getElementById('prov-cuit').value = '';
+      document.getElementById('prov-telefono').value = '';
+      document.getElementById('prov-rubro').value = '';
 
-  cerrarModalAltaProveedor();
-  renderizarTablaProveedores(); 
-  cargarBuscadorProveedores();
-}
+      cerrarModalAltaProveedor();
+      renderizarTablaProveedores(); 
+      cargarBuscadorProveedores();
+    }
 
     function calcularSaldoProveedor(provId) {
       let saldo = 0;
@@ -2763,82 +2880,84 @@ function guardarProveedor() {
     }
 
     function eliminarProveedorActual() {
-  if (!proveedorSeleccionadoId) return;
-  const prv = dbProveedores[proveedorSeleccionadoId];
-  const nombrePrv = prv ? prv.nombre : 'este proveedor';
-  
-  if (confirm(`⚠️ ¿Está completamente seguro que desea borrar al proveedor "${nombrePrv}"?`)) {
-    const idABorrar = proveedorSeleccionadoId;
-    cerrarHistorialProveedor();
-    
-    delete dbProveedores[idABorrar];
-    if (dbHistorialProveedores[idABorrar]) {
-      delete dbHistorialProveedores[idABorrar];
-      guardarDB('db_historial_proveedores', dbHistorialProveedores);
+      if (!proveedorSeleccionadoId) return;
+      const prv = dbProveedores[proveedorSeleccionadoId];
+      const nombrePrv = prv ? prv.nombre : 'este proveedor';
+      
+      if (confirm(`⚠️ ¿Está completamente seguro que desea borrar al proveedor "${nombrePrv}"?`)) {
+        const idABorrar = proveedorSeleccionadoId;
+        cerrarHistorialProveedor();
+        
+        delete dbProveedores[idABorrar];
+        if (dbHistorialProveedores[idABorrar]) {
+          delete dbHistorialProveedores[idABorrar];
+          guardarDB('db_historial_proveedores', dbHistorialProveedores);
+        }
+        guardarDB('db_proveedores', dbProveedores);
+        
+        renderizarTablaProveedores();
+        cargarBuscadorProveedores();
+      }
     }
-    guardarDB('db_proveedores', dbProveedores);
-    
-    renderizarTablaProveedores();
-    cargarBuscadorProveedores();
-  }
-}
 
-  function verHistorialProveedor(provId) {
-  if (!provId) return;
-  proveedorSeleccionadoId = provId; 
-  
-  const prov = dbProveedores[provId] || JSON.parse(localStorage.getItem('db_proveedores') || '{}')[provId]; 
-  if (!prov) {
-    alert("No se pudieron cargar los datos del proveedor.");
-    return;
-  }
-  
-  const nombreEl = document.getElementById('historial-nombre-proveedor');
-  const contactoEl = document.getElementById('historial-contacto-proveedor');
-  if (nombreEl) nombreEl.textContent = prov.nombre || '';
-  
-  const saldoActual = calcularSaldoProveedor(provId);
-  if (contactoEl) contactoEl.textContent = `Tel: ${prov.telefono || 'S/D'} | CUIT: ${prov.cuit || 'S/D'} | Saldo Deuda: $${saldoActual.toLocaleString()}`;
-  
-  const modalProv = document.getElementById('modal-historial-proveedor');
-  if (modalProv) {
-    modalProv.classList.remove('hidden');
-  }
-  
-  document.getElementById('edit-prov-nombre').value = prov.nombre || '';
-  document.getElementById('edit-prov-cuit').value = prov.cuit || '';
-  document.getElementById('edit-prov-telefono').value = prov.telefono || '';
-  document.getElementById('edit-prov-rubro').value = prov.rubro || '';
+    function verHistorialProveedor(provId) {
+      if (!provId) return;
+      proveedorSeleccionadoId = provId; 
+      
+      const prov = dbProveedores[provId] || JSON.parse(localStorage.getItem('db_proveedores') || '{}')[provId]; 
+      if (!prov) {
+        alert("No se pudieron cargar los datos del proveedor.");
+        return;
+      }
+      
+      const nombreEl = document.getElementById('historial-nombre-proveedor');
+      const contactoEl = document.getElementById('historial-contacto-proveedor');
+      if (nombreEl) nombreEl.textContent = prov.nombre || '';
+      
+      const saldoActual = calcularSaldoProveedor(provId);
+      if (contactoEl) contactoEl.textContent = `Tel: ${prov.telefono || 'S/D'} | CUIT: ${prov.cuit || 'S/D'} | Saldo Deuda: $${saldoActual.toLocaleString()}`;
+      
+      const modalProv = document.getElementById('modal-historial-proveedor');
+      if (modalProv) {
+        modalProv.classList.remove('hidden');
+      }
+      
+      document.getElementById('edit-prov-nombre').value = prov.nombre || '';
+      document.getElementById('edit-prov-cuit').value = prov.cuit || '';
+      document.getElementById('edit-prov-telefono').value = prov.telefono || '';
+      document.getElementById('edit-prov-rubro').value = prov.rubro || '';
 
-  renderizarTablaHistorialProveedor();
-}
+      renderizarTablaHistorialProveedor();
+    }
 
-   function guardarEdicionProveedor() {
-  if (!proveedorSeleccionadoId || !dbProveedores[proveedorSeleccionadoId]) return;
-  const prov = dbProveedores[proveedorSeleccionadoId];
+    function guardarEdicionProveedor() {
+      if (!proveedorSeleccionadoId || !dbProveedores[proveedorSeleccionadoId]) return;
+      const prov = dbProveedores[proveedorSeleccionadoId];
 
-  const nuevoNombre = document.getElementById('edit-prov-nombre').value.trim();
-  if (!nuevoNombre) { alert("La razón social no puede estar vacía."); return; }
+      const nuevoNombre = document.getElementById('edit-prov-nombre').value.trim();
+      if (!nuevoNombre) { alert("La razón social no puede estar vacía."); return; }
 
-  prov.nombre = nuevoNombre;
-  prov.cuit = document.getElementById('edit-prov-cuit').value.trim();
-  prov.telefono = document.getElementById('edit-prov-telefono').value.trim();
-  prov.rubro = document.getElementById('edit-prov-rubro').value.trim();
+      prov.nombre = nuevoNombre;
+      prov.cuit = document.getElementById('edit-prov-cuit').value.trim();
+      prov.telefono = document.getElementById('edit-prov-telefono').value.trim();
+      prov.rubro = document.getElementById('edit-prov-rubro').value.trim();
 
-  guardarDB('db_proveedores', dbProveedores);
-  renderizarTablaProveedores();
-  cargarBuscadorProveedores();
-  verHistorialProveedor(proveedorSeleccionadoId);
-}
-  function cerrarHistorialProveedor() { 
-  proveedorSeleccionadoId = null; 
-  const modal = document.getElementById('modal-historial-proveedor');
-  if (modal) {
-    modal.classList.add('hidden');
-  }
-  const selBuscador = document.getElementById('select-buscador-proveedor');
-  if (selBuscador) selBuscador.value = "";
-}
+      guardarDB('db_proveedores', dbProveedores);
+      renderizarTablaProveedores();
+      cargarBuscadorProveedores();
+      verHistorialProveedor(proveedorSeleccionadoId);
+    }
+
+    function cerrarHistorialProveedor() { 
+      proveedorSeleccionadoId = null; 
+      const modal = document.getElementById('modal-historial-proveedor');
+      if (modal) {
+        modal.classList.add('hidden');
+      }
+      const selBuscador = document.getElementById('select-buscador-proveedor');
+      if (selBuscador) selBuscador.value = "";
+    }
+
     function cargarFacturaProveedor() {
       if (!proveedorSeleccionadoId) return;
       const cant = parseFloat(document.getElementById('fact-cant').value); const precioUn = parseFloat(document.getElementById('fact-precio').value);
@@ -3814,7 +3933,7 @@ function guardarProveedor() {
             if (bkp.dbHistorialClientes) guardarDB('db_historial_clientes', bkp.dbHistorialClientes);
             if (bkp.dbHistorialProveedores) guardarDB('db_historial_proveedores', bkp.dbHistorialProveedores);
             if (bkp.dbCajasDiarias) guardarDB('db_cajas_diarias', bkp.dbCajasDiarias);
-            if (bkp.dbEgresosCaja) guardarDB('db_egresos_caja', bkp.dbEgresosCaja);
+            if (bkp.dbEgresosCaja) guardarDB('db_egresos_caja', dbEgresosCaja);
             if (bkp.dbRepartosCerrados) guardarDB('db_repartos_cerrados', bkp.dbRepartosCerrados);
 
             alert("¡Datos restaurados y subidos a la nube exitosamente!");
