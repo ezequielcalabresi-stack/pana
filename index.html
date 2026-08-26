@@ -2341,7 +2341,7 @@
       Object.values(dbRepartos).forEach(pDia => Object.values(pDia).forEach(p => { if (p.clienteId === cliId && !p.pagado) saldo += p.monto; }));
       Object.values(dbHistorialClientes[cliId] || {}).forEach(m => { if (m.tipo === 'debito') saldo += m.monto; if (m.tipo === 'credito') saldo -= m.monto; });
       return saldo;
-    }
+
 function renderizarTablaClientes() {
       const tbody = document.getElementById('tabla-resumen-clientes-deuda'); 
       if (!tbody) return; 
@@ -2360,15 +2360,14 @@ function renderizarTablaClientes() {
         tr.className = "border-b hover:bg-gray-50";
         const claseSaldo = saldo > 0 ? "font-bold text-red-600" : (saldo < 0 ? "font-bold text-green-700" : "text-gray-500");
 
-        // Inyección directa por HTML plano para compatibilidad total con WebView Android
         tr.innerHTML = `
           <td class="p-2 font-bold text-gray-800">${cli.nombre}</td>
           <td class="p-2 text-gray-600">${cli.telefono || 'S/D'}</td>
           <td class="p-2 text-right ${claseSaldo}">$${saldo.toLocaleString()}</td>
           <td class="p-2 text-center">
-            <button type="button" onclick="verHistorialCliente('${cli.id}')" class="bg-amber-700 text-white text-xs px-3 py-1.5 rounded-lg font-bold shadow active:bg-amber-900">
+            <a href="javascript:void(0);" onclick="verHistorialCliente('${cli.id}')" class="inline-block bg-amber-700 text-white text-xs px-3 py-1.5 rounded-lg font-bold shadow active:bg-amber-950">
               Abrir Ficha
-            </button>
+            </a>
           </td>
         `;
         tbody.appendChild(tr);
@@ -2730,7 +2729,7 @@ function renderizarTablaClientes() {
       Object.values(dbHistorialProveedores[provId] || {}).forEach(m => { if (m.tipo === 'factura') saldo += m.monto; if (m.tipo === 'pago') saldo -= m.monto; });
       return saldo;
     }
-function renderizarTablaProveedores() {
+ffunction renderizarTablaProveedores() {
       const tbody = document.getElementById('tabla-resumen-proveedores-deuda'); 
       if (!tbody) return; 
       tbody.innerHTML = '';
@@ -2748,20 +2747,20 @@ function renderizarTablaProveedores() {
         tr.className = "border-b hover:bg-gray-50";
         const claseSaldo = saldo > 0 ? "font-bold text-red-600" : "text-gray-500";
 
-        // Inyección directa por HTML plano para compatibilidad total con WebView Android
         tr.innerHTML = `
           <td class="p-2 font-bold text-gray-800">${prv.nombre}</td>
           <td class="p-2 text-gray-600">${prv.rubro || 'General'}</td>
           <td class="p-2 text-right ${claseSaldo}">$${saldo.toLocaleString()}</td>
           <td class="p-2 text-center">
-            <button type="button" onclick="verHistorialProveedor('${prv.id}')" class="bg-amber-700 text-white text-xs px-3 py-1.5 rounded-lg font-bold shadow active:bg-amber-900">
+            <a href="javascript:void(0);" onclick="verHistorialProveedor('${prv.id}')" class="inline-block bg-amber-700 text-white text-xs px-3 py-1.5 rounded-lg font-bold shadow active:bg-amber-950">
               Abrir Ficha
-            </button>
+            </a>
           </td>
         `;
         tbody.appendChild(tr);
       });
-    }    function eliminarProveedorActual() {
+    }
+  function eliminarProveedorActual() {
       if (!proveedorSeleccionadoId) return;
       const prv = dbProveedores[proveedorSeleccionadoId];
       const nombrePrv = prv ? prv.nombre : 'este proveedor';
