@@ -281,82 +281,6 @@
 
     <!-- 3. CLIENTES Y CUENTA CORRIENTE -->
     <section id="sec-clientes" class="hidden space-y-4">
-      
-      <!-- Ficha del cliente seleccionada arriba de todo -->
-      <div id="modulo-historial-cliente" class="bg-white p-4 rounded-xl shadow border border-amber-500 space-y-4 hidden">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 border-b pb-2">
-          <div>
-            <h2 id="historial-nombre-cliente" class="text-lg font-bold text-amber-900"></h2>
-            <p id="historial-contacto-cliente" class="text-xs text-gray-600"></p>
-          </div>
-          <!-- BOTONES ENVÍO WHATSAPP Y EMAIL -->
-          <div class="flex flex-wrap items-center gap-2">
-            <button type="button" onclick="enviarResumenWhatsAppCliente()" class="bg-green-600 hover:bg-green-700 text-white text-xs px-3 py-2 rounded font-bold shadow flex items-center gap-1">📱 Enviar WhatsApp</button>
-            <button type="button" onclick="enviarResumenEmailCliente()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-2 rounded font-bold shadow flex items-center gap-1">✉️ Enviar Mail</button>
-            <button type="button" onclick="cerrarHistorialCliente()" class="bg-gray-300 text-gray-800 text-xs px-3 py-2 rounded font-bold">✕ Cerrar Ficha</button>
-          </div>
-        </div>
-
-        <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 space-y-2">
-          <h3 class="text-xs font-bold text-gray-700">✏️ Editar Datos del Cliente</h3>
-          <div class="grid grid-cols-1 md:grid-cols-5 gap-2">
-            <input type="text" id="edit-cli-nombre" placeholder="Nombre" class="border p-1.5 rounded text-xs bg-white">
-            <input type="text" id="edit-cli-cuit" placeholder="CUIT / DNI" class="border p-1.5 rounded text-xs bg-white">
-            <input type="text" id="edit-cli-direccion" placeholder="Dirección" class="border p-1.5 rounded text-xs bg-white">
-            <input type="text" id="edit-cli-telefono" placeholder="Teléfono" class="border p-1.5 rounded text-xs bg-white">
-            <input type="email" id="edit-cli-email" placeholder="Email" class="border p-1.5 rounded text-xs bg-white">
-          </div>
-          <div class="flex justify-end gap-2 pt-1">
-            <button type="button" onclick="guardarEdicionCliente()" class="bg-amber-700 text-white font-bold px-3 py-1.5 rounded text-xs hover:bg-amber-800">Guardar Cambios</button>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- PANEL 1: CARGO MANUAL (Suma Deuda) -->
-          <div class="bg-red-50 p-3 rounded-lg border border-red-200 space-y-2">
-            <h3 class="text-xs font-bold text-red-900">⬆️ Agregar pedidos / Cargo Manual</h3>
-            <div class="grid grid-cols-2 gap-2">
-              <input type="date" id="cargo-cli-fecha" class="border p-2 rounded text-xs bg-white">
-              <input type="number" id="cargo-cli-monto" placeholder="Monto ($)" class="border p-2 rounded text-xs bg-white">
-            </div>
-            <input type="text" id="cargo-cli-concepto" placeholder="Concepto (Ej: Saldo anterior, Ajuste...)" class="border p-2 rounded text-xs bg-white w-full">
-            <button type="button" onclick="registrarCargoCliente()" class="bg-red-700 text-white font-bold px-3 py-2 rounded text-xs hover:bg-red-800 w-full">Sumar a la Deuda</button>
-          </div>
-
-          <!-- PANEL 2: PAGO (Resta Deuda) -->
-          <div class="bg-green-50 p-3 rounded-lg border border-green-200 space-y-2">
-            <h3 class="text-xs font-bold text-green-900">⬇️ Registrar Entrega / Pago</h3>
-            <div class="grid grid-cols-2 gap-2">
-              <input type="date" id="pago-fecha" class="border p-2 rounded text-xs bg-white">
-              <input type="number" id="pago-monto" placeholder="Monto abonado ($)" class="border p-2 rounded text-xs bg-white">
-            </div>
-            <select id="pago-medio" class="border p-2 rounded text-xs bg-white w-full">
-              <option value="Efectivo">Efectivo</option>
-              <option value="Transferencia">Transferencia</option>
-              <option value="Mercado Pago">Mercado Pago</option>
-              <option value="Cheque">Cheque</option>
-            </select>
-            <button type="button" onclick="registrarPagoCliente()" class="bg-green-700 text-white font-bold px-3 py-2 rounded text-xs hover:bg-green-800 w-full">Registrar Pago</button>
-          </div>
-        </div>
-
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs md:text-sm">
-            <thead>
-              <tr class="bg-amber-100 border-b text-amber-900 font-bold">
-                <th class="p-2">Fecha</th>
-                <th class="p-2">Concepto / Detalle</th>
-                <th class="p-2 text-right">Débito</th>
-                <th class="p-2 text-right">Crédito</th>
-                <th class="p-2 text-right">Saldo Acumulado</th>
-                <th class="p-2 text-center">Acción</th>
-              </tr>
-            </thead>
-            <tbody id="tabla-historial-cliente"></tbody>
-          </table>
-        </div>
-      </div>
-
       <div class="bg-white p-4 rounded-xl shadow border space-y-3">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 mb-3">
           <h2 class="text-base font-bold text-gray-800">Directorio General de Clientes</h2>
@@ -370,7 +294,7 @@
         
         <div class="bg-gray-50 p-3 rounded-lg border">
           <h3 class="text-xs font-bold text-gray-700 mb-2">Listado de Todos los Clientes y Cta. Cte.</h3>
-          <div class="overflow-x-auto max-h-64 overflow-y-auto">
+          <div class="overflow-x-auto max-h-96 overflow-y-auto">
             <table class="w-full text-left text-xs">
               <thead>
                 <tr class="bg-gray-200 border-b">
@@ -389,79 +313,6 @@
 
     <!-- 4. PROVEEDORES Y FACTURACIÓN -->
     <section id="sec-proveedores" class="hidden space-y-4">
-      
-      <!-- Ficha del proveedor seleccionada arriba de todo -->
-      <div id="modulo-historial-proveedor" class="bg-white p-4 rounded-xl shadow border border-amber-500 space-y-4 hidden">
-        <div class="flex justify-between items-center border-b pb-2">
-          <h2 id="historial-nombre-proveedor" class="text-lg font-bold text-amber-900"></h2>
-          <!-- BOTONES ENVÍO WHATSAPP Y EMAIL PROVEEDOR -->
-          <div class="flex flex-wrap items-center gap-2">
-            <button type="button" onclick="enviarResumenWhatsAppProveedor()" class="bg-green-600 hover:bg-green-700 text-white text-xs px-3 py-2 rounded font-bold shadow flex items-center gap-1">📱 Enviar WhatsApp</button>
-            <button type="button" onclick="enviarResumenEmailProveedor()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-2 rounded font-bold shadow flex items-center gap-1">✉️ Enviar Mail</button>
-            <button type="button" onclick="cerrarHistorialProveedor()" class="bg-gray-300 text-gray-800 text-xs px-3 py-2 rounded font-bold">✕ Cerrar Ficha</button>
-          </div>
-        </div>
-
-        <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 space-y-2">
-          <h3 class="text-xs font-bold text-gray-700">✏️ Editar Datos del Proveedor</h3>
-          <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
-            <input type="text" id="edit-prov-nombre" placeholder="Razón Social" class="border p-1.5 rounded text-xs bg-white">
-            <input type="text" id="edit-prov-cuit" placeholder="CUIT" class="border p-1.5 rounded text-xs bg-white">
-            <input type="text" id="edit-prov-telefono" placeholder="Teléfono" class="border p-1.5 rounded text-xs bg-white">
-            <input type="text" id="edit-prov-rubro" placeholder="Rubro" class="border p-1.5 rounded text-xs bg-white">
-          </div>
-          <div class="flex justify-end gap-2 pt-1">
-            <button type="button" onclick="guardarEdicionProveedor()" class="bg-amber-700 text-white font-bold px-3 py-1.5 rounded text-xs hover:bg-amber-800">Guardar Cambios</button>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div class="bg-amber-50 p-3 rounded-lg border border-amber-200 space-y-2">
-            <h3 class="text-xs font-bold text-amber-900">🧾 Cargar Factura de Compra</h3>
-            <div class="grid grid-cols-2 gap-2">
-              <input type="date" id="fact-fecha" class="border p-2 rounded text-xs bg-white">
-              <input type="text" id="fact-nro" placeholder="N° Factura" class="border p-2 rounded text-xs bg-white">
-            </div>
-            <div class="grid grid-cols-3 gap-1">
-              <select id="fact-insumo" class="border p-2 rounded text-xs bg-white col-span-1"></select>
-              <input type="number" id="fact-cant" placeholder="Cant." class="border p-2 rounded text-xs bg-white">
-              <input type="number" id="fact-precio" placeholder="Precio Un." class="border p-2 rounded text-xs bg-white">
-            </div>
-            <button type="button" onclick="cargarFacturaProveedor()" class="bg-amber-800 text-white font-bold px-3 py-2 rounded text-xs hover:bg-amber-900 w-full">Ingresar Factura y Stock</button>
-          </div>
-
-          <div class="bg-green-50 p-3 rounded-lg border border-green-200 space-y-2">
-            <h3 class="text-xs font-bold text-green-900">💸 Registrar Pago a Proveedor</h3>
-            <div class="grid grid-cols-2 gap-2">
-              <input type="date" id="pago-prov-fecha" class="border p-2 rounded text-xs bg-white">
-              <input type="number" id="pago-prov-monto" placeholder="Monto ($)" class="border p-2 rounded text-xs bg-white">
-            </div>
-            <select id="pago-prov-medio" class="border p-2 rounded text-xs bg-white w-full">
-              <option value="Efectivo">Efectivo</option>
-              <option value="Transferencia">Transferencia</option>
-              <option value="Cheque">Cheque</option>
-            </select>
-            <button type="button" onclick="registrarPagoProveedor()" class="bg-green-700 text-white font-bold px-3 py-2 rounded text-xs hover:bg-green-800 w-full">Registrar Pago</button>
-          </div>
-        </div>
-
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs md:text-sm">
-            <thead>
-              <tr class="bg-amber-100 border-b text-amber-900 font-bold">
-                <th class="p-2">Fecha</th>
-                <th class="p-2">Detalle / N° Factura</th>
-                <th class="p-2 text-right">Facturado</th>
-                <th class="p-2 text-right">Pagado</th>
-                <th class="p-2 text-right">Saldo Deuda</th>
-                <th class="p-2 text-center">Acción</th>
-              </tr>
-            </thead>
-            <tbody id="tabla-historial-proveedor"></tbody>
-          </table>
-        </div>
-      </div>
-
       <div class="bg-white p-4 rounded-xl shadow border space-y-3">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 mb-3">
           <h2 class="text-base font-bold text-gray-800">Directorio General de Proveedores</h2>
@@ -475,7 +326,7 @@
         
         <div class="bg-gray-50 p-3 rounded-lg border">
           <h3 class="text-xs font-bold text-gray-700 mb-2">Listado de Todos los Proveedores y Estado de Deuda</h3>
-          <div class="overflow-x-auto max-h-64 overflow-y-auto">
+          <div class="overflow-x-auto max-h-96 overflow-y-auto">
             <table class="w-full text-left text-xs">
               <thead>
                 <tr class="bg-gray-200 border-b">
@@ -865,6 +716,153 @@
 
   <!-- CONTENEDOR PARA IMPRESIÓN DIRECTA / PDF -->
   <div id="area-impresion"></div>
+
+  <!-- MODAL FICHA DE CLIENTE / CUENTA CORRIENTE -->
+  <div id="modal-historial-cliente" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden p-2">
+    <div class="bg-white p-5 rounded-xl shadow-2xl max-w-4xl w-full space-y-4 max-h-[95vh] overflow-y-auto">
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 border-b pb-2">
+        <div>
+          <h2 id="historial-nombre-cliente" class="text-lg font-bold text-amber-900"></h2>
+          <p id="historial-contacto-cliente" class="text-xs text-gray-600"></p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <button type="button" onclick="enviarResumenWhatsAppCliente()" class="bg-green-600 hover:bg-green-700 text-white text-xs px-3 py-2 rounded font-bold shadow flex items-center gap-1">📱 Enviar WhatsApp</button>
+          <button type="button" onclick="enviarResumenEmailCliente()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-2 rounded font-bold shadow flex items-center gap-1">✉️ Enviar Mail</button>
+          <button type="button" onclick="cerrarHistorialCliente()" class="bg-gray-300 text-gray-800 text-xs px-3 py-2 rounded font-bold">✕ Cerrar Ficha</button>
+        </div>
+      </div>
+
+      <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 space-y-2">
+        <h3 class="text-xs font-bold text-gray-700">✏️ Editar Datos del Cliente</h3>
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-2">
+          <input type="text" id="edit-cli-nombre" placeholder="Nombre" class="border p-1.5 rounded text-xs bg-white">
+          <input type="text" id="edit-cli-cuit" placeholder="CUIT / DNI" class="border p-1.5 rounded text-xs bg-white">
+          <input type="text" id="edit-cli-direccion" placeholder="Dirección" class="border p-1.5 rounded text-xs bg-white">
+          <input type="text" id="edit-cli-telefono" placeholder="Teléfono" class="border p-1.5 rounded text-xs bg-white">
+          <input type="email" id="edit-cli-email" placeholder="Email" class="border p-1.5 rounded text-xs bg-white">
+        </div>
+        <div class="flex justify-end gap-2 pt-1">
+          <button type="button" onclick="guardarEdicionCliente()" class="bg-amber-700 text-white font-bold px-3 py-1.5 rounded text-xs hover:bg-amber-800">Guardar Cambios</button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="bg-red-50 p-3 rounded-lg border border-red-200 space-y-2">
+          <h3 class="text-xs font-bold text-red-900">⬆️ Agregar pedidos / Cargo Manual</h3>
+          <div class="grid grid-cols-2 gap-2">
+            <input type="date" id="cargo-cli-fecha" class="border p-2 rounded text-xs bg-white">
+            <input type="number" id="cargo-cli-monto" placeholder="Monto ($)" class="border p-2 rounded text-xs bg-white">
+          </div>
+          <input type="text" id="cargo-cli-concepto" placeholder="Concepto (Ej: Saldo anterior, Ajuste...)" class="border p-2 rounded text-xs bg-white w-full">
+          <button type="button" onclick="registrarCargoCliente()" class="bg-red-700 text-white font-bold px-3 py-2 rounded text-xs hover:bg-red-800 w-full">Sumar a la Deuda</button>
+        </div>
+
+        <div class="bg-green-50 p-3 rounded-lg border border-green-200 space-y-2">
+          <h3 class="text-xs font-bold text-green-900">⬇️ Registrar Entrega / Pago</h3>
+          <div class="grid grid-cols-2 gap-2">
+            <input type="date" id="pago-fecha" class="border p-2 rounded text-xs bg-white">
+            <input type="number" id="pago-monto" placeholder="Monto abonado ($)" class="border p-2 rounded text-xs bg-white">
+          </div>
+          <select id="pago-medio" class="border p-2 rounded text-xs bg-white w-full">
+            <option value="Efectivo">Efectivo</option>
+            <option value="Transferencia">Transferencia</option>
+            <option value="Mercado Pago">Mercado Pago</option>
+            <option value="Cheque">Cheque</option>
+          </select>
+          <button type="button" onclick="registrarPagoCliente()" class="bg-green-700 text-white font-bold px-3 py-2 rounded text-xs hover:bg-green-800 w-full">Registrar Pago</button>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto max-h-60 overflow-y-auto">
+        <table class="w-full text-left text-xs md:text-sm">
+          <thead>
+            <tr class="bg-amber-100 border-b text-amber-900 font-bold sticky top-0">
+              <th class="p-2">Fecha</th>
+              <th class="p-2">Concepto / Detalle</th>
+              <th class="p-2 text-right">Débito</th>
+              <th class="p-2 text-right">Crédito</th>
+              <th class="p-2 text-right">Saldo Acumulado</th>
+              <th class="p-2 text-center">Acción</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-historial-cliente"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL FICHA DE PROVEEDOR / FACTURAS Y PAGOS -->
+  <div id="modal-historial-proveedor" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden p-2">
+    <div class="bg-white p-5 rounded-xl shadow-2xl max-w-4xl w-full space-y-4 max-h-[95vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b pb-2">
+        <h2 id="historial-nombre-proveedor" class="text-lg font-bold text-amber-900"></h2>
+        <div class="flex flex-wrap items-center gap-2">
+          <button type="button" onclick="enviarResumenWhatsAppProveedor()" class="bg-green-600 hover:bg-green-700 text-white text-xs px-3 py-2 rounded font-bold shadow flex items-center gap-1">📱 Enviar WhatsApp</button>
+          <button type="button" onclick="enviarResumenEmailProveedor()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-2 rounded font-bold shadow flex items-center gap-1">✉️ Enviar Mail</button>
+          <button type="button" onclick="cerrarHistorialProveedor()" class="bg-gray-300 text-gray-800 text-xs px-3 py-2 rounded font-bold">✕ Cerrar Ficha</button>
+        </div>
+      </div>
+
+      <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 space-y-2">
+        <h3 class="text-xs font-bold text-gray-700">✏️ Editar Datos del Proveedor</h3>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
+          <input type="text" id="edit-prov-nombre" placeholder="Razón Social" class="border p-1.5 rounded text-xs bg-white">
+          <input type="text" id="edit-prov-cuit" placeholder="CUIT" class="border p-1.5 rounded text-xs bg-white">
+          <input type="text" id="edit-prov-telefono" placeholder="Teléfono" class="border p-1.5 rounded text-xs bg-white">
+          <input type="text" id="edit-prov-rubro" placeholder="Rubro" class="border p-1.5 rounded text-xs bg-white">
+        </div>
+        <div class="flex justify-end gap-2 pt-1">
+          <button type="button" onclick="guardarEdicionProveedor()" class="bg-amber-700 text-white font-bold px-3 py-1.5 rounded text-xs hover:bg-amber-800">Guardar Cambios</button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="bg-amber-50 p-3 rounded-lg border border-amber-200 space-y-2">
+          <h3 class="text-xs font-bold text-amber-900">🧾 Cargar Factura de Compra</h3>
+          <div class="grid grid-cols-2 gap-2">
+            <input type="date" id="fact-fecha" class="border p-2 rounded text-xs bg-white">
+            <input type="text" id="fact-nro" placeholder="N° Factura" class="border p-2 rounded text-xs bg-white">
+          </div>
+          <div class="grid grid-cols-3 gap-1">
+            <select id="fact-insumo" class="border p-2 rounded text-xs bg-white col-span-1"></select>
+            <input type="number" id="fact-cant" placeholder="Cant." class="border p-2 rounded text-xs bg-white">
+            <input type="number" id="fact-precio" placeholder="Precio Un." class="border p-2 rounded text-xs bg-white">
+          </div>
+          <button type="button" onclick="cargarFacturaProveedor()" class="bg-amber-800 text-white font-bold px-3 py-2 rounded text-xs hover:bg-amber-900 w-full">Ingresar Factura y Stock</button>
+        </div>
+
+        <div class="bg-green-50 p-3 rounded-lg border border-green-200 space-y-2">
+          <h3 class="text-xs font-bold text-green-900">💸 Registrar Pago a Proveedor</h3>
+          <div class="grid grid-cols-2 gap-2">
+            <input type="date" id="pago-prov-fecha" class="border p-2 rounded text-xs bg-white">
+            <input type="number" id="pago-prov-monto" placeholder="Monto ($)" class="border p-2 rounded text-xs bg-white">
+          </div>
+          <select id="pago-prov-medio" class="border p-2 rounded text-xs bg-white w-full">
+            <option value="Efectivo">Efectivo</option>
+            <option value="Transferencia">Transferencia</option>
+            <option value="Cheque">Cheque</option>
+          </select>
+          <button type="button" onclick="registrarPagoProveedor()" class="bg-green-700 text-white font-bold px-3 py-2 rounded text-xs hover:bg-green-800 w-full">Registrar Pago</button>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto max-h-60 overflow-y-auto">
+        <table class="w-full text-left text-xs md:text-sm">
+          <thead>
+            <tr class="bg-amber-100 border-b text-amber-900 font-bold sticky top-0">
+              <th class="p-2">Fecha</th>
+              <th class="p-2">Detalle / N° Factura</th>
+              <th class="p-2 text-right">Facturado</th>
+              <th class="p-2 text-right">Pagado</th>
+              <th class="p-2 text-right">Saldo Deuda</th>
+              <th class="p-2 text-center">Acción</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-historial-proveedor"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 
   <!-- MODAL EDITAR CAJA ADMIN -->
   <div id="modal-editar-caja-admin" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
@@ -2276,9 +2274,7 @@
       document.getElementById('edit-cli-telefono').value = cli.telefono || '';
       document.getElementById('edit-cli-email').value = cli.email || '';
 
-      const modulo = document.getElementById('modulo-historial-cliente');
-      modulo.classList.remove('hidden');
-      modulo.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      document.getElementById('modal-historial-cliente').classList.remove('hidden');
       
       const selBuscador = document.getElementById('select-buscador-cliente');
       if (selBuscador) selBuscador.value = cliId;
@@ -2308,7 +2304,7 @@
 
     function cerrarHistorialCliente() { 
       clienteSeleccionadoId = null; 
-      document.getElementById('modulo-historial-cliente').classList.add('hidden'); 
+      document.getElementById('modal-historial-cliente').classList.add('hidden'); 
       const selBuscador = document.getElementById('select-buscador-cliente');
       if (selBuscador) selBuscador.value = "";
     }
@@ -2656,9 +2652,7 @@
       document.getElementById('edit-prov-telefono').value = prv.telefono || '';
       document.getElementById('edit-prov-rubro').value = prv.rubro || '';
 
-      const modulo = document.getElementById('modulo-historial-proveedor');
-      modulo.classList.remove('hidden');
-      modulo.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      document.getElementById('modal-historial-proveedor').classList.remove('hidden');
 
       const selBuscador = document.getElementById('select-buscador-proveedor');
       if (selBuscador) selBuscador.value = provId;
@@ -2685,7 +2679,7 @@
 
     function cerrarHistorialProveedor() { 
       proveedorSeleccionadoId = null; 
-      document.getElementById('modulo-historial-proveedor').classList.add('hidden'); 
+      document.getElementById('modal-historial-proveedor').classList.add('hidden'); 
       const selBuscador = document.getElementById('select-buscador-proveedor');
       if (selBuscador) selBuscador.value = "";
     }
