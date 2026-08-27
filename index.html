@@ -676,7 +676,8 @@
           <p class="text-xs text-blue-800">Respaldos automáticos diarios.</p>
 
           <div class="flex flex-col gap-2">
-            <button type="button" onclick="descargarBackupManual()" class="bg-blue-700 hover:bg-blue-800 text-white font-bold text-xs p-2 rounded shadow">📥 Descargar Respaldo JSON</button>
+            <!-- BOTÓN DE COPIA DE SEGURIDAD MANUAL SOLICITADO -->
+            <button type="button" onclick="descargarBackupManual()" class="bg-blue-700 hover:bg-blue-800 text-white font-bold text-xs p-2.5 rounded shadow flex items-center justify-center gap-1.5">🔄 Forzar Copia de Seguridad Manual</button>
             <button type="button" onclick="document.getElementById('input-subir-backup').click()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs p-2 rounded shadow">📤 Subir Respaldo JSON (Recuperar)</button>
             <input type="file" id="input-subir-backup" accept=".json" class="hidden" onchange="subirBackupManual(event)">
             <hr class="border-blue-200">
@@ -744,6 +745,61 @@
 
   <!-- CONTENEDOR PARA IMPRESIÓN DIRECTA / PDF -->
   <div id="area-impresion"></div>
+
+  <!-- MODAL EDITAR USUARIO Y PERMISOS DE SOLAPAS -->
+  <div id="modal-editar-usuario" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden p-2">
+    <div class="bg-white p-5 rounded-xl shadow-2xl max-w-lg w-full space-y-4 max-h-[95vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b pb-2">
+        <h3 class="text-base font-bold text-amber-900">✏️ Editar Usuario y Permisos de Solapas</h3>
+        <button type="button" onclick="cerrarModalEditarUsuario()" class="text-gray-500 font-bold text-sm">✕</button>
+      </div>
+      <input type="hidden" id="edit-usr-id">
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="font-bold text-gray-700 block mb-1">Nombre Completo:</label>
+          <input type="text" id="edit-usr-nombre" class="border p-2 rounded w-full bg-white text-sm font-semibold">
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="font-bold text-gray-700 block mb-1">Rol:</label>
+            <select id="edit-usr-rol" class="border p-2 rounded w-full bg-white text-xs font-semibold">
+              <option value="admin">Administrador / Dueño</option>
+              <option value="produccion">Panadero / Cuadra</option>
+              <option value="repartidor">Repartidor</option>
+              <option value="mostrador">Encargado Mostrador</option>
+            </select>
+          </div>
+          <div>
+            <label class="font-bold text-amber-900 block mb-1">Sucursal / Ámbito:</label>
+            <select id="edit-usr-sucursal" class="border p-2 rounded w-full bg-amber-50 text-xs font-bold border-amber-300">
+              <option value="todas">General / Ambas</option>
+              <option value="alem">La Casa del Pan (Alem)</option>
+              <option value="espiga">La Espiga de Oro</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="bg-amber-50 p-3 rounded border border-amber-200 space-y-2">
+          <label class="font-bold text-amber-900 block mb-1">Solapas / Pestañas Permitidas:</label>
+          <div class="grid grid-cols-2 gap-2 text-xs font-medium text-gray-800">
+            <label><input type="checkbox" class="chk-pestana" value="reparto"> 🚚 Pedidos y Reparto</label>
+            <label><input type="checkbox" class="chk-pestana" value="hoja-ruta"> 📋 Hoja de Ruta / Pagos</label>
+            <label><input type="checkbox" class="chk-pestana" value="cuadra"> 👨‍🍳 Cuadra</label>
+            <label><input type="checkbox" class="chk-pestana" value="clientes"> 👥 Clientes / Cta. Cte.</label>
+            <label><input type="checkbox" class="chk-pestana" value="proveedores"> 🏭 Proveedores / Facturas</label>
+            <label><input type="checkbox" class="chk-pestana" value="stock"> 📦 Control de Stock</label>
+            <label><input type="checkbox" class="chk-pestana" value="caja"> 💰 Cajas y Reportes</label>
+            <label><input type="checkbox" class="chk-pestana" value="precios"> ⚙️ Catálogo Despacho</label>
+            <label><input type="checkbox" class="chk-pestana" value="usuarios"> 🔐 Usuarios y Backups</label>
+          </div>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button type="button" onclick="cerrarModalEditarUsuario()" class="bg-gray-300 text-gray-800 text-xs px-3 py-2 rounded font-bold">Cancelar</button>
+        <button type="button" onclick="guardarEdicionUsuarioPermisos()" class="bg-amber-800 text-white text-xs px-4 py-2 rounded font-bold hover:bg-amber-900">Guardar Cambios</button>
+      </div>
+    </div>
+  </div>
 
   <!-- MODAL FICHA DE CLIENTE / CUENTA CORRIENTE -->
  <div id="modal-historial-cliente" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden p-2">
@@ -1134,11 +1190,11 @@
     };
 
     window.LISTA_USUARIOS_BASE = {
-      "USR-1": { id: "USR-1", nombre: "Administrador General", rol: "admin", sucursal: "todas", pin: "1234" },
-      "USR-2": { id: "USR-2", nombre: "Maira (Mostrador Alem)", rol: "mostrador", sucursal: "alem", pin: "1234" },
-      "USR-3": { id: "USR-3", nombre: "Encargado Espiga de Oro", rol: "mostrador", sucursal: "espiga", pin: "1234" },
-      "USR-4": { id: "USR-4", nombre: "Chofer Reparto", rol: "repartidor", sucursal: "todas", pin: "1234" },
-      "USR-5": { id: "USR-5", nombre: "Maestro Panadero", rol: "produccion", sucursal: "todas", pin: "1234" }
+      "USR-1": { id: "USR-1", nombre: "Administrador General", rol: "admin", sucursal: "todas", pin: "1234", pestanas: ['reparto', 'hoja-ruta', 'cuadra', 'clientes', 'proveedores', 'stock', 'caja', 'precios', 'usuarios'] },
+      "USR-2": { id: "USR-2", nombre: "Maira (Mostrador Alem)", rol: "mostrador", sucursal: "alem", pin: "1234", pestanas: ['reparto', 'hoja-ruta', 'cuadra', 'clientes', 'proveedores', 'stock', 'caja', 'precios'] },
+      "USR-3": { id: "USR-3", nombre: "Encargado Espiga de Oro", rol: "mostrador", sucursal: "espiga", pin: "1234", pestanas: ['reparto', 'hoja-ruta', 'cuadra', 'caja'] },
+      "USR-4": { id: "USR-4", nombre: "Chofer Reparto", rol: "repartidor", sucursal: "todas", pin: "1234", pestanas: ['reparto', 'hoja-ruta', 'cuadra', 'clientes'] },
+      "USR-5": { id: "USR-5", nombre: "Maestro Panadero", rol: "produccion", sucursal: "todas", pin: "1234", pestanas: ['cuadra', 'stock'] }
     };
 
     window.LISTA_PANIFICADOS_REPARTO_BASE = {
@@ -1498,7 +1554,7 @@
       };
 
       guardarDB('db_recurrentes', dbRecurrentes);
-      document.getElementById('rec-cantidad').value;
+      document.getElementById('rec-cantidad').value = '';
       renderizarTablaRecurrentes();
       procesarPedidosRecurrentesAutomaticos();
       alert("¡Regla recurrente guardada con éxito!");
@@ -1761,10 +1817,10 @@
     function renderizarMenuNavegacion() {
       const usr = dbUsuarios[usuarioActivoId];
       if (!usr) return;
-      let permisos = PERMISOS_ROLES[usr.rol]?.pestanas || [];
+      let permisos = usr.pestanas || PERMISOS_ROLES[usr.rol]?.pestanas || [];
       const lista = ['reparto', 'hoja-ruta', 'cuadra', 'clientes', 'proveedores', 'stock', 'caja', 'precios', 'usuarios'];
 
-      if (usr.sucursal === 'espiga' && usr.rol !== 'admin') {
+      if (usr.sucursal === 'espiga' && usr.rol !== 'admin' && !usr.pestanas) {
         permisos = ['reparto', 'hoja-ruta', 'cuadra', 'caja'];
       }
 
@@ -1891,7 +1947,6 @@
 
       guardarRepartoPorFecha(fechaDestino);
       
-      // LIMPIAR CAMPOS AUTOMÁTICAMENTE PARA EVITAR DUPLICADOS
       document.getElementById('rep-cantidad').value = '';
       document.getElementById('rep-precio-unitario').value = '';
       document.getElementById('rep-cliente').value = '';
@@ -1925,7 +1980,6 @@
 
       guardarRepartoPorFecha(fechaDestino);
       
-      // LIMPIAR CAMPOS AUTOMÁTICAMENTE
       document.getElementById('rep-despacho-cantidad').value = '';
       document.getElementById('rep-despacho-precio-unitario').value = '';
       document.getElementById('rep-despacho-cliente').value = '';
@@ -2020,7 +2074,6 @@
         if (contReabrir) contReabrir.innerHTML = '';
       }
 
-      // 1. RENDERIZAR PESTAÑA PEDIDOS (USA fechaDestinoActiva)
       const pedidosDestino = dbRepartos[fechaDestinoActiva] || [];
       pedidosDestino.sort((a, b) => (a.clienteNombre || "").toLowerCase().localeCompare((b.clienteNombre || "").toLowerCase()));
 
@@ -2044,7 +2097,6 @@
         }
       });
 
-      // 2. RENDERIZAR PESTAÑA HOJA DE RUTA (USA fechaHojaRutaActiva)
       const pedidosHojaRuta = dbRepartos[fechaHojaRutaActiva] || [];
       pedidosHojaRuta.sort((a, b) => (a.clienteNombre || "").toLowerCase().localeCompare((b.clienteNombre || "").toLowerCase()));
 
@@ -3818,15 +3870,64 @@
 
     function guardarUsuario() {
       const nombre = document.getElementById('usr-nombre').value.trim(); if (!nombre) return;
+      const rolSeleccionado = document.getElementById('usr-rol').value;
       const id = generarID('USR');
       dbUsuarios[id] = { 
         id, 
         nombre, 
-        rol: document.getElementById('usr-rol').value, 
+        rol: rolSeleccionado, 
         sucursal: document.getElementById('usr-sucursal').value, 
-        pin: '1234' 
+        pin: '1234',
+        pestanas: PERMISOS_ROLES[rolSeleccionado]?.pestanas || ['reparto', 'cuadra']
       };
       guardarDB('db_usuarios', dbUsuarios); renderizarTablaUsuarios(); renderizarUsuariosSelect();
+      document.getElementById('usr-nombre').value = '';
+    }
+
+    function abrirModalEditarUsuario(id) {
+      const u = dbUsuarios[id];
+      if (!u) return;
+      document.getElementById('edit-usr-id').value = u.id;
+      document.getElementById('edit-usr-nombre').value = u.nombre;
+      document.getElementById('edit-usr-rol').value = u.rol;
+      document.getElementById('edit-usr-sucursal').value = u.sucursal || 'todas';
+
+      const permitidas = u.pestanas || PERMISOS_ROLES[u.rol]?.pestanas || [];
+      document.querySelectorAll('.chk-pestana').forEach(chk => {
+        chk.checked = permitidas.includes(chk.value);
+      });
+
+      document.getElementById('modal-editar-usuario').classList.remove('hidden');
+    }
+
+    function cerrarModalEditarUsuario() {
+      document.getElementById('modal-editar-usuario').classList.add('hidden');
+    }
+
+    function guardarEdicionUsuarioPermisos() {
+      const id = document.getElementById('edit-usr-id').value;
+      const u = dbUsuarios[id];
+      if (!u) return;
+
+      const nuevoNombre = document.getElementById('edit-usr-nombre').value.trim();
+      if (!nuevoNombre) { alert("El nombre no puede estar vacío."); return; }
+
+      u.nombre = nuevoNombre;
+      u.rol = document.getElementById('edit-usr-rol').value;
+      u.sucursal = document.getElementById('edit-usr-sucursal').value;
+
+      let nuevasPestanas = [];
+      document.querySelectorAll('.chk-pestana:checked').forEach(chk => {
+        nuevasPestanas.push(chk.value);
+      });
+      u.pestanas = nuevasPestanas;
+
+      dbUsuarios[id] = u;
+      guardarDB('db_usuarios', dbUsuarios);
+      renderizarTablaUsuarios();
+      renderizarUsuariosSelect();
+      cerrarModalEditarUsuario();
+      alert("¡Usuario y permisos actualizados con éxito!");
     }
 
     function renderizarTablaUsuarios() {
@@ -3838,7 +3939,10 @@
           <td class="p-2 font-bold">${u.nombre}</td>
           <td class="p-2"><span class="bg-amber-100 text-amber-900 px-2 py-0.5 rounded text-xs font-bold">${configRol?.nombre || u.rol}</span></td>
           <td class="p-2"><span class="bg-blue-100 text-blue-900 px-2 py-0.5 rounded text-xs font-bold">${ETIQUETAS_SUCURSAL[u.sucursal || 'todas']}</span></td>
-          <td class="p-2 text-center">${u.id !== 'USR-1' ? `<button onclick="eliminarUsuario('${u.id}')" class="text-xs text-red-600 font-bold">Eliminar</button>` : '-'}</td>
+          <td class="p-2 text-center flex items-center justify-center gap-1">
+            <button onclick="abrirModalEditarUsuario('${u.id}')" class="bg-blue-600 hover:bg-blue-700 text-white text-[11px] px-2 py-0.5 rounded font-bold shadow">✏️ Editar</button>
+            ${u.id !== 'USR-1' ? `<button onclick="eliminarUsuario('${u.id}')" class="bg-red-600 hover:bg-red-700 text-white text-[11px] px-2 py-0.5 rounded font-bold shadow">Eliminar</button>` : ''}
+          </td>
         `;
         tbody.appendChild(tr);
       });
