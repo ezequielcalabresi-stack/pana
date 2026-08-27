@@ -68,6 +68,15 @@
         </span>
       </div>
 
+      <!-- SELECTOR DE PANADERÍA / SUCURSAL ACTIVA -->
+      <div class="flex items-center gap-1 bg-amber-950 p-2 rounded-lg border border-amber-700">
+        <label class="text-xs font-semibold text-amber-100">🏪 Panadería:</label>
+        <select id="select-panaderia-activa" onchange="cambiarPanaderiaActiva()" class="bg-white text-gray-800 text-xs p-1 rounded font-bold">
+          <option value="alem">La Casa del Pan (Alem) - [A]</option>
+          <option value="espiga">La Espiga de Oro - [E]</option>
+        </select>
+      </div>
+
       <div class="flex items-center gap-1 bg-amber-950 p-2 rounded-lg border border-amber-700">
         <label class="text-xs font-semibold text-amber-100">👤 Usuario:</label>
         <select id="select-usuario-activo" onchange="cambiarUsuarioActivo()" class="bg-white text-gray-800 text-xs p-1 rounded font-bold">
@@ -1767,7 +1776,31 @@
     function actualizarBadgeRol() {
       const badge = document.getElementById('badge-rol-activo');
       const usr = dbUsuarios[usuarioActivoId];
-      if (badge && usr) badge.textContent = `${PERMISOS_ROLES[usr.rol]?.nombre || usr.rol} | ${ETIQUETAS_SUCURSAL[usr.sucursal || 'todas']}`;
+      if (badge && usr) {
+        badge.textContent = `${PERMISOS_ROLES[usr.rol]?.nombre || usr.rol} | ${ETIQUETAS_SUCURSAL[usr.sucursal || 'todas']}`;
+        
+        // Ajustar automáticamente el selector de panadería según el ámbito del usuario si no es admin general con permiso libre
+        const selPanaderia = document.getElementById('select-panaderia-activa');
+        if (selPanaderia) {
+          if (usr.sucursal === 'espiga') {
+            selPanaderia.value = 'espiga';
+            selPanaderia.disabled = true;
+          } else if (usr.sucursal === 'alem') {
+            selPanaderia.value = 'alem';
+            selPanaderia.disabled = true;
+          } else {
+            selPanaderia.disabled = false;
+          }
+        }
+      }
+    }
+
+    function cambiarPanaderiaActiva() {
+      // Función ejecutada al cambiar el selector manual superior
+      cargarCajasHoyUI();
+      renderizarTablaEgresosHoy();
+      renderizarReportesMensuales();
+      renderizarCuadra();
     }
 
     function cambiarPinUsuarioActivo() {
@@ -1916,11 +1949,18 @@
       inputSubtotal.value = Number((precioUnit * valCant).toFixed(2));
     }
 
-    function obtenerSufijoSucursalUsuario() {
+    function obtenerSufijoSucursalActual() {
+      const selectPanaderia = document.getElementById('select-panaderia-activa');
+      const sucursalActual = selectPanaderia ? selectPanaderia.value : 'alem';
+      
+      if (sucursalActual === 'espiga') return " (E)";
+      if (sucursalActual === 'alem') return " (A)";
+      
       const usr = dbUsuarios[usuarioActivoId];
       if (usr && usr.sucursal === 'espiga') return " (E)";
       if (usr && usr.sucursal === 'alem') return " (A)";
-      return "";
+      
+      return " (A)";
     }
 
     function agregarPedidoPanificado() {
@@ -1936,7 +1976,7 @@
       const cliente = dbClientes[cliId]; const panificado = dbPanificados[prodNombre];
       if (!cliente) return;
 
-      const sufijoOrigen = obtenerSufijoSucursalUsuario();
+      const sufijoOrigen = obtenerSufijoSucursalActual();
 
       if (!dbRepartos[fechaDestino]) dbRepartos[fechaDestino] = [];
       dbRepartos[fechaDestino].push({
@@ -1967,7 +2007,7 @@
       if (!cliId || !prodNombre || isNaN(cant) || cant <= 0 || isNaN(montoTotal)) { alert("Verifique los datos del adicional."); return; }
       const cliente = dbClientes[cliId]; if (!cliente) return;
 
-      const sufijoOrigen = obtenerSufijoSucursalUsuario();
+      const sufijoOrigen = obtenerSufijoSucursalActual();
 
       if (!dbRepartos[fechaDestino]) dbRepartos[fechaDestino] = [];
       dbRepartos[fechaDestino].push({
@@ -1995,7 +2035,7 @@
       const fechaClave = document.getElementById('cuadra-fecha-selector').value || fechaCuadraActiva;
       if (!fechaClave) { alert("⚠️ Por favor, seleccione una Fecha válida."); return; }
 
-      const sufijoOrigen = obtenerSufijoSucursalUsuario();
+      const sufijoOrigen = obtenerSufijoSucursalActual();
       const textoNota = input.value.trim() + sufijoOrigen;
 
       if (!dbNotasMostrador[fechaClave]) dbNotasMostrador[fechaClave] = [];
