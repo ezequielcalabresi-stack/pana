@@ -4696,7 +4696,7 @@ function validarYEjecutarCierre(selectedDate, currentOperationalDate) {
     
     return true;
 }
-    function procesarCierreReparto(hojaDeRutaItems, fechaSeleccionada) {
+function procesarCierreReparto(hojaDeRutaItems, fechaSeleccionada) {
         // Paso A: Calcular el consolidado total de los montos antes de limpiar	
         const totalConsolidado = hojaDeRutaItems.reduce((acumulador, item) => {
             return acumulador + Number(item.monto || 0);
