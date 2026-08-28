@@ -489,7 +489,7 @@
       </div>
     </section>
 
-   <!-- 6. CAJAS INDEPENDIENTES Y REPORTES -->
+  <!-- 6. CAJAS INDEPENDIENTES Y REPORTES -->
     <section id="sec-caja" class="hidden space-y-4">
       <div id="grid-cajas-diarias" class="grid grid-cols-1 md:grid-cols-3 gap-4">
         
@@ -505,9 +505,9 @@
             </div>
             <hr class="border-amber-300">
             <div class="grid grid-cols-1 gap-2 text-sm">
-              <div class="flex justify-between items-center"><label class="text-xs text-gray-600">Efectivo Físico Declarado</label><input type="text" id="rep-caja-efectivo" onchange="guardarDatosCajaDiaria()" class="border p-1.5 rounded w-28 font-bold text-sm text-right"></div>
-              <div class="flex justify-between items-center"><label class="text-xs text-gray-600">Transferencias / MP</label><input type="text" id="rep-caja-digital" onchange="guardarDatosCajaDiaria()" class="border p-1.5 rounded w-28 font-bold text-blue-700 text-sm text-right"></div>
-              <div class="flex justify-between items-center"><label class="text-xs text-gray-600">Gastos del Reparto</label><input type="text" id="rep-caja-gastos" onchange="guardarDatosCajaDiaria()" class="border p-1.5 rounded w-28 font-bold text-red-700 text-sm text-right"></div>
+              <div class="flex justify-between items-center"><label class="text-xs text-gray-600">Efectivo Físico Declarado</label><input type="text" id="rep-caja-efectivo" onchange="guardarDatosCajaDiaria()" class="input-moneda border p-1.5 rounded w-28 font-bold text-sm text-right"></div>
+              <div class="flex justify-between items-center"><label class="text-xs text-gray-600">Transferencias / MP</label><input type="text" id="rep-caja-digital" onchange="guardarDatosCajaDiaria()" class="input-moneda border p-1.5 rounded w-28 font-bold text-blue-700 text-sm text-right"></div>
+              <div class="flex justify-between items-center"><label class="text-xs text-gray-600">Gastos del Reparto</label><input type="text" id="rep-caja-gastos" onchange="guardarDatosCajaDiaria()" class="input-moneda border p-1.5 rounded w-28 font-bold text-red-700 text-sm text-right"></div>
             </div>
             <div id="btn-reparto-accion"></div>
           </div>
@@ -521,8 +521,8 @@
               <span id="st-alem-manana" class="text-[10px] bg-green-200 text-green-800 px-2 py-0.5 rounded font-bold">🟢 Abierto</span>
             </div>
             <div class="grid grid-cols-2 gap-2 text-sm">
-              <div><label class="text-xs text-gray-600 block">Efectivo</label><input type="text" id="alem-m-efectivo" onchange="guardarDatosCajaDiaria()" class="border p-1.5 rounded w-full font-bold text-sm"></div>
-              <div><label class="text-xs text-gray-600 block">Digital</label><input type="text" id="alem-m-digital" onchange="guardarDatosCajaDiaria()" class="border p-1.5 rounded w-full font-bold text-blue-700 text-sm"></div>
+              <div><label class="text-xs text-gray-600 block">Efectivo</label><input type="text" id="alem-m-efectivo" onchange="guardarDatosCajaDiaria()" class="input-moneda border p-1.5 rounded w-full font-bold text-sm"></div>
+              <div><label class="text-xs text-gray-600 block">Digital</label><input type="text" id="alem-m-digital" onchange="guardarDatosCajaDiaria()" class="input-moneda border p-1.5 rounded w-full font-bold text-blue-700 text-sm"></div>
             </div>
             <div id="btn-alem-manana"></div>
           </div>
@@ -533,8 +533,8 @@
               <span id="st-alem-tarde" class="text-[10px] bg-green-200 text-green-800 px-2 py-0.5 rounded font-bold">🟢 Abierto</span>
             </div>
             <div class="grid grid-cols-2 gap-2 text-sm">
-              <div><label class="text-xs text-gray-600 block">Efectivo</label><input type="text" id="alem-t-efectivo" onchange="guardarDatosCajaDiaria()" class="border p-1.5 rounded w-full font-bold text-sm"></div>
-              <div><label class="text-xs text-gray-600 block">Digital</label><input type="text" id="alem-t-digital" onchange="guardarDatosCajaDiaria()" class="border p-1.5 rounded w-full font-bold text-blue-700 text-sm"></div>
+              <div><label class="text-xs text-gray-600 block">Efectivo</label><input type="text" id="alem-t-efectivo" onchange="guardarDatosCajaDiaria()" class="input-moneda border p-1.5 rounded w-full font-bold text-sm"></div>
+              <div><label class="text-xs text-gray-600 block">Digital</label><input type="text" id="alem-t-digital" onchange="guardarDatosCajaDiaria()" class="input-moneda border p-1.5 rounded w-full font-bold text-blue-700 text-sm"></div>
             </div>
             <div id="btn-alem-tarde"></div>
           </div>
@@ -548,8 +548,8 @@
               <span id="st-espiga-manana" class="text-[10px] bg-green-200 text-green-800 px-2 py-0.5 rounded font-bold">🟢 Abierto</span>
             </div>
             <div class="grid grid-cols-2 gap-2 text-sm">
-              <div><label class="text-xs text-gray-600 block">Efectivo</label><input type="text" id="espiga-m-efectivo" onchange="guardarDatosCajaDiaria()" class="border p-1.5 rounded w-full font-bold text-sm"></div>
-              <div><label class="text-xs text-gray-600 block">Digital</label><input type="text" id="espiga-m-digital" onchange="guardarDatosCajaDiaria()" class="border p-1.5 rounded w-full font-bold text-blue-700 text-sm"></div>
+              <div><label class="text-xs text-gray-600 block">Efectivo</label><input type="text" id="espiga-m-efectivo" onchange="guardarDatosCajaDiaria()" class="input-moneda border p-1.5 rounded w-full font-bold text-sm"></div>
+              <div><label class="text-xs text-gray-600 block">Digital</label><input type="text" id="espiga-m-digital" onchange="guardarDatosCajaDiaria()" class="input-moneda border p-1.5 rounded w-full font-bold text-blue-700 text-sm"></div>
             </div>
             <div id="btn-espiga-manana"></div>
           </div>
@@ -560,8 +560,8 @@
               <span id="st-espiga-tarde" class="text-[10px] bg-green-200 text-green-800 px-2 py-0.5 rounded font-bold">🟢 Abierto</span>
             </div>
             <div class="grid grid-cols-2 gap-2 text-sm">
-              <div><label class="text-xs text-gray-600 block">Efectivo</label><input type="text" id="espiga-t-efectivo" onchange="guardarDatosCajaDiaria()" class="border p-1.5 rounded w-full font-bold text-sm"></div>
-              <div><label class="text-xs text-gray-600 block">Digital</label><input type="text" id="espiga-t-digital" onchange="guardarDatosCajaDiaria()" class="border p-1.5 rounded w-full font-bold text-blue-700 text-sm"></div>
+              <div><label class="text-xs text-gray-600 block">Efectivo</label><input type="text" id="espiga-t-efectivo" onchange="guardarDatosCajaDiaria()" class="input-moneda border p-1.5 rounded w-full font-bold text-sm"></div>
+              <div><label class="text-xs text-gray-600 block">Digital</label><input type="text" id="espiga-t-digital" onchange="guardarDatosCajaDiaria()" class="input-moneda border p-1.5 rounded w-full font-bold text-blue-700 text-sm"></div>
             </div>
             <div id="btn-espiga-tarde"></div>
           </div>
@@ -3826,25 +3826,25 @@ function cargarCajasHoyUI() {
       if (!c.reparto) c.reparto = { efectivo: 0, digital: 0, gastos: 0, cerrado: false };
 
       if (!c.alem.manana.cerrado) {
-        c.alem.manana.efectivo = parseFloat(document.getElementById('alem-m-efectivo')?.value) || 0;
-        c.alem.manana.digital = parseFloat(document.getElementById('alem-m-digital')?.value) || 0;
+        c.alem.manana.efectivo = limpiarValorMoneda(document.getElementById('alem-m-efectivo')?.value);
+        c.alem.manana.digital = limpiarValorMoneda(document.getElementById('alem-m-digital')?.value);
       }
       if (!c.alem.tarde.cerrado) {
-        c.alem.tarde.efectivo = parseFloat(document.getElementById('alem-t-efectivo')?.value) || 0;
-        c.alem.tarde.digital = parseFloat(document.getElementById('alem-t-digital')?.value) || 0;
+        c.alem.tarde.efectivo = limpiarValorMoneda(document.getElementById('alem-t-efectivo')?.value);
+        c.alem.tarde.digital = limpiarValorMoneda(document.getElementById('alem-t-digital')?.value);
       }
       if (!c.espiga.manana.cerrado) {
-        c.espiga.manana.efectivo = parseFloat(document.getElementById('espiga-m-efectivo')?.value) || 0;
-        c.espiga.manana.digital = parseFloat(document.getElementById('espiga-m-digital')?.value) || 0;
+        c.espiga.manana.efectivo = limpiarValorMoneda(document.getElementById('espiga-m-efectivo')?.value);
+        c.espiga.manana.digital = limpiarValorMoneda(document.getElementById('espiga-m-digital')?.value);
       }
       if (!c.espiga.tarde.cerrado) {
-        c.espiga.tarde.efectivo = parseFloat(document.getElementById('espiga-t-efectivo')?.value) || 0;
-        c.espiga.tarde.digital = parseFloat(document.getElementById('espiga-t-digital')?.value) || 0;
+        c.espiga.tarde.efectivo = limpiarValorMoneda(document.getElementById('espiga-t-efectivo')?.value);
+        c.espiga.tarde.digital = limpiarValorMoneda(document.getElementById('espiga-t-digital')?.value);
       }
       if (!c.reparto.cerrado) {
-        c.reparto.efectivo = parseFloat(document.getElementById('rep-caja-efectivo')?.value) || 0;
-        c.reparto.digital = parseFloat(document.getElementById('rep-caja-digital')?.value) || 0;
-        c.reparto.gastos = parseFloat(document.getElementById('rep-caja-gastos')?.value) || 0;
+        c.reparto.efectivo = limpiarValorMoneda(document.getElementById('rep-caja-efectivo')?.value);
+        c.reparto.digital = limpiarValorMoneda(document.getElementById('rep-caja-digital')?.value);
+        c.reparto.gastos = limpiarValorMoneda(document.getElementById('rep-caja-gastos')?.value);
       }
 
       guardarDB('db_cajas_diarias', dbCajasDiarias);
@@ -4550,6 +4550,73 @@ function reabrirTurnoAdmin(sucursal, turno) {
         }
       }
     }
+// Función para dar formato moneda estilo Excel mientras se escribe
+    function aplicarFormatoMonedaInput(input) {
+      // 1. Guardar la posición del cursor para que no brinque al final
+      let cursorPosition = input.selectionStart;
+      let longitudAntigua = input.value.length;
+
+      // 2. Extraer solo los números del valor actual
+      let valorLimpio = input.value.replace(/\D/g, "");
+      
+      if (valorLimpio === "") {
+        input.value = "";
+        return;
+      }
+
+      // 3. Formatear con separador de miles (estilo argentino: puntos)
+      let valorFormateado = Number(valorLimpio).toLocaleString("es-AR");
+
+      // 4. Asignar el valor formateado al input
+      input.value = valorFormateado;
+
+      // 5. Ajustar la posición del cursor de manera natural
+      let nuevaLongitud = input.value.length;
+      cursorPosition = cursorPosition + (nuevaLongitud - longitudAntigua);
+      input.setSelectionRange(cursorPosition, cursorPosition);
+    }
+
+    // Función para limpiar el valor antes de guardarlo en tu base de datos o variable numérica
+    function obtenerValorNumerico(valorTexto) {
+      if (!valorTexto) return 0;
+      let limpio = String(valorTexto).replace(/\./g, "").replace(/,/g, ".");
+      return parseFloat(limpio) || 0;
+    }
+// Función para dar formato moneda estilo Excel mientras se escribe
+    function aplicarFormatoMonedaInput(input) {
+      let cursorPosition = input.selectionStart;
+      let longitudAntigua = input.value.length;
+      let valorLimpio = input.value.replace(/\D/g, "");
+      
+      if (valorLimpio === "") {
+        input.value = "";
+        return;
+      }
+
+      let valorFormateado = Number(valorLimpio).toLocaleString("es-AR");
+      input.value = valorFormateado;
+
+      let nuevaLongitud = input.value.length;
+      cursorPosition = cursorPosition + (nuevaLongitud - longitudAntigua);
+      input.setSelectionRange(cursorPosition, cursorPosition);
+    }
+
+    // Función para limpiar el valor antes de guardarlo en tu base de datos o variable numérica
+    function obtenerValorNumerico(valorTexto) {
+      if (!valorTexto) return 0;
+      let limpio = String(valorTexto).replace(/\./g, "").replace(/,/g, ".");
+      return parseFloat(limpio) || 0;
+    }
+
+    // 🟢 AQUÍ ES DONDE VA EL BLOQUE NUEVO:
+    document.addEventListener("DOMContentLoaded", () => {
+      document.querySelectorAll(".input-moneda").forEach(input => {
+        input.addEventListener("input", function() {
+          aplicarFormatoMonedaInput(this);
+        });
+      });
+    });
   </script>
 </body>
 </html>
+  
