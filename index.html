@@ -1288,12 +1288,15 @@ function guardarRepartoConSincronizacion(fechaDestino, nuevoPedido) {
       }
     }
 // FUNCIONES PARA REGISTRAR STOCK REMANENTE / CANCELACIONES EN CUADRA
-    function cargarSelectorRemanentesCuadra() {
+   function cargarSelectorRemanentesCuadra() {
       const sel = document.getElementById('ajuste-cuadra-producto');
       if (!sel) return;
+      
+      // GUARDAR LA OPCIÓN ACTUAL SELECCIONADA PARA NO PERDERLA EN EL REFRESH
+      const valorSeleccionadoActual = sel.value;
+
       sel.innerHTML = '<option value="">-- Seleccionar Producto a Descontar --</option>';
       
-      // Obtenemos los productos activos de la cuadra para la fecha seleccionada
       const pedidosHoy = dbRepartos[fechaCuadraActiva] || [];
       const consolidados = {};
 
@@ -1302,13 +1305,17 @@ function guardarRepartoConSincronizacion(fechaDestino, nuevoPedido) {
         consolidados[p.producto] = (consolidados[p.producto] || 0) + p.unidades;
       });
 
-      // Llenamos el selector con los productos que realmente están en la Cuadra
       Object.keys(consolidados).sort().forEach(prod => {
         const opt = document.createElement('option');
         opt.value = prod;
         opt.textContent = prod;
         sel.appendChild(opt);
       });
+
+      // RESTAURAR LA SELECCIÓN SI TODAVÍA EXISTE
+      if (valorSeleccionadoActual && consolidados[valorSeleccionadoActual]) {
+        sel.value = valorSeleccionadoActual;
+      }
     }
     function registrarStockRemanenteCuadra() {
       const prod = document.getElementById('ajuste-cuadra-producto').value;
@@ -2595,7 +2602,7 @@ function renderizarPlanillaReparto() {
       window.print();
     }
 
-   function renderizarCuadra() {
+  function renderizarCuadra() {
       const fechaFormateada = obtenerFechaConDia(fechaCuadraActiva);
       const lblCua = document.getElementById('label-fecha-cuadra'); if (lblCua) lblCua.innerText = `Fecha de Producción: ${fechaFormateada}`;
       
@@ -2644,8 +2651,11 @@ function renderizarPlanillaReparto() {
         });
       }
 
-      // 🔄 ACTUALIZAR EL SELECTOR DE REMANENTES CON LOS PRODUCTOS DE ESTA CUADRA
-      cargarSelectorRemanentesCuadra();
+      // SOLO ACTUALIZAR EL SELECTOR SI EL USUARIO NO ESTÁ INTERactuando CON ÉL
+      const selectRemanente = document.getElementById('ajuste-cuadra-producto');
+      if (selectRemanente && document.activeElement !== selectRemanente) {
+        cargarSelectorRemanentesCuadra();
+      }
     }
 
     function eliminarNotaMostrador(idx) {
