@@ -25,6 +25,32 @@
       background-color: #f9fafb;
     }
 
+    /* ESTILOS PARA SEMÁFOROS DE SINCRONIZACIÓN EN TIEMPO REAL */
+    @keyframes pulse-red {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+    .semaforo-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 9999px;
+    }
+    .semaforo-rojo {
+      background-color: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #f87171;
+      animation: pulse-red 1.2s infinite;
+    }
+    .semaforo-verde {
+      background-color: #d1fae5;
+      color: #065f46;
+      border: 1px solid #34d399;
+    }
+
     /* OCULTAR ÁREA DE IMPRESIÓN EN LA APLICACIÓN Y APK */
     #area-impresion {
       display: none;
@@ -308,6 +334,33 @@
         </div>
         <ul id="lista-notas-mostrador" class="list-disc pl-5 text-base space-y-1 text-gray-700"></ul>
       </div>
+
+      <!-- NUEVA SECCIÓN: AJUSTE POR STOCK REMANENTE / CANCELACIONES -->
+      <div class="bg-amber-50 p-4 rounded-xl shadow border border-amber-300 space-y-3">
+        <h2 class="text-base font-bold text-amber-900 flex items-center gap-1">🔄 Ajuste de Producción por Stock Remanente / Cancelación</h2>
+        <p class="text-xs text-gray-600">Permite descontar de la producción del día los saldos sobrantes o pedidos cancelados para evitar sobreproducción, sin alterar las cuentas corrientes.</p>
+        
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-2 text-sm">
+          <select id="ajuste-cuadra-producto" class="border p-2 rounded bg-white font-bold text-amber-900 md:col-span-2">
+            <option value="">-- Seleccionar Producto a Descontar --</option>
+          </select>
+          <input type="number" id="ajuste-cuadra-cantidad" placeholder="Cant. a restar" step="0.01" min="0.01" class="border p-2 rounded bg-white font-bold md:col-span-1">
+          <button type="button" onclick="registrarStockRemanenteCuadra()" class="bg-amber-800 hover:bg-amber-900 text-white font-bold px-4 py-2 rounded text-xs shadow md:col-span-1">Aplicar Resta a Cuadra</button>
+        </div>
+
+        <div class="overflow-x-auto bg-white rounded border mt-2">
+          <table class="w-full text-left text-xs">
+            <thead>
+              <tr class="bg-amber-100 text-amber-950 border-b font-bold">
+                <th class="p-1.5">Producto</th>
+                <th class="p-1.5 text-center">Cantidad Descontada</th>
+                <th class="p-1.5 text-center">Acción</th>
+              </tr>
+            </thead>
+            <tbody id="tabla-remanentes-cuadra"></tbody>
+          </table>
+        </div>
+      </div>
     </section>
 
     <!-- 3. CLIENTES Y CUENTA CORRIENTE -->
@@ -436,7 +489,7 @@
       </div>
     </section>
 
-    <!-- 6. CAJAS INDEPENDIENTES Y REPORTES -->
+   <!-- 6. CAJAS INDEPENDIENTES Y REPORTES -->
     <section id="sec-caja" class="hidden space-y-4">
       <div id="grid-cajas-diarias" class="grid grid-cols-1 md:grid-cols-3 gap-4">
         
@@ -452,11 +505,11 @@
             </div>
             <hr class="border-amber-300">
             <div class="grid grid-cols-1 gap-2 text-sm">
-              <div class="flex justify-between items-center"><label class="text-xs text-gray-600">Efectivo Físico Declarado</label><input type="number" id="rep-caja-efectivo" onchange="guardarDatosCajaDiaria()" class="border p-1.5 rounded w-24 font-bold text-sm text-right"></div>
-              <div class="flex justify-between items-center"><label class="text-xs text-gray-600">Transferencias / MP</label><input type="number" id="rep-caja-digital" onchange="guardarDatosCajaDiaria()" class="border p-1.5 rounded w-24 font-bold text-blue-700 text-sm text-right"></div>
-              <div class="flex justify-between items-center"><label class="text-xs text-gray-600">Gastos del Reparto</label><input type="number" id="rep-caja-gastos" onchange="guardarDatosCajaDiaria()" class="border p-1.5 rounded w-24 font-bold text-red-700 text-sm text-right"></div>
+              <div class="flex justify-between items-center"><label class="text-xs text-gray-600">Efectivo Físico Declarado</label><input type="text" id="rep-caja-efectivo" onchange="guardarDatosCajaDiaria()" class="border p-1.5 rounded w-28 font-bold text-sm text-right"></div>
+              <div class="flex justify-between items-center"><label class="text-xs text-gray-600">Transferencias / MP</label><input type="text" id="rep-caja-digital" onchange="guardarDatosCajaDiaria()" class="border p-1.5 rounded w-28 font-bold text-blue-700 text-sm text-right"></div>
+              <div class="flex justify-between items-center"><label class="text-xs text-gray-600">Gastos del Reparto</label><input type="text" id="rep-caja-gastos" onchange="guardarDatosCajaDiaria()" class="border p-1.5 rounded w-28 font-bold text-red-700 text-sm text-right"></div>
             </div>
-            <button type="button" onclick="cerrarCajaReparto()" class="w-full mt-1 bg-amber-800 text-white text-xs py-1.5 rounded font-bold hover:bg-amber-900 shadow">Cerrar Caja Reparto</button>
+            <div id="btn-reparto-accion"></div>
           </div>
         </div>
 
@@ -468,10 +521,10 @@
               <span id="st-alem-manana" class="text-[10px] bg-green-200 text-green-800 px-2 py-0.5 rounded font-bold">🟢 Abierto</span>
             </div>
             <div class="grid grid-cols-2 gap-2 text-sm">
-              <div><label class="text-xs text-gray-600 block">Efectivo</label><input type="number" id="alem-m-efectivo" onchange="guardarDatosCajaDiaria()" class="border p-1.5 rounded w-full font-bold text-sm"></div>
-              <div><label class="text-xs text-gray-600 block">Digital</label><input type="number" id="alem-m-digital" onchange="guardarDatosCajaDiaria()" class="border p-1.5 rounded w-full font-bold text-blue-700 text-sm"></div>
+              <div><label class="text-xs text-gray-600 block">Efectivo</label><input type="text" id="alem-m-efectivo" onchange="guardarDatosCajaDiaria()" class="border p-1.5 rounded w-full font-bold text-sm"></div>
+              <div><label class="text-xs text-gray-600 block">Digital</label><input type="text" id="alem-m-digital" onchange="guardarDatosCajaDiaria()" class="border p-1.5 rounded w-full font-bold text-blue-700 text-sm"></div>
             </div>
-            <button type="button" onclick="cerrarTurnoParcial('alem', 'manana')" class="w-full mt-1 bg-amber-800 text-white text-xs py-1 rounded font-bold hover:bg-amber-900 shadow">Cerrar Turno Mañana</button>
+            <div id="btn-alem-manana"></div>
           </div>
 
           <div class="bg-orange-50 p-2 rounded border border-orange-200 space-y-1">
@@ -480,10 +533,10 @@
               <span id="st-alem-tarde" class="text-[10px] bg-green-200 text-green-800 px-2 py-0.5 rounded font-bold">🟢 Abierto</span>
             </div>
             <div class="grid grid-cols-2 gap-2 text-sm">
-              <div><label class="text-xs text-gray-600 block">Efectivo</label><input type="number" id="alem-t-efectivo" onchange="guardarDatosCajaDiaria()" class="border p-1.5 rounded w-full font-bold text-sm"></div>
-              <div><label class="text-xs text-gray-600 block">Digital</label><input type="number" id="alem-t-digital" onchange="guardarDatosCajaDiaria()" class="border p-1.5 rounded w-full font-bold text-blue-700 text-sm"></div>
+              <div><label class="text-xs text-gray-600 block">Efectivo</label><input type="text" id="alem-t-efectivo" onchange="guardarDatosCajaDiaria()" class="border p-1.5 rounded w-full font-bold text-sm"></div>
+              <div><label class="text-xs text-gray-600 block">Digital</label><input type="text" id="alem-t-digital" onchange="guardarDatosCajaDiaria()" class="border p-1.5 rounded w-full font-bold text-blue-700 text-sm"></div>
             </div>
-            <button type="button" onclick="cerrarTurnoParcial('alem', 'tarde')" class="w-full mt-1 bg-orange-800 text-white text-xs py-1 rounded font-bold hover:bg-orange-900 shadow">Cerrar Turno Tarde</button>
+            <div id="btn-alem-tarde"></div>
           </div>
         </div>
 
@@ -495,10 +548,10 @@
               <span id="st-espiga-manana" class="text-[10px] bg-green-200 text-green-800 px-2 py-0.5 rounded font-bold">🟢 Abierto</span>
             </div>
             <div class="grid grid-cols-2 gap-2 text-sm">
-              <div><label class="text-xs text-gray-600 block">Efectivo</label><input type="number" id="espiga-m-efectivo" onchange="guardarDatosCajaDiaria()" class="border p-1.5 rounded w-full font-bold text-sm"></div>
-              <div><label class="text-xs text-gray-600 block">Digital</label><input type="number" id="espiga-m-digital" onchange="guardarDatosCajaDiaria()" class="border p-1.5 rounded w-full font-bold text-blue-700 text-sm"></div>
+              <div><label class="text-xs text-gray-600 block">Efectivo</label><input type="text" id="espiga-m-efectivo" onchange="guardarDatosCajaDiaria()" class="border p-1.5 rounded w-full font-bold text-sm"></div>
+              <div><label class="text-xs text-gray-600 block">Digital</label><input type="text" id="espiga-m-digital" onchange="guardarDatosCajaDiaria()" class="border p-1.5 rounded w-full font-bold text-blue-700 text-sm"></div>
             </div>
-            <button type="button" onclick="cerrarTurnoParcial('espiga', 'manana')" class="w-full mt-1 bg-amber-800 text-white text-xs py-1 rounded font-bold hover:bg-amber-900 shadow">Cerrar Turno Mañana</button>
+            <div id="btn-espiga-manana"></div>
           </div>
 
           <div class="bg-orange-50 p-2 rounded border border-orange-200 space-y-1">
@@ -507,10 +560,10 @@
               <span id="st-espiga-tarde" class="text-[10px] bg-green-200 text-green-800 px-2 py-0.5 rounded font-bold">🟢 Abierto</span>
             </div>
             <div class="grid grid-cols-2 gap-2 text-sm">
-              <div><label class="text-xs text-gray-600 block">Efectivo</label><input type="number" id="espiga-t-efectivo" onchange="guardarDatosCajaDiaria()" class="border p-1.5 rounded w-full font-bold text-sm"></div>
-              <div><label class="text-xs text-gray-600 block">Digital</label><input type="number" id="espiga-t-digital" onchange="guardarDatosCajaDiaria()" class="border p-1.5 rounded w-full font-bold text-blue-700 text-sm"></div>
+              <div><label class="text-xs text-gray-600 block">Efectivo</label><input type="text" id="espiga-t-efectivo" onchange="guardarDatosCajaDiaria()" class="border p-1.5 rounded w-full font-bold text-sm"></div>
+              <div><label class="text-xs text-gray-600 block">Digital</label><input type="text" id="espiga-t-digital" onchange="guardarDatosCajaDiaria()" class="border p-1.5 rounded w-full font-bold text-blue-700 text-sm"></div>
             </div>
-            <button type="button" onclick="cerrarTurnoParcial('espiga', 'tarde')" class="w-full mt-1 bg-orange-800 text-white text-xs py-1 rounded font-bold hover:bg-orange-900 shadow">Cerrar Turno Tarde</button>
+            <div id="btn-espiga-tarde"></div>
           </div>
         </div>
       </div>
@@ -971,7 +1024,7 @@
     </div>
 
     <!-- HISTORIAL DE MOVIMIENTOS -->
-    <div class="overflow-x-auto max-h-60 overflow-y-auto">
+    <div class="overflow-x-auto max-h-60 overflow-y-auto border rounded-lg mt-2 bg-white">
       <table class="w-full text-left text-xs md:text-sm">
         <thead>
           <tr class="bg-amber-100 border-b text-amber-900 font-bold sticky top-0">
@@ -1143,24 +1196,6 @@
       </div>
     </div>
   </div>
-
-  <!-- MODAL ALTA PROVEEDOR -->
-  <div id="modal-alta-proveedor" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-    <div class="bg-white p-5 rounded-xl shadow-xl max-w-md w-full space-y-3">
-      <h3 class="text-base font-bold text-amber-900 border-b pb-2">➕ Alta de Nuevo Proveedor</h3>
-      <div class="space-y-2">
-        <input type="text" id="prov-nombre" placeholder="Razón Social / Proveedor" class="border p-2 rounded w-full text-sm">
-        <input type="text" id="prov-cuit" placeholder="CUIT" class="border p-2 rounded w-full text-sm">
-        <input type="text" id="prov-telefono" placeholder="Teléfono" class="border p-2 rounded w-full text-sm">
-        <input type="text" id="prov-rubro" placeholder="Rubro" class="border p-2 rounded w-full text-sm">
-      </div>
-      <div class="flex justify-end gap-2 pt-2">
-        <button type="button" onclick="cerrarModalAltaProveedor()" class="bg-gray-300 text-gray-800 text-xs px-4 py-2 rounded font-bold">Cancelar</button>
-        <button type="button" onclick="guardarProveedor()" class="bg-amber-700 text-white font-bold px-4 py-2 rounded text-sm hover:bg-amber-800">Registrar Proveedor</button>
-      </div>
-    </div>
-  </div>
-
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
@@ -1228,6 +1263,92 @@
       repartidor: { nombre: "Repartidor", pestanas: ['reparto', 'hoja-ruta', 'cuadra', 'clientes'] },
       produccion: { nombre: "Producción / Cuadra", pestanas: ['cuadra', 'stock'] }
     };
+// ESTRUCTURA PARA ALMACENAR REMANENTES/CANCELACIONES DE CUADRA POR FECHA
+    var dbRemanentesCuadra = cargarDB('db_remanentes_cuadra', {});
+
+    // MODIFICACIÓN EN GUARDAR REPARTO CON ESTADO DE SEMÁFORO (CONEXIÓN A NUBE)
+    function guardarRepartoConSincronizacion(fechaDestino, nuevoPedido, elementoUIId) {
+      if (!dbRepartos[fechaDestino]) dbRepartos[fechaDestino] = [];
+      
+      // Asignar estado inicial: ROJO (Sincronizando)
+      nuevoPedido.sincronizadoNube = false;
+      dbRepartos[fechaDestino].push(nuevoPedido);
+      
+      // Renderizar inmediatamente en local para velocidad visual
+      renderizarPlanillaReparto();
+      renderizarCuadra();
+      renderizarReportesMensuales();
+
+      // Guardado asíncrono en Firebase con feedback de semáforo
+      if (rtdb) {
+        rtdb.ref('db_repartos/' + fechaDestino).set(dbRepartos[fechaDestino]).then(() => {
+          // Éxito: Marcar como sincronizado (VERDE)
+          const pedidoRef = dbRepartos[fechaDestino].find(p => p.id === nuevoPedido.id);
+          if (pedidoRef) pedidoRef.sincronizadoNube = true;
+          renderizarPlanillaReparto();
+        }).catch(err => {
+          console.warn("Error de sincronización con la nube:", err);
+        });
+      } else {
+        // Modo local
+        nuevoPedido.sincronizadoNube = true;
+        renderizarPlanillaReparto();
+      }
+    }
+
+// FUNCIONES PARA REGISTRAR STOCK REMANENTE / CANCELACIONES EN CUADRA
+    function cargarSelectorRemanentesCuadra() {
+      const sel = document.getElementById('ajuste-cuadra-producto');
+      if (!sel) return;
+      sel.innerHTML = '<option value="">-- Seleccionar Producto a Descontar --</option>';
+      
+      // Obtenemos los productos activos de la cuadra para la fecha seleccionada
+      const pedidosHoy = dbRepartos[fechaCuadraActiva] || [];
+      const consolidados = {};
+
+      pedidosHoy.forEach(p => {
+        if (p.origen === 'despacho') return;
+        consolidados[p.producto] = (consolidados[p.producto] || 0) + p.unidades;
+      });
+
+      // Llenamos el selector con los productos que realmente están en la Cuadra
+      Object.keys(consolidados).sort().forEach(prod => {
+        const opt = document.createElement('option');
+        opt.value = prod;
+        opt.textContent = prod;
+        sel.appendChild(opt);
+      });
+    }
+    function registrarStockRemanenteCuadra() {
+      const prod = document.getElementById('ajuste-cuadra-producto').value;
+      const cant = parseFloat(document.getElementById('ajuste-cuadra-cantidad').value);
+
+      if (!prod || isNaN(cant) || cant <= 0) {
+        alert("Seleccione un producto y una cantidad válida para descontar.");
+        return;
+      }
+
+      if (!dbRemanentesCuadra[fechaCuadraActiva]) dbRemanentesCuadra[fechaCuadraActiva] = [];
+      
+      dbRemanentesCuadra[fechaCuadraActiva].push({
+        id: generarID('REM'),
+        producto: prod,
+        cantidad: cant
+      });
+
+      guardarDB('db_remanentes_cuadra', dbRemanentesCuadra);
+      document.getElementById('ajuste-cuadra-cantidad').value = '';
+      renderizarCuadra();
+      alert(`¡Se descontaron ${cant} unidades de ${prod} en la producción de la fecha ${fechaCuadraActiva}!`);
+    }
+
+    function eliminarRemanenteCuadra(id) {
+      if (dbRemanentesCuadra[fechaCuadraActiva]) {
+        dbRemanentesCuadra[fechaCuadraActiva] = dbRemanentesCuadra[fechaCuadraActiva].filter(r => r.id !== id);
+        guardarDB('db_remanentes_cuadra', dbRemanentesCuadra);
+        renderizarCuadra();
+      }
+    }
 
     const ETIQUETAS_SUCURSAL = {
       todas: "General (Ambas Sucursales)",
@@ -2021,7 +2142,7 @@
       return " (A)";
     }
 
-    function agregarPedidoPanificado() {
+function agregarPedidoPanificado() {
       const fechaDestino = document.getElementById('rep-fecha-destino').value || fechaActual;
       if (dbRepartosCerrados[fechaDestino]) { alert(`⚠️ El reparto del día ${fechaDestino} ya se encuentra cerrado.`); return; }
       
@@ -2036,21 +2157,33 @@
 
       const sufijoOrigen = obtenerSufijoSucursalActual();
 
-      if (!dbRepartos[fechaDestino]) dbRepartos[fechaDestino] = [];
-      dbRepartos[fechaDestino].push({
-        id: generarID('REP'), clienteId: cliId, clienteNombre: cliente.nombre + sufijoOrigen, producto: prodNombre,
-        unidades: cant, unidPorPaq: panificado ? panificado.unidPorPaq : 1, precioUnitario: precioPersonalizado,
-        monto: cant * precioPersonalizado, origen: 'cuadra', pagado: false, medioPago: "Pendiente"
-      });
+      // Creamos el nuevo pedido unificando la lógica con el semáforo
+      const nuevoPedido = {
+        id: generarID('REP'), 
+        clienteId: cliId, 
+        clienteNombre: cliente.nombre + sufijoOrigen, 
+        producto: prodNombre,
+        unidades: cant, 
+        unidPorPaq: panificado ? panificado.unidPorPaq : 1, 
+        precioUnitario: precioPersonalizado,
+        monto: cant * precioPersonalizado, 
+        origen: 'cuadra', 
+        pagado: false, 
+        medioPago: "Pendiente"
+      };
 
-      guardarRepartoPorFecha(fechaDestino);
+      // Guardamos y sincronizamos con la nube en tiempo real
+      guardarRepartoConSincronizacion(fechaDestino, nuevoPedido);
       
+      // Limpiamos los campos del formulario
       document.getElementById('rep-cantidad').value = '';
       document.getElementById('rep-precio-unitario').value = '';
       document.getElementById('rep-cliente').value = '';
       
       alert(`¡Pedido cargado con éxito para la fecha ${fechaDestino}!`);
-      renderizarPlanillaReparto(); renderizarCuadra(); renderizarReportesMensuales();
+      renderizarPlanillaReparto(); 
+      renderizarCuadra(); 
+      renderizarReportesMensuales();
     }
 
     function agregarPedidoDespacho() {
@@ -2067,23 +2200,33 @@
 
       const sufijoOrigen = obtenerSufijoSucursalActual();
 
-      if (!dbRepartos[fechaDestino]) dbRepartos[fechaDestino] = [];
-      dbRepartos[fechaDestino].push({
-        id: generarID('REP'), clienteId: cliId, clienteNombre: cliente.nombre + sufijoOrigen, producto: prodNombre,
-        unidades: cant, unidPorPaq: 1, 
+      // Creamos el pedido de despacho una sola vez
+      const nuevoPedido = {
+        id: generarID('REP'), 
+        clienteId: cliId, 
+        clienteNombre: cliente.nombre + sufijoOrigen, 
+        producto: prodNombre,
+        unidades: cant, 
+        unidPorPaq: 1, 
         precioUnitario: (montoTotal / cant), 
         monto: montoTotal,
-        origen: 'despacho', pagado: false, medioPago: "Pendiente"
-      });
+        origen: 'despacho', 
+        pagado: false, 
+        medioPago: "Pendiente"
+      };
 
-      guardarRepartoPorFecha(fechaDestino);
+      // Guardamos y sincronizamos con la nube en tiempo real (con semáforo)
+      guardarRepartoConSincronizacion(fechaDestino, nuevoPedido);
       
+      // Limpiamos los inputs
       document.getElementById('rep-despacho-cantidad').value = '';
       document.getElementById('rep-despacho-precio-unitario').value = '';
       document.getElementById('rep-despacho-cliente').value = '';
 
       alert(`¡Ítem de despacho cargado con éxito para la fecha ${fechaDestino}!`);
-      renderizarPlanillaReparto(); renderizarCuadra(); renderizarReportesMensuales();
+      renderizarPlanillaReparto(); 
+      renderizarCuadra(); 
+      renderizarReportesMensuales();
     }
 
     function agregarNotaMostrador() {
@@ -2133,7 +2276,7 @@
       }
     }
 
-    function renderizarPlanillaReparto() {
+function renderizarPlanillaReparto() {
       procesarPedidosRecurrentesAutomaticos();
       const tbody = document.getElementById('tabla-reparto');
       const tbodyHojaRuta = document.getElementById('tabla-hoja-ruta');
@@ -2179,10 +2322,16 @@
       pedidosDestino.forEach((p) => {
         if (tbody) {
           const iconoAuto = p.origenAuto ? '🤖 ' : '';
+          
+          // 🟢🔴 Indicador visual de semáforo de sincronización por pedido
+          const semaforoHtml = p.sincronizadoNube 
+            ? `<span class="semaforo-badge semaforo-verde" title="Sincronizado en la Nube">🟢 Online</span>` 
+            : `<span class="semaforo-badge semaforo-rojo" title="Subiendo a la base de datos...">🔴 Sincronizando</span>`;
+
           const trPed = document.createElement('tr'); 
           trPed.className = "border-b hover:bg-gray-50 text-xs md:text-sm";
           trPed.innerHTML = `
-            <td class="p-2 font-semibold text-gray-800">${p.clienteNombre}</td>
+            <td class="p-2 font-semibold text-gray-800">${p.clienteNombre} ${semaforoHtml}</td>
             <td class="p-2">${iconoAuto}${p.producto}</td>
             <td class="p-2">${p.origen === 'despacho' ? `<span class="bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded text-[10px] font-bold">Despacho</span>` : `<span class="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded text-[10px] font-bold">Cuadra</span>`}</td>
             <td class="p-2">${p.unidades} un.</td>
@@ -2259,7 +2408,6 @@
       if (elTr) elTr.textContent = `$${totalTransf.toLocaleString()}`;
       if (elTot) elTot.textContent = `$${(totalEfectivo + totalTransf).toLocaleString()}`;
     }
-    
     function marcarPedidoCobrado(pedidoId, medioPago) {
       const fechaHojaRutaActiva = document.getElementById('hr-fecha-selector').value || fechaActual;
       if (dbRepartosCerrados[fechaHojaRutaActiva]) return;
@@ -2455,7 +2603,7 @@
       window.print();
     }
 
-    function renderizarCuadra() {
+   function renderizarCuadra() {
       const fechaFormateada = obtenerFechaConDia(fechaCuadraActiva);
       const lblCua = document.getElementById('label-fecha-cuadra'); if (lblCua) lblCua.innerText = `Fecha de Producción: ${fechaFormateada}`;
       
@@ -2503,6 +2651,9 @@
           listaNotas.appendChild(li);
         });
       }
+
+      // 🔄 ACTUALIZAR EL SELECTOR DE REMANENTES CON LOS PRODUCTOS DE ESTA CUADRA
+      cargarSelectorRemanentesCuadra();
     }
 
     function eliminarNotaMostrador(idx) {
@@ -3293,27 +3444,41 @@
       }
     }
 
-    function renderizarTablaHistorialProveedor() {
+   function renderizarTablaHistorialProveedor() {
       if (!proveedorSeleccionadoId) return;
-      const tbody = document.getElementById('tabla-historial-proveedor'); if (!tbody) return; tbody.innerHTML = '';
+      const tbody = document.getElementById('tabla-historial-proveedor'); 
+      if (!tbody) return; 
+      tbody.innerHTML = '';
+      
       const movs = Object.values(dbHistorialProveedores[proveedorSeleccionadoId] || {});
-      movs.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+      movs.sort((a, b) => new Date(a.fecha || 0) - new Date(b.fecha || 0));
 
       let acumulado = 0;
       movs.forEach(m => {
-        if (m.tipo === 'factura') acumulado += m.monto; if (m.tipo === 'pago') acumulado -= m.monto;
-        const tr = document.createElement('tr'); tr.className = "border-b text-xs md:text-sm hover:bg-gray-50";
-        
-        const tdFecha = m.fecha;
-        const tdConcepto = m.tipo === 'factura' ? `Fac N° ${m.nroFactura || 'S/N'}` : `Pago: ${m.medio || ''}`;
-        const tdMontoFactura = m.tipo === 'factura' ? `$${m.monto}` : '-';
-        const tdMontoPago = m.tipo === 'pago' ? `$${m.monto}` : '-';
+        const tipoMov = m.tipo || 'factura';
+        const montoMov = parseFloat(m.monto) || 0;
 
-        tr.innerHTML = `<td class="p-2">${tdFecha}</td><td class="p-2">${tdConcepto}</td><td class="p-2 text-right text-red-600">${tdMontoFactura}</td><td class="p-2 text-right text-green-700">${tdMontoPago}</td><td class="p-2 text-right font-bold text-red-600">$${acumulado.toLocaleString()}</td>
-        <td class="p-2 text-center flex justify-center items-center gap-1">
-          <button onclick="abrirModalEditarMovProveedor('${m.id}')" class="text-[10px] text-blue-600 font-bold border border-blue-600 px-2 py-0.5 rounded hover:bg-blue-50">Editar</button>
-          <button onclick="borrarMovimientoProveedor('${m.id}')" class="text-[10px] text-red-600 font-bold border border-red-600 px-2 py-0.5 rounded hover:bg-blue-50">Borrar</button>
-        </td>`;
+        if (tipoMov === 'factura') acumulado += montoMov; 
+        if (tipoMov === 'pago') acumulado -= montoMov;
+
+        const tr = document.createElement('tr'); 
+        tr.className = "border-b text-xs md:text-sm hover:bg-gray-50";
+        
+        const tdFecha = m.fecha || 'S/F';
+        const tdConcepto = tipoMov === 'factura' ? `Fac N° ${m.nroFactura || 'S/N'}` : `Pago: ${m.medio || ''}`;
+        const tdMontoFactura = tipoMov === 'factura' ? `$${montoMov.toLocaleString()}` : '-';
+        const tdMontoPago = tipoMov === 'pago' ? `$${montoMov.toLocaleString()}` : '-';
+
+        tr.innerHTML = `
+          <td class="p-2">${tdFecha}</td>
+          <td class="p-2">${tdConcepto}</td>
+          <td class="p-2 text-right text-red-600">${tdMontoFactura}</td>
+          <td class="p-2 text-right text-green-700">${tdMontoPago}</td>
+          <td class="p-2 text-right font-bold text-red-600">$${acumulado.toLocaleString()}</td>
+          <td class="p-2 text-center flex justify-center items-center gap-1">
+            <button onclick="abrirModalEditarMovProveedor('${m.id}')" class="text-[10px] text-blue-600 font-bold border border-blue-600 px-2 py-0.5 rounded hover:bg-blue-50">Editar</button>
+            <button onclick="borrarMovimientoProveedor('${m.id}')" class="text-[10px] text-red-600 font-bold border border-red-600 px-2 py-0.5 rounded hover:bg-blue-50">Borrar</button>
+          </td>`;
         tbody.appendChild(tr);
       });
 
@@ -3563,8 +3728,9 @@
       });
     }
 
-    function cargarCajasHoyUI() {
+function cargarCajasHoyUI() {
       const usr = dbUsuarios[usuarioActivoId];
+      const esAdmin = (usr && usr.rol === 'admin');
       const boxRep = document.getElementById('box-caja-reparto');
       const boxAlem = document.getElementById('box-caja-alem');
       const boxEspiga = document.getElementById('box-caja-espiga');
@@ -3601,12 +3767,27 @@
           const inEf = document.getElementById(`${pfx}-efectivo`);
           const inDg = document.getElementById(`${pfx}-digital`);
           const stLbl = document.getElementById(`st-${suc}-${turno}`);
+          const btnAccion = document.getElementById(`btn-${suc}-${turno}`);
 
-          if (inEf) { inEf.value = info.efectivo || 0; inEf.disabled = info.cerrado; }
-          if (inDg) { inDg.value = info.digital || 0; inDg.disabled = info.cerrado; }
+          if (inEf) { inEf.value = (info.efectivo || 0).toLocaleString('es-AR'); inEf.disabled = info.cerrado && !esAdmin; }
+          if (inDg) { inDg.value = (info.digital || 0).toLocaleString('es-AR'); inDg.disabled = info.cerrado && !esAdmin; }
+          
           if (stLbl) {
             stLbl.textContent = info.cerrado ? `🔒 Cerrado (${info.usuario || ''})` : '🟢 Abierto';
             stLbl.className = info.cerrado ? "text-[10px] bg-red-200 text-red-800 px-2 py-0.5 rounded font-bold" : "text-[10px] bg-green-200 text-green-800 px-2 py-0.5 rounded font-bold";
+          }
+
+          if (btnAccion) {
+            if (info.cerrado) {
+              if (esAdmin) {
+                btnAccion.innerHTML = `<button type="button" onclick="reabrirTurnoAdmin('${suc}', '${turno}')" class="w-full mt-1 bg-red-700 hover:bg-red-800 text-white text-xs py-1 rounded font-bold shadow">🔓 Reabrir Turno (Admin)</button>`;
+              } else {
+                btnAccion.innerHTML = `<span class="text-[10px] text-gray-500 font-bold block text-center mt-1">Cerrado</span>`;
+              }
+            } else {
+              const colorBg = turno === 'manana' ? 'bg-amber-800 hover:bg-amber-900' : 'bg-orange-800 hover:bg-orange-900';
+              btnAccion.innerHTML = `<button type="button" onclick="cerrarTurnoParcial('${suc}', '${turno}')" class="w-full mt-1 ${colorBg} text-white text-xs py-1 rounded font-bold shadow">Cerrar Turno ${turno === 'manana' ? 'Mañana' : 'Tarde'}</button>`;
+            }
           }
         });
       });
@@ -3616,17 +3797,29 @@
       const repDg = document.getElementById('rep-caja-digital');
       const repGs = document.getElementById('rep-caja-gastos');
       const stRep = document.getElementById('st-rep-caja');
+      const btnRepAccion = document.getElementById('btn-reparto-accion');
       
-      if (repEf) { repEf.value = cRep.efectivo || 0; repEf.disabled = cRep.cerrado; }
-      if (repDg) { repDg.value = cRep.digital || 0; repDg.disabled = cRep.cerrado; }
-      if (repGs) { repGs.value = cRep.gastos || 0; repGs.disabled = cRep.cerrado; }
+      if (repEf) { repEf.value = (cRep.efectivo || 0).toLocaleString('es-AR'); repEf.disabled = cRep.cerrado && !esAdmin; }
+      if (repDg) { repDg.value = (cRep.digital || 0).toLocaleString('es-AR'); repDg.disabled = cRep.cerrado && !esAdmin; }
+      if (repGs) { repGs.value = (cRep.gastos || 0).toLocaleString('es-AR'); repGs.disabled = cRep.cerrado && !esAdmin; }
       
       if (stRep) {
         stRep.textContent = cRep.cerrado ? `🔒 Cerrado (${cRep.usuario || ''})` : '🟢 Abierta';
         stRep.className = cRep.cerrado ? "text-[10px] bg-red-200 text-red-800 px-2 py-0.5 rounded font-bold" : "text-[10px] bg-green-200 text-green-800 px-2 py-0.5 rounded font-bold";
       }
-    }
 
+      if (btnRepAccion) {
+        if (cRep.cerrado) {
+          if (esAdmin) {
+            btnRepAccion.innerHTML = `<button type="button" onclick="reabrirCajaRepartoAdmin()" class="w-full mt-1 bg-red-700 hover:bg-red-800 text-white text-xs py-1.5 rounded font-bold shadow">🔓 Reabrir Caja Reparto (Admin)</button>`;
+          } else {
+            btnRepAccion.innerHTML = `<span class="text-xs text-gray-500 font-bold block text-center mt-1">Caja Cerrada</span>`;
+          }
+        } else {
+          btnRepAccion.innerHTML = `<button type="button" onclick="cerrarCajaReparto()" class="w-full mt-1 bg-amber-800 text-white text-xs py-1.5 rounded font-bold hover:bg-amber-900 shadow">Cerrar Caja Reparto</button>`;
+        }
+      }
+    }
     function guardarDatosCajaDiaria() {
       if (!dbCajasDiarias[fechaActual]) {
         dbCajasDiarias[fechaActual] = {
@@ -3983,15 +4176,30 @@
       `;
     }
 
-    function renderizarTablaPanificados() {
+ function renderizarTablaPanificados() {
       const tbody = document.getElementById('tabla-panificados-precios'); if (!tbody) return; tbody.innerHTML = '';
+      
       Object.entries(dbPanificados).sort((a,b) => a[0].localeCompare(b[0])).forEach(([nombre, p]) => {
         const tr = document.createElement('tr'); tr.className = "border-b hover:bg-gray-50";
+        
+        const menorFmt = Number(p.menor || 0).toLocaleString('es-AR', { minimumFractionDigits: 0 });
+        const mayorFmt = Number(p.mayor || 0).toLocaleString('es-AR', { minimumFractionDigits: 0 });
+
         tr.innerHTML = `
           <td class="p-2 font-bold">${nombre}</td>
-          <td class="p-2">${p.unidPorPaq}</td>
-          <td class="p-2">$${p.menor}</td>
-          <td class="p-2 font-bold text-amber-900">$${p.mayor}</td>
+          <td class="p-2"><input type="number" value="${p.unidPorPaq || 0}" onchange="actualizarPanificadoDirecto('${nombre}', 'unidPorPaq', this)" class="border p-1 rounded w-20 text-center font-bold"></td>
+          <td class="p-2">
+            <div class="flex items-center gap-1">
+              <span>$</span>
+              <input type="text" value="${menorFmt}" onchange="actualizarPanificadoDirecto('${nombre}', 'menor', this)" class="border p-1 rounded w-28 font-bold text-sm">
+            </div>
+          </td>
+          <td class="p-2">
+            <div class="flex items-center gap-1">
+              <span>$</span>
+              <input type="text" value="${mayorFmt}" onchange="actualizarPanificadoDirecto('${nombre}', 'mayor', this)" class="border p-1 rounded w-28 font-bold text-amber-900 text-sm">
+            </div>
+          </td>
           <td class="p-2 text-center"><button onclick="eliminarPanificado('${nombre}')" class="text-xs bg-red-600 text-white px-2 py-1 rounded font-bold hover:bg-red-700 shadow">✕</button></td>
         `;
         tbody.appendChild(tr);
@@ -4027,7 +4235,36 @@
         cargarSelectorProductosRecurrentes(); 
       }
     }
+function actualizarPanificadoDirecto(nombre, campo, inputElement) {
+      const valorCrudo = inputElement.value;
+      // Si es el campo de cantidad mínima usamos número entero, si es precio usamos limpieza de moneda
+      const valorNumerico = campo === 'unidPorPaq' ? (parseInt(valorCrudo) || 0) : limpiarValorMoneda(valorCrudo);
+      
+      if (dbPanificados[nombre]) {
+        dbPanificados[nombre][campo] = valorNumerico;
+        guardarDB('db_panificados', dbPanificados);
 
+        // Si es precio, lo formateamos con puntos de miles; si es cantidad mínima, queda normal
+        if (campo !== 'unidPorPaq') {
+          inputElement.value = valorNumerico.toLocaleString('es-AR', { minimumFractionDigits: 0 });
+        }
+
+        // Aviso visual sutil de confirmación ("Guardado ✓")
+        const fila = inputElement.closest('tr');
+        if (fila) {
+          let alerta = fila.querySelector('.aviso-guardado');
+          if (!alerta) {
+            alerta = document.createElement('span');
+            alerta.className = 'aviso-guardado text-[10px] text-green-700 font-bold ml-2 bg-green-100 px-1.5 py-0.5 rounded transition-all';
+            inputElement.parentNode.appendChild(alerta);
+          }
+          alerta.textContent = 'Guardado ✓';
+          setTimeout(() => {
+            alerta.textContent = '';
+          }, 1500);
+        }
+      }
+    }
     function renderizarTablaCatalogo() {
       const tbody = document.getElementById('tabla-catalogo-precios'); if (!tbody) return; tbody.innerHTML = '';
       const busqueda = (document.getElementById('buscar-producto')?.value || '').toLowerCase();
@@ -4035,15 +4272,69 @@
       Object.entries(dbProductos).sort((a,b) => a[0].localeCompare(b[0])).forEach(([nombre, p]) => {
         if (busqueda && !nombre.toLowerCase().includes(busqueda)) return;
         const tr = document.createElement('tr'); tr.className = "border-b hover:bg-gray-50";
+        
+        const mostradorFmt = Number(p.mostrador || 0).toLocaleString('es-AR', { minimumFractionDigits: 0 });
+        const repartoFmt = Number(p.reparto || 0).toLocaleString('es-AR', { minimumFractionDigits: 0 });
+        const unOcuartoFmt = Number(p.unOcuarto || 0).toLocaleString('es-AR', { minimumFractionDigits: 0 });
+
         tr.innerHTML = `
           <td class="p-2 font-bold">${nombre}</td>
-          <td class="p-2">$${p.mostrador}</td>
-          <td class="p-2 font-bold text-amber-900">$${p.reparto}</td>
-          <td class="p-2">$${p.unOcuarto}</td>
+          <td class="p-2">
+            <div class="flex items-center gap-1">
+              <span>$</span>
+              <input type="text" value="${mostradorFmt}" onchange="actualizarProductoDirecto('${nombre}', 'mostrador', this)" class="border p-1 rounded w-28 font-bold text-sm">
+            </div>
+          </td>
+          <td class="p-2 font-bold text-amber-900">
+            <div class="flex items-center gap-1">
+              <span>$</span>
+              <input type="text" value="${repartoFmt}" onchange="actualizarProductoDirecto('${nombre}', 'reparto', this)" class="border p-1 rounded w-28 font-bold text-amber-900 text-sm">
+            </div>
+          </td>
+          <td class="p-2">
+            <div class="flex items-center gap-1">
+              <span>$</span>
+              <input type="text" value="${unOcuartoFmt}" onchange="actualizarProductoDirecto('${nombre}', 'unOcuarto', this)" class="border p-1 rounded w-28 font-bold text-sm">
+            </div>
+          </td>
           <td class="p-2 text-center"><button onclick="eliminarProductoCatalogo('${nombre}')" class="text-xs bg-red-600 text-white px-2 py-1 rounded font-bold hover:bg-red-700 shadow">✕</button></td>
         `;
         tbody.appendChild(tr);
       });
+    }
+function limpiarValorMoneda(valorStr) {
+      if (!valorStr) return 0;
+      const limpio = String(valorStr).replace(/\./g, '').replace(',', '.').replace(/[^0-9.-]+/g, "");
+      return parseFloat(limpio) || 0;
+    }
+
+    function actualizarProductoDirecto(nombre, campo, inputElement) {
+      const valorCrudo = inputElement.value;
+      const valorNumerico = limpiarValorMoneda(valorCrudo);
+      
+      if (dbProductos[nombre]) {
+        // 1. Guardamos el valor limpio en la base de datos y persistimos
+        dbProductos[nombre][campo] = valorNumerico;
+        guardarDB('db_productos', dbProductos);
+
+        // 2. Formateamos automáticamente el input con el punto de miles (ej: 1.000)
+        inputElement.value = valorNumerico.toLocaleString('es-AR', { minimumFractionDigits: 0 });
+
+        // 3. Mostramos un aviso visual sutil de confirmación de guardado ("Guardado ✓")
+        const fila = inputElement.closest('tr');
+        if (fila) {
+          let alerta = fila.querySelector('.aviso-guardado');
+          if (!alerta) {
+            alerta = document.createElement('span');
+            alerta.className = 'aviso-guardado text-[10px] text-green-700 font-bold ml-2 bg-green-100 px-1.5 py-0.5 rounded transition-all';
+            inputElement.parentNode.appendChild(alerta);
+          }
+          alerta.textContent = 'Guardado ✓';
+          setTimeout(() => {
+            alerta.textContent = '';
+          }, 1500);
+        }
+      }
     }
 
     function filtrarTablaPrecios() { renderizarTablaCatalogo(); }
@@ -4234,6 +4525,39 @@ function renderizarTablaUsuarios() {
       const f = document.getElementById('select-backups-historial').value;
       if (!f) { alert("Seleccione una fecha."); return; }
       alert(`Función de restauración rápida para la fecha ${f} disponible a través de la carga de respaldos JSON.`);
+    }
+function reabrirTurnoAdmin(sucursal, turno) {
+      const usr = dbUsuarios[usuarioActivoId];
+      if (!usr || usr.rol !== 'admin') {
+        alert("⚠️ Acción exclusiva para el Administrador General.");
+        return;
+      }
+
+      if (confirm(`🔓 ¿Desea reabrir el Turno ${turno.toUpperCase()} de ${sucursal.toUpperCase()} para corregir valores?`)) {
+        if (dbCajasDiarias[fechaActual] && dbCajasDiarias[fechaActual][sucursal][turno]) {
+          dbCajasDiarias[fechaActual][sucursal][turno].cerrado = false;
+          guardarDB('db_cajas_diarias', dbCajasDiarias);
+          cargarCajasHoyUI();
+          alert("¡Turno reabierto con éxito!");
+        }
+      }
+    }
+
+    function reabrirCajaRepartoAdmin() {
+      const usr = dbUsuarios[usuarioActivoId];
+      if (!usr || usr.rol !== 'admin') {
+        alert("⚠️ Acción exclusiva para el Administrador General.");
+        return;
+      }
+
+      if (confirm("🔓 ¿Desea reabrir la Caja de Reparto para correcciones?")) {
+        if (dbCajasDiarias[fechaActual] && dbCajasDiarias[fechaActual].reparto) {
+          dbCajasDiarias[fechaActual].reparto.cerrado = false;
+          guardarDB('db_cajas_diarias', dbCajasDiarias);
+          cargarCajasHoyUI();
+          alert("¡Caja de Reparto reabierta con éxito!");
+        }
+      }
     }
   </script>
 </body>
