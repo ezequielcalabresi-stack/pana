@@ -4616,7 +4616,48 @@ function reabrirTurnoAdmin(sucursal, turno) {
         });
       });
     });
-  </script>
+// Ejemplo de validación para el botón "Cerrar Reparto del Día"
+function validarYEjecutarCierre(selectedDate, currentOperationalDate) {
+    // Función auxiliar para convertir de "DD/MM/AAAA" a objeto Date de forma segura
+    function convertirAFechaJS(fechaStr) {
+        if (!fechaStr) return new Date(NaN);
+        // Si viene en formato "DD/MM/AAAA" o "DD-MM-AAAA"
+        const partes = fechaStr.split(/[\/-]/);
+        if (partes.length === 3) {
+            // Retorna formato Año, Mes (0 a 11), Día
+            return new Date(partes[2], partes[1] - 1, partes[0]);
+        }
+        // Por si acaso viene en formato ISO estándar YYYY-MM-DD
+        return new Date(fechaStr);
+    }
+
+    const fechaSeleccionada = convertirAFechaJS(selectedDate);
+    const fechaActual = convertirAFechaJS(currentOperationalDate);
+
+    if (fechaSeleccionada > fechaActual) {
+        mostrarAlerta("No es posible cerrar o manipular la caja de una fecha posterior a la Fecha Operativa actual.");
+        return false; // Detiene la ejecución del cierre
+    }
+    
+    return true;
+}function procesarCierreReparto(hojaDeRutaItems, fechaSeleccionada) {
+        // Paso A: Calcular el consolidado total de los montos antes de limpiar	
+        const totalConsolidado = hojaDeRutaItems.reduce((acumulador, item) => {
+            return acumulador + Number(item.monto || 0);
+        }, 0);
+
+        // Paso B: Registrar el total en el cierre de caja oficial
+        guardarCajaEnBaseDeDatos({
+            fecha: fechaSeleccionada,
+            montoTotalCaja: totalConsolidado,
+            detalleItems: hojaDeRutaItems
+        });
+
+        // Paso C: Limpiar o archivar los registros de la interfaz de forma segura
+        limpiarVistaHojaDeRuta();
+        
+        console.log("Cierre procesado correctamente con un total de:", totalConsolidado);
+    }  </script>
 </body>
 </html>
   
