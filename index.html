@@ -1271,24 +1271,32 @@
 function guardarRepartoConSincronizacion(fechaDestino, nuevoPedido) {
       if (!dbRepartos[fechaDestino]) dbRepartos[fechaDestino] = [];
       
-      // Lo marcamos como sincronizado localmente de forma inmediata para evitar bloqueo en rojo
-      nuevoPedido.sincronizadoNube = true;
+      // 1. Guardado inmediato en local para velocidad instantánea
+      nuevoPedido.sincronizadoNube = false; // Comienza el envío
       dbRepartos[fechaDestino].push(nuevoPedido);
       
-      // Renderizamos la interfaz al instante
       renderizarPlanillaReparto();
       renderizarCuadra();
       renderizarReportesMensuales();
 
-      // Guardado en segundo plano en Firebase sin bloquear la UI
+      // 2. Sincronización en segundo plano con la nube
       if (rtdb) {
-        rtdb.ref('db_repartos/' + fechaDestino).set(dbRepartos[fechaDestino]).catch(err => {
+        rtdb.ref('db_repartos/' + fechaDestino).set(dbRepartos[fechaDestino]).then(() => {
+          // Si guardó bien en la nube, marcamos el ítem como sincronizado y actualizamos
+          nuevoPedido.sincronizadoNube = true;
+          renderizarPlanillaReparto();
+        }).catch(err => {
           console.warn("Aviso de sincronización en segundo plano:", err);
         });
+      } else {
+        // Si no hay nube (modo local puro), lo damos por sincronizado localmente
+        nuevoPedido.sincronizadoNube = true;
+        renderizarPlanillaReparto();
       }
     }
 // FUNCIONES PARA REGISTRAR STOCK REMANENTE / CANCELACIONES EN CUADRA
-   function cargarSelectorRemanentesCuadra() {
+   
+function cargarSelectorRemanentesCuadra() {
       const sel = document.getElementById('ajuste-cuadra-producto');
       if (!sel) return;
       
@@ -1787,12 +1795,14 @@ function cargarDB(key, fallback) {
       }
     }
 
-    function procesarPedidosRecurrentesAutomaticos() {
+   function procesarPedidosRecurrentesAutomaticos() {
       const fechaDestinoActiva = document.getElementById('rep-fecha-destino')?.value || fechaActual;
       if (!dbRepartos[fechaDestinoActiva]) dbRepartos[fechaDestinoActiva] = [];
       const [anio, mes, dia] = fechaDestinoActiva.split('-').map(Number);
       const fechaObj = new Date(anio, mes - 1, dia);
       const diaSemanaActual = fechaObj.getDay();
+
+      let huboCambiosNuevos = false;
 
       Object.values(dbRecurrentes).forEach(r => {
         let cumpleCondicion = false;
@@ -1830,6 +1840,7 @@ function cargarDB(key, fallback) {
               }
             }
 
+            // CREAMOS EL PEDIDO AUTOMÁTICO MARCADO DIRECTAMENTE COMO ONLINE (SINCRONIZADO)
             dbRepartos[fechaDestinoActiva].push({
               id: generarID('AUTO'),
               clienteId: r.clienteId,
@@ -1842,13 +1853,19 @@ function cargarDB(key, fallback) {
               origen: r.origenTipo === 'panificado' ? 'cuadra' : 'despacho',
               origenAuto: true,
               pagado: false,
-              medioPago: "Pendiente"
+              medioPago: "Pendiente",
+              sincronizadoNube: true // <--- SOLUCIÓN: Marcado directo en verde
             });
+
+            huboCambiosNuevos = true;
           }
         }
       });
 
-      guardarRepartoPorFecha(fechaDestinoActiva);
+      // SI SE INSERTARON NUEVOS AUTOMÁTICOS, LOS PERSISTIMOS EN LA NUBE
+      if (huboCambiosNuevos) {
+        guardarRepartoPorFecha(fechaDestinoActiva);
+      }
     }
 
     function abrirModalPedidosAuto() {
@@ -4679,7 +4696,7 @@ function validarYEjecutarCierre(selectedDate, currentOperationalDate) {
     
     return true;
 }
-  function procesarCierreReparto(hojaDeRutaItems, fechaSeleccionada) {
+    function procesarCierreReparto(hojaDeRutaItems, fechaSeleccionada) {
         // Paso A: Calcular el consolidado total de los montos antes de limpiar	
         const totalConsolidado = hojaDeRutaItems.reduce((acumulador, item) => {
             return acumulador + Number(item.monto || 0);
