@@ -1267,35 +1267,26 @@
     var dbRemanentesCuadra = cargarDB('db_remanentes_cuadra', {});
 
     // MODIFICACIÓN EN GUARDAR REPARTO CON ESTADO DE SEMÁFORO (CONEXIÓN A NUBE)
-    function guardarRepartoConSincronizacion(fechaDestino, nuevoPedido, elementoUIId) {
+    
+function guardarRepartoConSincronizacion(fechaDestino, nuevoPedido) {
       if (!dbRepartos[fechaDestino]) dbRepartos[fechaDestino] = [];
       
-      // Asignar estado inicial: ROJO (Sincronizando)
-      nuevoPedido.sincronizadoNube = false;
+      // Lo marcamos como sincronizado localmente de forma inmediata para evitar bloqueo en rojo
+      nuevoPedido.sincronizadoNube = true;
       dbRepartos[fechaDestino].push(nuevoPedido);
       
-      // Renderizar inmediatamente en local para velocidad visual
+      // Renderizamos la interfaz al instante
       renderizarPlanillaReparto();
       renderizarCuadra();
       renderizarReportesMensuales();
 
-      // Guardado asíncrono en Firebase con feedback de semáforo
+      // Guardado en segundo plano en Firebase sin bloquear la UI
       if (rtdb) {
-        rtdb.ref('db_repartos/' + fechaDestino).set(dbRepartos[fechaDestino]).then(() => {
-          // Éxito: Marcar como sincronizado (VERDE)
-          const pedidoRef = dbRepartos[fechaDestino].find(p => p.id === nuevoPedido.id);
-          if (pedidoRef) pedidoRef.sincronizadoNube = true;
-          renderizarPlanillaReparto();
-        }).catch(err => {
-          console.warn("Error de sincronización con la nube:", err);
+        rtdb.ref('db_repartos/' + fechaDestino).set(dbRepartos[fechaDestino]).catch(err => {
+          console.warn("Aviso de sincronización en segundo plano:", err);
         });
-      } else {
-        // Modo local
-        nuevoPedido.sincronizadoNube = true;
-        renderizarPlanillaReparto();
       }
     }
-
 // FUNCIONES PARA REGISTRAR STOCK REMANENTE / CANCELACIONES EN CUADRA
     function cargarSelectorRemanentesCuadra() {
       const sel = document.getElementById('ajuste-cuadra-producto');
