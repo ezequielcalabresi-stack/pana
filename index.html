@@ -1197,7 +1197,7 @@
     </div>
   </div>
   <script>
-    if ('serviceWorker' in navigator) {
+    if ('serviceWorker' in navigator && (window.location.protocol === 'http:' || window.location.protocol === 'https:')) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js')
           .then(reg => console.log('Service Worker registrado con éxito:', reg.scope))
@@ -1396,7 +1396,7 @@ function guardarRepartoConSincronizacion(fechaDestino, nuevoPedido) {
     }
     var usuarioActivoId = localStorage.getItem(`usuario_activo_${dispositivoId}`) || 'USR-1';
 
-    function cargarDB(key, fallback) {
+function cargarDB(key, fallback) {
       const data = localStorage.getItem(key);
       let valorInicial = data ? JSON.parse(data) : fallback;
 
@@ -1411,6 +1411,7 @@ function guardarRepartoConSincronizacion(fechaDestino, nuevoPedido) {
       if (key === 'db_egresos_caja') { dbEgresosCaja = valorInicial; renderizarTablaEgresosHoy(); renderizarReportesMensuales(); }
       if (key === 'db_recurrentes') { dbRecurrentes = valorInicial; renderizarTablaRecurrentes(); }
       if (key === 'db_repartos_cerrados') { dbRepartosCerrados = valorInicial; renderizarPlanillaReparto(); }
+      if (key === 'db_historial_proveedores') { dbHistorialProveedores = valorInicial; }
 
       if (rtdb) {
         try {
@@ -1435,12 +1436,12 @@ function guardarRepartoConSincronizacion(fechaDestino, nuevoPedido) {
             if (key === 'db_egresos_caja') { dbEgresosCaja = val || valorInicial; renderizarTablaEgresosHoy(); renderizarReportesMensuales(); }
             if (key === 'db_recurrentes') { dbRecurrentes = val || valorInicial; renderizarTablaRecurrentes(); }
             if (key === 'db_repartos_cerrados') { dbRepartosCerrados = val || valorInicial; renderizarPlanillaReparto(); }
+            if (key === 'db_historial_proveedores') { dbHistorialProveedores = val || valorInicial; if (proveedorSeleccionadoId) renderizarTablaHistorialProveedor(); }
           });
         } catch (e) { console.warn("Firebase Offline"); }
       }
       return valorInicial;
     }
-
     function guardarDB(key, data) {
       localStorage.setItem(key, JSON.stringify(data));
       if (rtdb) rtdb.ref(key).set(data).catch(err => console.warn(err));
@@ -3191,7 +3192,7 @@ function renderizarPlanillaReparto() {
       }
     }
 
-    function cargarFacturaProveedorConItems() {
+   function cargarFacturaProveedorConItems() {
       if (!proveedorSeleccionadoId) return;
       const fecha = document.getElementById('fact-fecha').value || obtenerFechaHoyLocal();
       const nroFactura = document.getElementById('fact-nro').value.trim() || 'S/N';
@@ -3202,7 +3203,11 @@ function renderizarPlanillaReparto() {
         return;
       }
 
-      if (!dbHistorialProveedores[proveedorSeleccionadoId]) dbHistorialProveedores[proveedorSeleccionadoId] = [];
+      // ASEGURAR QUE EXISTA EL CONTENEDOR EXCLUSIVO PARA ESTE PROVEEDOR
+      if (!dbHistorialProveedores[proveedorSeleccionadoId] || !Array.isArray(dbHistorialProveedores[proveedorSeleccionadoId])) {
+        dbHistorialProveedores[proveedorSeleccionadoId] = [];
+      }
+
       dbHistorialProveedores[proveedorSeleccionadoId].push({
         id: generarID('FAC'),
         fecha,
@@ -3222,7 +3227,12 @@ function renderizarPlanillaReparto() {
       });
 
       guardarDB('db_insumos', dbInsumos);
-      guardarDB('db_historial_proveedores', dbHistorialProveedores);
+      
+      // GUARDADO AISLADO EN LOCALSTORAGE Y FIREBASE
+      localStorage.setItem('db_historial_proveedores', JSON.stringify(dbHistorialProveedores));
+      if (rtdb) {
+        rtdb.ref('db_historial_proveedores/' + proveedorSeleccionadoId).set(dbHistorialProveedores[proveedorSeleccionadoId]).catch(err => console.warn(err));
+      }
 
       document.getElementById('fact-nro').value = '';
       document.getElementById('fact-total-monto').value = '';
@@ -3300,6 +3310,10 @@ function renderizarPlanillaReparto() {
       const contactoEl = document.getElementById('historial-contacto-proveedor');
       if (nombreEl) nombreEl.textContent = prov.nombre || '';
       
+      if (!dbHistorialProveedores[proveedorSeleccionadoId] || !Array.isArray(dbHistorialProveedores[proveedorSeleccionadoId])) {
+        dbHistorialProveedores[proveedorSeleccionadoId] = [];
+      }
+
       const saldoActual = calcularSaldoProveedor(provId);
       if (contactoEl) contactoEl.textContent = `Tel: ${prov.telefono || 'S/D'} | CUIT: ${prov.cuit || 'S/D'} | Saldo Deuda: $${saldoActual.toLocaleString()}`;
       
@@ -3308,10 +3322,18 @@ function renderizarPlanillaReparto() {
         modalProv.classList.remove('hidden');
       }
       
-      document.getElementById('edit-prov-nombre').value = prov.nombre || '';
-      document.getElementById('edit-prov-cuit').value = prov.cuit || '';
-      document.getElementById('edit-prov-telefono').value = prov.telefono || '';
-      document.getElementById('edit-prov-rubro').value = prov.rubro || '';
+      // VALIDACIONES SEGURAS PARA EVITAR QUE LA CONSOLA EXPLOTE SI UN INPUT NO EXISTE
+      const editProvNombre = document.getElementById('edit-prov-nombre');
+      if (editProvNombre) editProvNombre.value = prov.nombre || '';
+
+      const editProvCuit = document.getElementById('edit-prov-cuit');
+      if (editProvCuit) editProvCuit.value = prov.cuit || '';
+
+      const editProvTelefono = document.getElementById('edit-prov-telefono');
+      if (editProvTelefono) editProvTelefono.value = prov.telefono || '';
+
+      const editProvRubro = document.getElementById('edit-prov-rubro');
+      if (editProvRubro) editProvRubro.value = prov.rubro || '';
 
       renderizarTablaHistorialProveedor();
     }
@@ -3366,21 +3388,28 @@ function renderizarPlanillaReparto() {
       guardarDB('db_historial_proveedores', dbHistorialProveedores);
       renderizarTablaHistorialProveedor(); renderizarTablaProveedores(); renderizarReportesMensuales();
     }
-
-    function registrarPagoProveedor() {
+function registrarPagoProveedor() {
       if (!proveedorSeleccionadoId) return;
-      const monto = parseFloat(document.getElementById('pago-prov-monto').value); if (isNaN(monto) || monto <= 0) return;
+      const monto = parseFloat(document.getElementById('pago-prov-monto').value); 
+      if (isNaN(monto) || monto <= 0) return;
+      
+      // ASOCIACIÓN DIRECTA AL ID DEL PROVEEDOR ACTIVO
       if (!dbHistorialProveedores[proveedorSeleccionadoId]) dbHistorialProveedores[proveedorSeleccionadoId] = [];
 
       dbHistorialProveedores[proveedorSeleccionadoId].push({
-        id: generarID('PAGPRV'), fecha: document.getElementById('pago-prov-fecha').value || fechaActual,
-        monto, medio: document.getElementById('pago-prov-medio').value, tipo: 'pago'
+        id: generarID('PAGPRV'), 
+        fecha: document.getElementById('pago-prov-fecha').value || fechaActual,
+        monto, 
+        medio: document.getElementById('pago-prov-medio').value, 
+        tipo: 'pago'
       });
 
       guardarDB('db_historial_proveedores', dbHistorialProveedores);
-      renderizarTablaHistorialProveedor(); renderizarTablaProveedores(); renderizarReportesMensuales();
+      document.getElementById('pago-prov-monto').value = '';
+      renderizarTablaHistorialProveedor(); 
+      renderizarTablaProveedores(); 
+      renderizarReportesMensuales();
     }
-
     function abrirModalEditarMovProveedor(id) {
       movProvEditContext = id;
       const m = Object.values(dbHistorialProveedores[proveedorSeleccionadoId] || {}).find(x => x.id === id);
@@ -3435,7 +3464,7 @@ function renderizarPlanillaReparto() {
       }
     }
 
-   function renderizarTablaHistorialProveedor() {
+ function renderizarTablaHistorialProveedor() {
       if (!proveedorSeleccionadoId) return;
       const tbody = document.getElementById('tabla-historial-proveedor'); 
       if (!tbody) return; 
@@ -3481,7 +3510,6 @@ function renderizarPlanillaReparto() {
       `;
       tbody.appendChild(trBorrar);
     }
-
     function enviarResumenWhatsAppProveedor() {
       if (!proveedorSeleccionadoId) return;
       const prv = dbProveedores[proveedorSeleccionadoId];
