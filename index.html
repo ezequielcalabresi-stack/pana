@@ -2104,7 +2104,7 @@ function guardarRepartoPorFecha(fecha) {
       verPestaña(pestañaInicial);
     }
 
-    function verPestaña(idPestaña) {
+   function verPestaña(idPestaña) {
       const lista = ['reparto', 'hoja-ruta', 'cuadra', 'clientes', 'proveedores', 'stock', 'caja', 'precios', 'usuarios'];
       lista.forEach(p => {
         const btn = document.getElementById(`btn-${p}`);
@@ -2117,6 +2117,13 @@ function guardarRepartoPorFecha(fecha) {
           if (sec) sec.classList.add('hidden');
         }
       });
+
+      // Asegurar que al entrar a Cajas se renderice todo de inmediato
+      if (idPestaña === 'caja') {
+        cargarCajasHoyUI();
+        renderizarTablaEgresosHoy();
+        renderizarReportesMensuales();
+      }
     }
 
     function cargarSelectorClientesReparto() {
@@ -2668,8 +2675,7 @@ function renderizarPlanillaReparto() {
 
       window.print();
     }
-
-  function renderizarCuadra() {
+function renderizarCuadra() {
   const fechaFormateada = obtenerFechaConDia(fechaCuadraActiva);
   const lblCua = document.getElementById('label-fecha-cuadra'); 
   if (lblCua) lblCua.innerText = `Fecha de Producción: ${fechaFormateada}`;
@@ -2740,7 +2746,7 @@ function renderizarPlanillaReparto() {
     contTotales.appendChild(totalCard);
   }
 
-  // Renderizar notas de mostrador
+  // Renderizar notas de mostrador con viñeta de sucursal destacada
   const listaNotas = document.getElementById('lista-notas-mostrador');
   if (listaNotas) {
     listaNotas.innerHTML = '';
@@ -2748,11 +2754,27 @@ function renderizarPlanillaReparto() {
     notasArr.sort((a, b) => a.texto.localeCompare(b.texto));
     
     notasArr.forEach((item) => {
+      let textoLimpio = item.texto;
+      let badgeSucursal = '';
+
+      // Detectar y extraer el sufijo de sucursal para convertirlo en viñeta visual
+      if (textoLimpio.endsWith(' (A)')) {
+        textoLimpio = textoLimpio.slice(0, -4);
+        badgeSucursal = '<span class="bg-amber-200 text-amber-950 px-2 py-0.5 rounded-full text-[10px] font-extrabold border border-amber-300 ml-2 shadow-sm">Alem [A]</span>';
+      } else if (textoLimpio.endsWith(' (E)')) {
+        textoLimpio = textoLimpio.slice(0, -4);
+        badgeSucursal = '<span class="bg-orange-200 text-orange-950 px-2 py-0.5 rounded-full text-[10px] font-extrabold border border-orange-300 ml-2 shadow-sm">Espiga [E]</span>';
+      }
+
       const li = document.createElement('li'); 
       li.className = "flex justify-between items-center bg-gray-50 p-2 rounded border mb-1";
-      li.innerHTML = `<span>${item.texto}</span><button onclick="eliminarNotaMostrador(${item.originalIndex})" class="text-xs text-red-600 font-bold">Eliminar</button>`;
+      li.innerHTML = `<div><span class="font-medium text-gray-800">${textoLimpio}</span>${badgeSucursal}</div><button onclick="eliminarNotaMostrador(${item.originalIndex})" class="text-xs text-red-600 font-bold hover:underline">Eliminar</button>`;
       listaNotas.appendChild(li);
     });
+
+    if (notasArr.length === 0) {
+      listaNotas.innerHTML = '<li class="text-sm text-gray-400 italic list-none">Sin pedidos especiales registrados para esta fecha.</li>';
+    }
   }
 
   const selectRemanente = document.getElementById('ajuste-cuadra-producto');
@@ -4141,19 +4163,41 @@ function cargarCajasHoyUI() {
       alert("¡Montos corregidos con éxito!");
     }
 
-   function renderizarReportesMensuales() {
-      const mesSel = document.getElementById('reporte-mes-select')?.value; if (!mesSel) return;
+ function renderizarReportesMensuales() {
+      const mesSelectEl = document.getElementById('reporte-mes-select');
+      let mesSel = mesSelectEl ? mesSelectEl.value : ''; 
+      
+      const hoy = new Date();
+      let anio = hoy.getFullYear();
+      let mes = hoy.getMonth() + 1;
+
+      if (mesSel && mesSel.includes('-') && !mesSel.includes('---')) {
+        const partes = mesSel.split('-');
+        if (partes.length >= 2 && !isNaN(partes[0]) && !isNaN(partes[1])) {
+          anio = Number(partes[0]);
+          mes = Number(partes[1]);
+        }
+      } else {
+        mesSel = `${anio}-${String(mes).padStart(2, '0')}`;
+        if (mesSelectEl) mesSelectEl.value = mesSel;
+      }
+
       const theadVentas = document.getElementById('thead-reporte-ventas');
       const tbodyVentas = document.getElementById('tabla-reporte-ventas');
       const tfootVentas = document.getElementById('tfoot-reporte-ventas');
       const tbodyEgresos = document.getElementById('tabla-reporte-egresos');
       const tfootEgresos = document.getElementById('tfoot-reporte-egresos');
-
+      
       if (!tbodyVentas || !tbodyEgresos || !theadVentas) return;
-      theadVentas.innerHTML = ''; tbodyVentas.innerHTML = ''; tfootVentas.innerHTML = '';
-      tbodyEgresos.innerHTML = ''; tfootEgresos.innerHTML = '';
 
-      const usr = dbUsuarios[usuarioActivoId];
+      theadVentas.innerHTML = ''; 
+      tbodyVentas.innerHTML = ''; 
+      if (tfootVentas) tfootVentas.innerHTML = '';
+      tbodyEgresos.innerHTML = ''; 
+      if (tfootEgresos) tfootEgresos.innerHTML = '';
+
+      const usuariosSeguros = dbUsuarios || {};
+      const usr = usuariosSeguros[usuarioActivoId];
       const esEspiga = (usr && usr.sucursal === 'espiga' && usr.rol !== 'admin');
       const esAdminGeneral = (usr && usr.rol === 'admin');
 
@@ -4188,16 +4232,19 @@ function cargarCajasHoyUI() {
         `;
       }
 
-      const [anio, mes] = mesSel.split('-').map(Number);
       const diasEnMes = new Date(anio, mes, 0).getDate();
 
       let sumAlem = 0, sumEspiga = 0, sumReparto = 0, sumTotalVentas = 0;
       let sumEgresosCaja = 0, sumPagosProv = 0, sumTotalEgresos = 0;
-      let diasConVentas = 0;
+
+      const cajasSeguras = dbCajasDiarias || {};
+      const repartosSeguros = dbRepartos || {};
+      const egresosSeguros = dbEgresosCaja || {};
+      const historialProvSeguro = dbHistorialProveedores || {};
 
       for (let d = 1; d <= diasEnMes; d++) {
         const diaStr = `${anio}-${String(mes).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-        const cDia = dbCajasDiarias[diaStr] || {};
+        const cDia = cajasSeguras[diaStr] || {};
         
         let vAlem = 0;
         if (cDia.alem) {
@@ -4215,11 +4262,12 @@ function cargarCajasHoyUI() {
         if (cDia.reparto) {
           vReparto = (cDia.reparto.efectivo || 0) + (cDia.reparto.digital || 0);
         } else {
-          (dbRepartos[diaStr] || []).forEach(p => { vReparto += p.monto; });
+          const pedidosDiaObj = repartosSeguros[diaStr] || {};
+          const pedidosDiaArr = Array.isArray(pedidosDiaObj) ? pedidosDiaObj : Object.values(pedidosDiaObj);
+          pedidosDiaArr.forEach(p => { if (p) vReparto += (p.monto || 0); });
         }
 
         const totalDiaVentas = esEspiga ? vEspiga : (vAlem + vEspiga + vReparto);
-        if (totalDiaVentas > 0) diasConVentas++;
 
         sumAlem += vAlem; sumEspiga += vEspiga; sumReparto += vReparto; sumTotalVentas += totalDiaVentas;
 
@@ -4246,7 +4294,7 @@ function cargarCajasHoyUI() {
         tbodyVentas.appendChild(trV);
 
         let egCaja = 0;
-        (dbEgresosCaja[diaStr] || []).forEach(e => {
+        (egresosSeguros[diaStr] || []).forEach(e => {
           if (esEspiga && e.origen !== 'La Espiga de Oro') return;
           egCaja += e.monto;
         });
@@ -4257,8 +4305,9 @@ function cargarCajasHoyUI() {
 
         let egProv = 0;
         if (!esEspiga) {
-          Object.values(dbHistorialProveedores).forEach(hList => {
-            Object.values(hList).forEach(m => { if (m.fecha === diaStr && m.tipo === 'pago') egProv += m.monto; });
+          Object.values(historialProvSeguro).forEach(hList => {
+            const hListArr = Array.isArray(hList) ? hList : Object.values(hList);
+            hListArr.forEach(m => { if (m && m.fecha === diaStr && m.tipo === 'pago') egProv += (m.monto || 0); });
           });
         }
 
@@ -4276,7 +4325,7 @@ function cargarCajasHoyUI() {
       }
 
       if (esEspiga) {
-        tfootVentas.innerHTML = `
+        if (tfootVentas) tfootVentas.innerHTML = `
           <tr>
             <td class="p-2">TOTALES</td>
             <td class="p-2 text-right">$${sumEspiga.toLocaleString()}</td>
@@ -4285,7 +4334,7 @@ function cargarCajasHoyUI() {
           </tr>
         `;
       } else {
-        tfootVentas.innerHTML = `
+        if (tfootVentas) tfootVentas.innerHTML = `
           <tr>
             <td class="p-2">TOTALES</td>
             <td class="p-2 text-right">$${sumAlem.toLocaleString()}</td>
@@ -4297,7 +4346,7 @@ function cargarCajasHoyUI() {
         `;
       }
 
-      tfootEgresos.innerHTML = `
+      if (tfootEgresos) tfootEgresos.innerHTML = `
         <tr>
           <td class="p-2">TOTALES</td>
           <td class="p-2 text-right text-red-700">$${sumEgresosCaja.toLocaleString()}</td>
@@ -4305,9 +4354,8 @@ function cargarCajasHoyUI() {
           <td class="p-2 text-right font-bold text-red-900">$${sumTotalEgresos.toLocaleString()}</td>
         </tr>
       `;
-    }
-
- function renderizarTablaPanificados() {
+    } 
+function renderizarTablaPanificados() {
       const tbody = document.getElementById('tabla-panificados-precios'); if (!tbody) return; tbody.innerHTML = '';
       
       Object.entries(dbPanificados).sort((a,b) => a[0].localeCompare(b[0])).forEach(([nombre, p]) => {
