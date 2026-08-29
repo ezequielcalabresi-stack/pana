@@ -1958,36 +1958,67 @@ function guardarRepartoPorFecha(fecha) {
       }
     }
 
-    function modificarPrecioPedidoDirecto(pedidoId, nuevoPrecioVal) {
-      const fechaDestinoActiva = document.getElementById('rep-fecha-destino').value || fechaActual;
-      if (dbRepartosCerrados[fechaDestinoActiva]) return;
-      const nuevoPrecio = parseFloat(nuevoPrecioVal); if (isNaN(nuevoPrecio)) return;
-      const pedido = (dbRepartos[fechaDestinoActiva] || []).find(p => p.id === pedidoId);
-      if (pedido) { 
-        pedido.precioUnitario = nuevoPrecio; 
-        pedido.monto = pedido.unidades * nuevoPrecio; 
-        guardarRepartoPorFecha(fechaDestinoActiva);
-        renderizarPlanillaReparto(); 
-        renderizarReportesMensuales(); 
-        if(!document.getElementById('modal-pedidos-auto').classList.contains('hidden')){ renderizarTablaPedidosAuto(); }
-      }
+function modificarPrecioPedidoDirecto(pedidoId, nuevoPrecioVal) {
+  const fechaDestinoActiva = document.getElementById('rep-fecha-destino').value || fechaActual;
+  if (dbRepartosCerrados[fechaDestinoActiva]) return;
+  
+  const nuevoPrecio = parseFloat(nuevoPrecioVal); 
+  if (isNaN(nuevoPrecio)) return;
+
+  let lista = dbRepartos[fechaDestinoActiva];
+  if (!lista) return;
+
+  let esArray = Array.isArray(lista);
+  let pedidosArray = esArray ? lista : Object.values(lista);
+
+  const pedidoEncontrado = pedidosArray.find(p => p && p.id === pedidoId);
+
+  if (pedidoEncontrado) { 
+    pedidoEncontrado.precioUnitario = nuevoPrecio; 
+    pedidoEncontrado.monto = Number((pedidoEncontrado.unidades * nuevoPrecio).toFixed(2)); 
+    
+    if (!esArray) {
+      dbRepartos[fechaDestinoActiva] = pedidosArray;
     }
 
+    guardarRepartoPorFecha(fechaDestinoActiva);
+    
+    renderizarPlanillaReparto(); 
+    renderizarReportesMensuales(); 
+    
+    if (!document.getElementById('modal-pedidos-auto').classList.contains('hidden')) { 
+      renderizarTablaPedidosAuto(); 
+    }
+  }
+}
     function eliminarPedidoReparto(pedidoId, productoNombre) {
-      const fechaDestinoActiva = document.getElementById('rep-fecha-destino').value || fechaActual;
-      if (dbRepartosCerrados[fechaDestinoActiva]) { alert("⚠️ El reparto de este día ya se encuentra cerrado."); return; }
-      if (confirm(`⚠️ ¿Desea eliminar el pedido de "${productoNombre}"?`)) {
-        if (dbRepartos[fechaDestinoActiva]) {
-          dbRepartos[fechaDestinoActiva] = dbRepartos[fechaDestinoActiva].filter(p => p.id !== pedidoId);
-          guardarRepartoPorFecha(fechaDestinoActiva);
-          renderizarPlanillaReparto(); 
-          renderizarCuadra(); 
-          renderizarReportesMensuales();
-          if(!document.getElementById('modal-pedidos-auto').classList.contains('hidden')){ renderizarTablaPedidosAuto(); }
-        }
+  const fechaDestinoActiva = document.getElementById('rep-fecha-destino').value || fechaActual;
+  if (dbRepartosCerrados[fechaDestinoActiva]) { 
+    alert("⚠️ El reparto de este día ya se encuentra cerrado."); 
+    return; 
+  }
+  
+  if (confirm(`⚠️ ¿Desea eliminar el pedido de "${productoNombre}"?`)) {
+    if (dbRepartos[fechaDestinoActiva]) {
+      // Asegurarnos de trabajar con un array y filtrar el ID correspondiente
+      let lista = Array.isArray(dbRepartos[fechaDestinoActiva]) 
+        ? dbRepartos[fechaDestinoActiva] 
+        : Object.values(dbRepartos[fechaDestinoActiva]);
+
+      dbRepartos[fechaDestinoActiva] = lista.filter(p => p && p.id !== pedidoId);
+      
+      guardarRepartoPorFecha(fechaDestinoActiva);
+      
+      renderizarPlanillaReparto(); 
+      renderizarCuadra(); 
+      renderizarReportesMensuales();
+      
+      if (!document.getElementById('modal-pedidos-auto').classList.contains('hidden')) { 
+        renderizarTablaPedidosAuto(); 
       }
     }
-
+  }
+}
     function renderizarUsuariosSelect() {
       const sel = document.getElementById('select-usuario-activo');
       if (!sel) return;
@@ -2481,14 +2512,33 @@ function renderizarPlanillaReparto() {
       if (elTr) elTr.textContent = `$${totalTransf.toLocaleString()}`;
       if (elTot) elTot.textContent = `$${(totalEfectivo + totalTransf).toLocaleString()}`;
     }
-    function marcarPedidoCobrado(pedidoId, medioPago) {
-      const fechaHojaRutaActiva = document.getElementById('hr-fecha-selector').value || fechaActual;
-      if (dbRepartosCerrados[fechaHojaRutaActiva]) return;
-      if (!medioPago) return;
-      const pedido = (dbRepartos[fechaHojaRutaActiva] || []).find(p => p.id === pedidoId);
-      if (pedido) { pedido.pagado = true; pedido.medioPago = medioPago; guardarRepartoPorFecha(fechaHojaRutaActiva); renderizarPlanillaReparto(); renderizarReportesMensuales(); }
-    }
+   function marcarPedidoCobrado(pedidoId, medioPago) {
+  const fechaHojaRutaActiva = document.getElementById('hr-fecha-selector').value || fechaActual;
+  if (dbRepartosCerrados[fechaHojaRutaActiva]) return;
+  if (!medioPago) return;
 
+  let lista = dbRepartos[fechaHojaRutaActiva];
+  if (!lista) return;
+
+  // Si está como objeto, lo convertimos temporalmente a array para ubicarlo de forma segura
+  let esArray = Array.isArray(lista);
+  let pedidosArray = esArray ? lista : Object.values(lista);
+
+  const pedido = pedidosArray.find(p => p && p.id === pedidoId);
+  if (pedido) {
+    pedido.pagado = true;
+    pedido.medioPago = medioPago;
+    
+    // Guardar el cambio actualizado
+    if (!esArray) {
+      dbRepartos[fechaHojaRutaActiva] = pedidosArray;
+    }
+    
+    guardarRepartoPorFecha(fechaHojaRutaActiva);
+    renderizarPlanillaReparto(); 
+    renderizarReportesMensuales(); 
+  }
+}
     function deshacerCobroPedido(pedidoId) {
       const fechaHojaRutaActiva = document.getElementById('hr-fecha-selector').value || fechaActual;
       if (dbRepartosCerrados[fechaHojaRutaActiva]) return;
