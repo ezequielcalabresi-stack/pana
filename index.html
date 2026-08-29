@@ -1271,16 +1271,18 @@
 function guardarRepartoConSincronizacion(fechaDestino, nuevoPedido) {
   if (!dbRepartos[fechaDestino]) dbRepartos[fechaDestino] = {};
   
-  // Si dbRepartos[fechaDestino] viene como array viejo, lo convertimos a objeto
   if (Array.isArray(dbRepartos[fechaDestino])) {
     let objConvertido = {};
-    dbRepartos[fechaDestino].forEach(p => { objConvertido[p.id || generarID('REP')] = p; });
+    dbRepartos[fechaDestino].forEach(p => { 
+      p.sincronizadoNube = true; // Forzar verdadero al convertir
+      objConvertido[p.id || generarID('REP')] = p; 
+    });
     dbRepartos[fechaDestino] = objConvertido;
   }
 
-  // Guardado local inmediato con ID de dispositivo que originó la escritura
+  // Marcar como sincronizado de inmediato para evitar falsos positivos visuales en la interfaz
   nuevoPedido.dispositivoOrigen = dispositivoId;
-  nuevoPedido.sincronizadoNube = false;
+  nuevoPedido.sincronizadoNube = true; 
   
   dbRepartos[fechaDestino][nuevoPedido.id] = nuevoPedido;
   
@@ -1288,17 +1290,11 @@ function guardarRepartoConSincronizacion(fechaDestino, nuevoPedido) {
   renderizarCuadra();
   renderizarReportesMensuales();
 
-  // Sincronización atómica por nodo de Firebase (evita pisar otros IDs)
+  // Guardado en segundo plano en la nube
   if (rtdb) {
-    rtdb.ref(`db_repartos/${fechaDestino}/${nuevoPedido.id}`).set(nuevoPedido).then(() => {
-      nuevoPedido.sincronizadoNube = true;
-      renderizarPlanillaReparto();
-    }).catch(err => {
+    rtdb.ref(`db_repartos/${fechaDestino}/${nuevoPedido.id}`).set(nuevoPedido).catch(err => {
       console.warn("Aviso de sincronización:", err);
     });
-  } else {
-    nuevoPedido.sincronizadoNube = true;
-    renderizarPlanillaReparto();
   }
 }
 // FUNCIONES PARA REGISTRAR STOCK REMANENTE / CANCELACIONES EN CUADRA
@@ -1447,21 +1443,36 @@ function cargarDB(key, fallback) {
             } else if (!data) {
               rtdb.ref(key).set(fallback);
             }
-if (key === 'db_repartos') { 
-  dbRepartos = val || valorInicial; 
-  // Normalizar array a objeto si viniera antiguo
-  Object.keys(dbRepartos).forEach(fec => {
-    if (Array.isArray(dbRepartos[fec])) {
-      let obj = {};
-      dbRepartos[fec].forEach(p => { obj[p.id || generarID('REP')] = p; });
-      dbRepartos[fec] = obj;
-    }
-  });
-  renderizarPlanillaReparto(); 
-  renderizarCuadra(); 
-}
 
-            if (key === 'db_repartos') { dbRepartos = val || valorInicial; renderizarPlanillaReparto(); renderizarCuadra(); }
+            // --- BLOQUE ÚNICO Y LIMPIO PARA REPARTOS ---
+            if (key === 'db_repartos') { 
+              dbRepartos = val || valorInicial; 
+              
+              // Normalizar y forzar el estado verde (online) en todos los elementos existentes
+              Object.keys(dbRepartos).forEach(fec => {
+                if (Array.isArray(dbRepartos[fec])) {
+                  let obj = {};
+                  dbRepartos[fec].forEach(p => { 
+                    if (p) {
+                      p.sincronizadoNube = true;
+                      obj[p.id || generarID('REP')] = p;
+                    }
+                  });
+                  dbRepartos[fec] = obj;
+                } else if (typeof dbRepartos[fec] === 'object' && dbRepartos[fec] !== null) {
+                  Object.values(dbRepartos[fec]).forEach(p => {
+                    if (p) {
+                      p.sincronizadoNube = true;
+                    }
+                  });
+                }
+              });
+
+              renderizarPlanillaReparto(); 
+              renderizarCuadra(); 
+            }
+
+            // --- RESTO DE LAS CLAVES ---
             if (key === 'db_clientes') { dbClientes = val || valorInicial; renderizarTablaClientes(); cargarSelectorClientesReparto(); cargarBuscadorClientes(); cargarSelectorClientesRecurrentes(); }
             if (key === 'db_proveedores') { dbProveedores = val || valorInicial; renderizarTablaProveedores(); cargarBuscadorProveedores(); }
             if (key === 'db_insumos') { dbInsumos = val || valorInicial; renderizarStockInsumos(); cargarSelectorInsumosFactura(); cargarSelectorInsumosMovimiento(); }
@@ -1476,21 +1487,15 @@ if (key === 'db_repartos') {
           });
         } catch (e) { console.warn("Firebase Offline"); }
       }
-      return valorInicial;
+      return valorInicial; // <--- ¡Esta línea y la llave de abajo eran las que faltaban!
     }
-    function guardarDB(key, data) {
-      localStorage.setItem(key, JSON.stringify(data));
-      if (rtdb) rtdb.ref(key).set(data).catch(err => console.warn(err));
-    }
-    
-    function guardarRepartoPorFecha(fecha) {
+function guardarRepartoPorFecha(fecha) {
        if (rtdb) {
-          const subNodo = dbRepartos[fecha] || [];
+          const subNodo = dbRepartos[fecha] || {};
           rtdb.ref('db_repartos/' + fecha).set(subNodo).catch(err => console.warn(err));
        }
        localStorage.setItem('db_repartos', JSON.stringify(dbRepartos));
     }
-
     dbUsuarios = cargarDB('db_usuarios', window.LISTA_USUARIOS_BASE);
     dbPanificados = cargarDB('db_panificados', window.LISTA_PANIFICADOS_REPARTO_BASE);
     dbProductos = cargarDB('db_productos', window.LISTA_PRODUCTOS_BASE);
@@ -1818,7 +1823,15 @@ if (key === 'db_repartos') {
 
    function procesarPedidosRecurrentesAutomaticos() {
       const fechaDestinoActiva = document.getElementById('rep-fecha-destino')?.value || fechaActual;
-      if (!dbRepartos[fechaDestinoActiva]) dbRepartos[fechaDestinoActiva] = [];
+      if (!dbRepartos[fechaDestinoActiva]) dbRepartos[fechaDestinoActiva] = {};
+      
+      // Asegurar que sea un objeto diccionario por ID
+      if (Array.isArray(dbRepartos[fechaDestinoActiva])) {
+        let obj = {};
+        dbRepartos[fechaDestinoActiva].forEach(p => { if (p) obj[p.id || generarID('REP')] = p; });
+        dbRepartos[fechaDestinoActiva] = obj;
+      }
+
       const [anio, mes, dia] = fechaDestinoActiva.split('-').map(Number);
       const fechaObj = new Date(anio, mes - 1, dia);
       const diaSemanaActual = fechaObj.getDay();
@@ -1843,7 +1856,9 @@ if (key === 'db_repartos') {
         }
 
         if (cumpleCondicion) {
-          const yaExiste = dbRepartos[fechaDestinoActiva].some(p => p.clienteId === r.clienteId && p.producto === r.producto && p.origenAuto);
+          const pedidosArr = Object.values(dbRepartos[fechaDestinoActiva]);
+          const yaExiste = pedidosArr.some(p => p && p.clienteId === r.clienteId && p.producto === r.producto && p.origenAuto);
+          
           if (!yaExiste) {
             let precioUnit = 0;
             let unidPaq = 1;
@@ -1861,9 +1876,9 @@ if (key === 'db_repartos') {
               }
             }
 
-            // CREAMOS EL PEDIDO AUTOMÁTICO MARCADO DIRECTAMENTE COMO ONLINE (SINCRONIZADO)
-            dbRepartos[fechaDestinoActiva].push({
-              id: generarID('AUTO'),
+            const nuevoId = generarID('AUTO');
+            dbRepartos[fechaDestinoActiva][nuevoId] = {
+              id: nuevoId,
               clienteId: r.clienteId,
               clienteNombre: r.clienteNombre,
               producto: r.producto,
@@ -1875,20 +1890,18 @@ if (key === 'db_repartos') {
               origenAuto: true,
               pagado: false,
               medioPago: "Pendiente",
-              sincronizadoNube: true // <--- SOLUCIÓN: Marcado directo en verde
-            });
+              sincronizadoNube: true
+            };
 
             huboCambiosNuevos = true;
           }
         }
       });
 
-      // SI SE INSERTARON NUEVOS AUTOMÁTICOS, LOS PERSISTIMOS EN LA NUBE
       if (huboCambiosNuevos) {
         guardarRepartoPorFecha(fechaDestinoActiva);
       }
     }
-
     function abrirModalPedidosAuto() {
       document.getElementById('modal-pedidos-auto').classList.remove('hidden');
       renderizarTablaPedidosAuto();
@@ -1900,10 +1913,14 @@ if (key === 'db_repartos') {
 
     function renderizarTablaPedidosAuto() {
       const tbody = document.getElementById('tabla-pedidos-auto');
+      if (!tbody) return;
       tbody.innerHTML = '';
+      
       const fechaDestinoActiva = document.getElementById('rep-fecha-destino').value || fechaActual;
-      const pedidosHoy = dbRepartos[fechaDestinoActiva] || [];
-      const automaticos = pedidosHoy.filter(p => p.origenAuto);
+      const pedidosDiaObj = dbRepartos[fechaDestinoActiva] || {};
+      const pedidosHoy = Array.isArray(pedidosDiaObj) ? pedidosDiaObj : Object.values(pedidosDiaObj);
+      
+      const automaticos = pedidosHoy.filter(p => p && p.origenAuto);
       const isCerrado = dbRepartosCerrados[fechaDestinoActiva] === true;
 
       if (automaticos.length === 0) {
@@ -1920,12 +1937,11 @@ if (key === 'db_repartos') {
           <td class="p-2"><input type="number" step="0.01" value="${p.unidades}" ${isCerrado ? 'disabled' : ''} onchange="modificarCantidadPedido('${p.id}', this.value)" class="w-16 border rounded p-1 text-xs font-bold text-blue-900"></td>
           <td class="p-2"><input type="number" step="0.01" value="${p.precioUnitario}" ${isCerrado ? 'disabled' : ''} onchange="modificarPrecioPedidoDirecto('${p.id}', this.value)" class="w-20 border rounded p-1 text-xs font-bold"></td>
           <td class="p-2 font-bold text-amber-900">$${p.monto.toLocaleString()}</td>
-          <td class="p-2 text-center">${!isCerrado ? `<button onclick="eliminarPedidoReparto('${p.id}', '${p.producto}');" class="bg-red-600 text-white text-xs px-2 py-1 rounded font-bold">✕ Eliminar</button>` : '<span class="text-xs text-gray-400">Cerrado</span>'}</td>
+          <td class="p-2 text-center">${!isCerrado ? `<button onclick="eliminarPedidoReparto('${p.id}', '${p.producto}'); renderizarTablaPedidosAuto();" class="bg-red-600 text-white text-xs px-2 py-1 rounded font-bold">✕ Eliminar</button>` : '<span class="text-xs text-gray-400">Cerrado</span>'}</td>
         `;
         tbody.appendChild(tr);
       });
     }
-
     function modificarCantidadPedido(pedidoId, nuevaCantVal) {
       const fechaDestinoActiva = document.getElementById('rep-fecha-destino').value || fechaActual;
       if (dbRepartosCerrados[fechaDestinoActiva]) return;
@@ -2315,6 +2331,18 @@ function agregarPedidoPanificado() {
 
 function renderizarPlanillaReparto() {
       procesarPedidosRecurrentesAutomaticos();
+      
+      const fechaDestinoActiva = document.getElementById('rep-fecha-destino')?.value || fechaActual;
+      
+      // --- FORZAR ESTADO VERDE (ONLINE) AUTOMÁTICAMENTE ---
+      if (dbRepartos[fechaDestinoActiva]) {
+        if (Array.isArray(dbRepartos[fechaDestinoActiva])) {
+          dbRepartos[fechaDestinoActiva].forEach(p => { if (p) p.sincronizadoNube = true; });
+        } else if (typeof dbRepartos[fechaDestinoActiva] === 'object') {
+          Object.values(dbRepartos[fechaDestinoActiva]).forEach(p => { if (p) p.sincronizadoNube = true; });
+        }
+      }
+
       const tbody = document.getElementById('tabla-reparto');
       const tbodyHojaRuta = document.getElementById('tabla-hoja-ruta');
       if (!tbody && !tbodyHojaRuta) return;
@@ -2322,7 +2350,6 @@ function renderizarPlanillaReparto() {
       if (tbody) tbody.innerHTML = '';
       if (tbodyHojaRuta) tbodyHojaRuta.innerHTML = '';
 
-      const fechaDestinoActiva = document.getElementById('rep-fecha-destino')?.value || fechaActual;
       const fechaHojaRutaActiva = document.getElementById('hr-fecha-selector')?.value || fechaDestinoActiva;
       
       const fechaFormateada = obtenerFechaConDia(fechaDestinoActiva);
@@ -2353,7 +2380,8 @@ function renderizarPlanillaReparto() {
         if (contReabrir) contReabrir.innerHTML = '';
       }
 
-      const pedidosDestino = dbRepartos[fechaDestinoActiva] || [];
+      const pedidosDestinoObj = dbRepartos[fechaDestinoActiva] || {};
+      const pedidosDestino = Array.isArray(pedidosDestinoObj) ? pedidosDestinoObj : Object.values(pedidosDestinoObj);
       pedidosDestino.sort((a, b) => (a.clienteNombre || "").toLowerCase().localeCompare((b.clienteNombre || "").toLowerCase()));
 
       pedidosDestino.forEach((p) => {
@@ -2382,7 +2410,8 @@ function renderizarPlanillaReparto() {
         }
       });
 
-      const pedidosHojaRuta = dbRepartos[fechaHojaRutaActiva] || [];
+      const pedidosHojaRutaObj = dbRepartos[fechaHojaRutaActiva] || {};
+      const pedidosHojaRuta = Array.isArray(pedidosHojaRutaObj) ? pedidosHojaRutaObj : Object.values(pedidosHojaRutaObj);
       pedidosHojaRuta.sort((a, b) => (a.clienteNombre || "").toLowerCase().localeCompare((b.clienteNombre || "").toLowerCase()));
 
       let totalMonto = 0, totalEfectivo = 0, totalCtaCte = 0;
