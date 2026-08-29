@@ -1269,62 +1269,70 @@
     // MODIFICACIÓN EN GUARDAR REPARTO CON ESTADO DE SEMÁFORO (CONEXIÓN A NUBE)
     
 function guardarRepartoConSincronizacion(fechaDestino, nuevoPedido) {
-      if (!dbRepartos[fechaDestino]) dbRepartos[fechaDestino] = [];
-      
-      // 1. Guardado inmediato en local para velocidad instantánea
-      nuevoPedido.sincronizadoNube = false; // Comienza el envío
-      dbRepartos[fechaDestino].push(nuevoPedido);
-      
-      renderizarPlanillaReparto();
-      renderizarCuadra();
-      renderizarReportesMensuales();
+  if (!dbRepartos[fechaDestino]) dbRepartos[fechaDestino] = {};
+  
+  // Si dbRepartos[fechaDestino] viene como array viejo, lo convertimos a objeto
+  if (Array.isArray(dbRepartos[fechaDestino])) {
+    let objConvertido = {};
+    dbRepartos[fechaDestino].forEach(p => { objConvertido[p.id || generarID('REP')] = p; });
+    dbRepartos[fechaDestino] = objConvertido;
+  }
 
-      // 2. Sincronización en segundo plano con la nube
-      if (rtdb) {
-        rtdb.ref('db_repartos/' + fechaDestino).set(dbRepartos[fechaDestino]).then(() => {
-          // Si guardó bien en la nube, marcamos el ítem como sincronizado y actualizamos
-          nuevoPedido.sincronizadoNube = true;
-          renderizarPlanillaReparto();
-        }).catch(err => {
-          console.warn("Aviso de sincronización en segundo plano:", err);
-        });
-      } else {
-        // Si no hay nube (modo local puro), lo damos por sincronizado localmente
-        nuevoPedido.sincronizadoNube = true;
-        renderizarPlanillaReparto();
-      }
-    }
+  // Guardado local inmediato con ID de dispositivo que originó la escritura
+  nuevoPedido.dispositivoOrigen = dispositivoId;
+  nuevoPedido.sincronizadoNube = false;
+  
+  dbRepartos[fechaDestino][nuevoPedido.id] = nuevoPedido;
+  
+  renderizarPlanillaReparto();
+  renderizarCuadra();
+  renderizarReportesMensuales();
+
+  // Sincronización atómica por nodo de Firebase (evita pisar otros IDs)
+  if (rtdb) {
+    rtdb.ref(`db_repartos/${fechaDestino}/${nuevoPedido.id}`).set(nuevoPedido).then(() => {
+      nuevoPedido.sincronizadoNube = true;
+      renderizarPlanillaReparto();
+    }).catch(err => {
+      console.warn("Aviso de sincronización:", err);
+    });
+  } else {
+    nuevoPedido.sincronizadoNube = true;
+    renderizarPlanillaReparto();
+  }
+}
 // FUNCIONES PARA REGISTRAR STOCK REMANENTE / CANCELACIONES EN CUADRA
    
 function cargarSelectorRemanentesCuadra() {
-      const sel = document.getElementById('ajuste-cuadra-producto');
-      if (!sel) return;
-      
-      // GUARDAR LA OPCIÓN ACTUAL SELECCIONADA PARA NO PERDERLA EN EL REFRESH
-      const valorSeleccionadoActual = sel.value;
+  const sel = document.getElementById('ajuste-cuadra-producto');
+  if (!sel) return;
+  
+  // 1. Guardar la opción actual seleccionada para no perderla
+  const valorSeleccionadoActual = sel.value;
 
-      sel.innerHTML = '<option value="">-- Seleccionar Producto a Descontar --</option>';
-      
-      const pedidosHoy = dbRepartos[fechaCuadraActiva] || [];
-      const consolidados = {};
+  sel.innerHTML = '<option value="">-- Seleccionar Producto a Descontar --</option>';
+  
+  const pedidosDiaObj = dbRepartos[fechaCuadraActiva] || {};
+  const pedidosDiaArr = Array.isArray(pedidosDiaObj) ? pedidosDiaObj : Object.values(pedidosDiaObj);
+  const consolidados = {};
 
-      pedidosHoy.forEach(p => {
-        if (p.origen === 'despacho') return;
-        consolidados[p.producto] = (consolidados[p.producto] || 0) + p.unidades;
-      });
+  pedidosDiaArr.forEach(p => {
+    if (p.origen === 'despacho') return;
+    consolidados[p.producto] = (consolidados[p.producto] || 0) + p.unidades;
+  });
 
-      Object.keys(consolidados).sort().forEach(prod => {
-        const opt = document.createElement('option');
-        opt.value = prod;
-        opt.textContent = prod;
-        sel.appendChild(opt);
-      });
+  Object.keys(consolidados).sort().forEach(prod => {
+    const opt = document.createElement('option');
+    opt.value = prod;
+    opt.textContent = prod;
+    sel.appendChild(opt);
+  });
 
-      // RESTAURAR LA SELECCIÓN SI TODAVÍA EXISTE
-      if (valorSeleccionadoActual && consolidados[valorSeleccionadoActual]) {
-        sel.value = valorSeleccionadoActual;
-      }
-    }
+  // 2. Restaurar la selección si el producto todavía existe en la lista
+  if (valorSeleccionadoActual && consolidados[valorSeleccionadoActual]) {
+    sel.value = valorSeleccionadoActual;
+  }
+}
     function registrarStockRemanenteCuadra() {
       const prod = document.getElementById('ajuste-cuadra-producto').value;
       const cant = parseFloat(document.getElementById('ajuste-cuadra-cantidad').value);
@@ -1439,6 +1447,19 @@ function cargarDB(key, fallback) {
             } else if (!data) {
               rtdb.ref(key).set(fallback);
             }
+if (key === 'db_repartos') { 
+  dbRepartos = val || valorInicial; 
+  // Normalizar array a objeto si viniera antiguo
+  Object.keys(dbRepartos).forEach(fec => {
+    if (Array.isArray(dbRepartos[fec])) {
+      let obj = {};
+      dbRepartos[fec].forEach(p => { obj[p.id || generarID('REP')] = p; });
+      dbRepartos[fec] = obj;
+    }
+  });
+  renderizarPlanillaReparto(); 
+  renderizarCuadra(); 
+}
 
             if (key === 'db_repartos') { dbRepartos = val || valorInicial; renderizarPlanillaReparto(); renderizarCuadra(); }
             if (key === 'db_clientes') { dbClientes = val || valorInicial; renderizarTablaClientes(); cargarSelectorClientesReparto(); cargarBuscadorClientes(); cargarSelectorClientesRecurrentes(); }
@@ -2620,61 +2641,96 @@ function renderizarPlanillaReparto() {
     }
 
   function renderizarCuadra() {
-      const fechaFormateada = obtenerFechaConDia(fechaCuadraActiva);
-      const lblCua = document.getElementById('label-fecha-cuadra'); if (lblCua) lblCua.innerText = `Fecha de Producción: ${fechaFormateada}`;
-      
-      const inputSelector = document.getElementById('cuadra-fecha-selector');
-      if (inputSelector && inputSelector.value !== fechaCuadraActiva) {
-        inputSelector.value = fechaCuadraActiva;
-      }
+  const fechaFormateada = obtenerFechaConDia(fechaCuadraActiva);
+  const lblCua = document.getElementById('label-fecha-cuadra'); 
+  if (lblCua) lblCua.innerText = `Fecha de Producción: ${fechaFormateada}`;
+  
+  const inputSelector = document.getElementById('cuadra-fecha-selector');
+  if (inputSelector && inputSelector.value !== fechaCuadraActiva) {
+    inputSelector.value = fechaCuadraActiva;
+  }
 
-      const contTotales = document.getElementById('totales-panificados'); if (!contTotales) return;
-      contTotales.innerHTML = '';
+  const contTotales = document.getElementById('totales-panificados'); 
+  if (!contTotales) return;
+  contTotales.innerHTML = '';
 
-      const consolidados = {};
-      (dbRepartos[fechaCuadraActiva] || []).forEach(p => {
-        if (p.origen === 'despacho') return;
-        consolidados[p.producto] = (consolidados[p.producto] || 0) + p.unidades;
-      });
+  // 1. Consolidar pedidos del día (convertir objeto a array de forma segura)
+  const pedidosDiaObj = dbRepartos[fechaCuadraActiva] || {};
+  const pedidosDiaArr = Array.isArray(pedidosDiaObj) ? pedidosDiaObj : Object.values(pedidosDiaObj);
 
-      const lista = Object.entries(consolidados).sort((a, b) => a[0].localeCompare(b[0]));
-      
-      let totalUnidadesCuadra = 0;
+  const consolidados = {};
+  pedidosDiaArr.forEach(p => {
+    if (p.origen === 'despacho') return;
+    consolidados[p.producto] = (consolidados[p.producto] || 0) + p.unidades;
+  });
 
-      if (lista.length === 0) contTotales.innerHTML = '<p class="text-sm text-gray-500 italic">No hay pedidos de cuadra cargados para esta fecha.</p>';
-      else {
-        lista.forEach(([prodNombre, cantUnidades]) => {
-          totalUnidadesCuadra += cantUnidades;
-          const card = document.createElement('div'); card.className = "p-3 bg-amber-50 rounded-lg border border-amber-200 flex justify-between items-center";
-          card.innerHTML = `<h4 class="text-lg font-bold text-amber-950">${prodNombre}</h4><span class="text-2xl font-extrabold text-amber-900">${cantUnidades}</span>`;
-          contTotales.appendChild(card);
-        });
-        
-        const totalCard = document.createElement('div'); totalCard.className = "p-3 bg-amber-200 rounded-lg border border-amber-400 flex justify-between items-center mt-2";
-        totalCard.innerHTML = `<h4 class="text-lg font-black text-amber-950">TOTAL PRODUCTOS</h4><span class="text-2xl font-black text-amber-900">${totalUnidadesCuadra}</span>`;
-        contTotales.appendChild(totalCard);
-      }
-
-      const listaNotas = document.getElementById('lista-notas-mostrador');
-      if (listaNotas) {
-        listaNotas.innerHTML = '';
-        let notasArr = (dbNotasMostrador[fechaCuadraActiva] || []).map((nota, idx) => ({ texto: nota, originalIndex: idx }));
-        notasArr.sort((a, b) => a.texto.localeCompare(b.texto));
-        
-        notasArr.forEach((item) => {
-          const li = document.createElement('li'); li.className = "flex justify-between items-center bg-gray-50 p-2 rounded border mb-1";
-          li.innerHTML = `<span>${item.texto}</span><button onclick="eliminarNotaMostrador(${item.originalIndex})" class="text-xs text-red-600 font-bold">Eliminar</button>`;
-          listaNotas.appendChild(li);
-        });
-      }
-
-      // SOLO ACTUALIZAR EL SELECTOR SI EL USUARIO NO ESTÁ INTERactuando CON ÉL
-      const selectRemanente = document.getElementById('ajuste-cuadra-producto');
-      if (selectRemanente && document.activeElement !== selectRemanente) {
-        cargarSelectorRemanentesCuadra();
-      }
+  // 2. Restar los remanentes / cancelaciones cargadas para esta fecha
+  const remanentesDia = dbRemanentesCuadra[fechaCuadraActiva] || [];
+  remanentesDia.forEach(r => {
+    if (consolidados[r.producto]) {
+      consolidados[r.producto] = Math.max(0, consolidados[r.producto] - r.cantidad);
     }
+  });
 
+  // 3. Renderizar tabla de remanentes aplicados en pantalla
+  const tbodyRemanentes = document.getElementById('tabla-remanentes-cuadra');
+  if (tbodyRemanentes) {
+    tbodyRemanentes.innerHTML = '';
+    remanentesDia.forEach(r => {
+      const trRem = document.createElement('tr');
+      trRem.className = "border-b hover:bg-gray-50";
+      trRem.innerHTML = `
+        <td class="p-1.5 font-bold text-amber-900">${r.producto}</td>
+        <td class="p-1.5 text-center font-bold text-red-600">-${r.cantidad} un.</td>
+        <td class="p-1.5 text-center"><button onclick="eliminarRemanenteCuadra('${r.id}')" class="bg-red-600 text-white text-[10px] px-2 py-0.5 rounded font-bold">✕ Quitar</button></td>
+      `;
+      tbodyRemanentes.appendChild(trRem);
+    });
+    if (remanentesDia.length === 0) {
+      tbodyRemanentes.innerHTML = '<tr><td colspan="3" class="p-2 text-center text-gray-400 italic">No hay descuentos por remanentes en esta fecha.</td></tr>';
+    }
+  }
+
+  const lista = Object.entries(consolidados).sort((a, b) => a[0].localeCompare(b[0]));
+  let totalUnidadesCuadra = 0;
+
+  if (lista.length === 0) {
+    contTotales.innerHTML = '<p class="text-sm text-gray-500 italic">No hay pedidos de cuadra cargados para esta fecha.</p>';
+  } else {
+    lista.forEach(([prodNombre, cantUnidades]) => {
+      totalUnidadesCuadra += cantUnidades;
+      const card = document.createElement('div'); 
+      card.className = "p-3 bg-amber-50 rounded-lg border border-amber-200 flex justify-between items-center";
+      card.innerHTML = `<h4 class="text-lg font-bold text-amber-950">${prodNombre}</h4><span class="text-2xl font-extrabold text-amber-900">${cantUnidades}</span>`;
+      contTotales.appendChild(card);
+    });
+    
+    const totalCard = document.createElement('div'); 
+    totalCard.className = "p-3 bg-amber-200 rounded-lg border border-amber-400 flex justify-between items-center mt-2";
+    totalCard.innerHTML = `<h4 class="text-lg font-black text-amber-950">TOTAL PRODUCTOS A PRODUCIR</h4><span class="text-2xl font-black text-amber-900">${totalUnidadesCuadra}</span>`;
+    contTotales.appendChild(totalCard);
+  }
+
+  // Renderizar notas de mostrador
+  const listaNotas = document.getElementById('lista-notas-mostrador');
+  if (listaNotas) {
+    listaNotas.innerHTML = '';
+    let notasArr = (dbNotasMostrador[fechaCuadraActiva] || []).map((nota, idx) => ({ texto: nota, originalIndex: idx }));
+    notasArr.sort((a, b) => a.texto.localeCompare(b.texto));
+    
+    notasArr.forEach((item) => {
+      const li = document.createElement('li'); 
+      li.className = "flex justify-between items-center bg-gray-50 p-2 rounded border mb-1";
+      li.innerHTML = `<span>${item.texto}</span><button onclick="eliminarNotaMostrador(${item.originalIndex})" class="text-xs text-red-600 font-bold">Eliminar</button>`;
+      listaNotas.appendChild(li);
+    });
+  }
+
+  const selectRemanente = document.getElementById('ajuste-cuadra-producto');
+  if (selectRemanente && document.activeElement !== selectRemanente) {
+    cargarSelectorRemanentesCuadra();
+  }
+}
     function eliminarNotaMostrador(idx) {
       const fechaClave = document.getElementById('cuadra-fecha-selector').value || fechaCuadraActiva;
       if (dbNotasMostrador[fechaClave]) dbNotasMostrador[fechaClave].splice(idx, 1);
@@ -4664,13 +4720,17 @@ function reabrirTurnoAdmin(sucursal, turno) {
     }
 
     // 🟢 AQUÍ ES DONDE VA EL BLOQUE NUEVO:
-    document.addEventListener("DOMContentLoaded", () => {
-      document.querySelectorAll(".input-moneda").forEach(input => {
-        input.addEventListener("input", function() {
-          aplicarFormatoMonedaInput(this);
-        });
-      });
+   document.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll(".input-moneda").forEach(input => {
+    // Asegurar que tengan el atributo numérico para el celular
+    input.setAttribute("inputmode", "numeric");
+    input.setAttribute("pattern", "[0-9]*");
+    
+    input.addEventListener("input", function() {
+      aplicarFormatoMonedaInput(this);
     });
+  });
+});
 // Ejemplo de validación para el botón "Cerrar Reparto del Día"
 function validarYEjecutarCierre(selectedDate, currentOperationalDate) {
     // Función auxiliar para convertir de "DD/MM/AAAA" a objeto Date de forma segura
