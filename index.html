@@ -1299,32 +1299,33 @@
 function guardarRepartoConSincronizacion(fechaDestino, nuevoPedido) {
   if (!dbRepartos[fechaDestino]) dbRepartos[fechaDestino] = {};
   
+  // Asegurar formato de objeto por ID
   if (Array.isArray(dbRepartos[fechaDestino])) {
     let objConvertido = {};
     dbRepartos[fechaDestino].forEach(p => { 
-      if (p) {
-        p.sincronizadoNube = true;
-        objConvertido[p.id || generarID('REP')] = p; 
-      }
+      if (p) objConvertido[p.id || generarID('REP')] = p; 
     });
     dbRepartos[fechaDestino] = objConvertido;
   }
 
+  // Identificar qué dispositivo está cargando el pedido
   nuevoPedido.dispositivoOrigen = dispositivoId;
   nuevoPedido.sincronizadoNube = true; 
   
+  // Guardado local
   dbRepartos[fechaDestino][nuevoPedido.id] = nuevoPedido;
   localStorage.setItem('db_repartos', JSON.stringify(dbRepartos));
   
-  renderizarPlanillaReparto();
-  renderizarCuadra();
-  renderizarReportesMensuales();
-
+  // Sincronización atómica en Firebase usando el ID específico del pedido
   if (rtdb) {
     rtdb.ref(`db_repartos/${fechaDestino}/${nuevoPedido.id}`).set(nuevoPedido).catch(err => {
       console.warn("Aviso de sincronización en red:", err);
     });
   }
+  
+  renderizarPlanillaReparto();
+  renderizarCuadra();
+  renderizarReportesMensuales();
 }
 // FUNCIONES PARA REGISTRAR STOCK REMANENTE / CANCELACIONES EN CUADRA
    
@@ -2910,48 +2911,48 @@ function renderizarCuadra() {
       if (dbNotasMostrador[fechaClave]) dbNotasMostrador[fechaClave].splice(idx, 1);
       guardarDB('db_notas_mostrador', dbNotasMostrador); renderizarCuadra();
     }
+function guardarCliente() {
+  const nombreInput = document.getElementById('cli-nombre');
+  const nombre = nombreInput.value.trim(); 
+  if (!nombre) {
+    alert("Ingrese el nombre o razón social del cliente.");
+    return;
+  }
 
-    function guardarCliente() {
-      const nombreInput = document.getElementById('cli-nombre');
-      const nombre = nombreInput.value.trim(); 
-      if (!nombre) {
-        alert("Ingrese el nombre o razón social del cliente.");
-        return;
-      }
+  const nombreLower = nombre.toLowerCase();
+  const yaExiste = Object.values(dbClientes).some(c => c.nombre.trim().toLowerCase() === nombreLower);
+  if (yaExiste) {
+    alert(`⚠️ Ya existe un cliente registrado con el nombre "${nombre}".`);
+    nombreInput.focus();
+    return;
+  }
 
-      const nombreLower = nombre.toLowerCase();
-      const yaExiste = Object.values(dbClientes).some(c => c.nombre.trim().toLowerCase() === nombreLower);
-      if (yaExiste) {
-        alert(`⚠️ Ya existe un cliente registrado con el nombre "${nombre}".`);
-        nombreInput.focus();
-        return;
-      }
+  const id = generarID('CLI');
+  dbClientes[id] = { 
+    id, 
+    nombre, 
+    cuit: document.getElementById('cli-cuit').value.trim(), 
+    // CORRECCIÓN AQUÍ: Asegurar captura de dirección y teléfono
+    direccion: document.getElementById('cli-direccion').value.trim(), 
+    telefono: document.getElementById('cli-telefono').value.trim(),
+    email: document.getElementById('cli-email')?.value.trim() || '' 
+  };
+  
+  guardarDB('db_clientes', dbClientes);
 
-      const id = generarID('CLI');
-      dbClientes[id] = { 
-        id, 
-        nombre, 
-        cuit: document.getElementById('cli-cuit').value.trim(), 
-        direccion: document.getElementById('cli-direccion').value.trim(), 
-        telefono: document.getElementById('cli-telefono').value.trim(),
-        email: document.getElementById('cli-email')?.value.trim() || '' 
-      };
-      
-      guardarDB('db_clientes', dbClientes);
-
-      nombreInput.value = ''; 
-      if(document.getElementById('cli-cuit')) document.getElementById('cli-cuit').value = '';
-      if(document.getElementById('cli-direccion')) document.getElementById('cli-direccion').value = '';
-      if(document.getElementById('cli-telefono')) document.getElementById('cli-telefono').value = '';
-      if(document.getElementById('cli-email')) document.getElementById('cli-email').value = '';
-      
-      cerrarModalAltaCliente();
-      cargarSelectorClientesReparto(); 
-      cargarSelectorClientesRecurrentes();
-      renderizarTablaClientes();
-      cargarBuscadorClientes();
-    }
-
+  // Limpieza de campos
+  nombreInput.value = ''; 
+  if(document.getElementById('cli-cuit')) document.getElementById('cli-cuit').value = '';
+  if(document.getElementById('cli-direccion')) document.getElementById('cli-direccion').value = '';
+  if(document.getElementById('cli-telefono')) document.getElementById('cli-telefono').value = '';
+  if(document.getElementById('cli-email')) document.getElementById('cli-email').value = '';
+  
+  cerrarModalAltaCliente();
+  cargarSelectorClientesReparto(); 
+  cargarSelectorClientesRecurrentes();
+  renderizarTablaClientes();
+  cargarBuscadorClientes();
+}
     function calcularSaldoCliente(cliId) {
       let saldo = 0;
       Object.values(dbRepartos).forEach(pDia => Object.values(pDia).forEach(p => { if (p.clienteId === cliId && !p.pagado) saldo += p.monto; }));
@@ -3074,49 +3075,34 @@ function renderizarTablaClientes() {
       if (selBuscador) selBuscador.value = "";
     }
 
-    function verHistorialCliente(cliId) {
+   function verHistorialCliente(cliId) {
   if (!cliId) return;
   clienteSeleccionadoId = cliId; 
   
-  let clienteActual = null;
-  if (dbClientes) {
-    if (Array.isArray(dbClientes)) {
-      clienteActual = dbClientes.find(c => c && (c.id === cliId || c.nombre === cliId));
-    } else {
-      clienteActual = dbClientes[cliId] || Object.values(dbClientes).find(c => c && c.id === cliId);
-    }
-  }
+  let clienteActual = dbClientes[cliId] || Object.values(dbClientes).find(c => c && c.id === cliId);
+  if (!clienteActual) return;
 
-  // Fallback de seguridad para que abra igual aunque el objeto esté incompleto
-  if (!clienteActual) {
-    clienteActual = { id: cliId, nombre: "Cliente", telefono: "", cuit: "", direccion: "", email: "" };
-  }
-  
+  // Cargar los valores actuales en los inputs de edición del modal
+  if(document.getElementById('edit-cli-nombre')) document.getElementById('edit-cli-nombre').value = clienteActual.nombre || '';
+  if(document.getElementById('edit-cli-cuit')) document.getElementById('edit-cli-cuit').value = clienteActual.cuit || '';
+  if(document.getElementById('edit-cli-direccion')) document.getElementById('edit-cli-direccion').value = clienteActual.direccion || '';
+  if(document.getElementById('edit-cli-telefono')) document.getElementById('edit-cli-telefono').value = clienteActual.telefono || '';
+  if(document.getElementById('edit-cli-email')) document.getElementById('edit-cli-email').value = clienteActual.email || '';
+
   const nombreEl = document.getElementById('historial-nombre-cliente');
   const contactoEl = document.getElementById('historial-contacto-cliente');
   if (nombreEl) nombreEl.textContent = clienteActual.nombre || '';
   
-  let saldoActual = 0;
-  try {
-    saldoActual = calcularSaldoCliente(cliId);
-  } catch (e) {
-    console.warn("Aviso en saldo de cliente:", e);
-  }
-
-  if (contactoEl) contactoEl.textContent = `Tel: ${clienteActual.telefono || 'S/D'} | Saldo: $${(saldoActual || 0).toLocaleString()}`;
+  let saldoActual = calcularSaldoCliente(cliId);
+  if (contactoEl) contactoEl.textContent = `Tel: ${clienteActual.telefono || 'S/D'} | Dir: ${clienteActual.direccion || 'S/D'} | Saldo: $${saldoActual.toLocaleString()}`;
   
-  // Fuerza absoluta para mostrar el modal de clientes
   const modal = document.getElementById('modal-historial-cliente');
   if (modal) {
     modal.classList.remove('hidden');
     modal.style.display = 'flex';
   }
 
-  try {
-    renderizarTablaHistorialCliente();
-  } catch (e) {
-    console.warn("Aviso renderizando historial cliente:", e);
-  }
+  renderizarTablaHistorialCliente();
 }
 
  function verHistorialProveedor(provId) {
@@ -3166,25 +3152,26 @@ function renderizarTablaClientes() {
       }
     }
  function guardarEdicionCliente() {
-      if (!clienteSeleccionadoId || !dbClientes[clienteSeleccionadoId]) return;
-      const cli = dbClientes[clienteSeleccionadoId];
+  if (!clienteSeleccionadoId || !dbClientes[clienteSeleccionadoId]) return;
+  const cli = dbClientes[clienteSeleccionadoId];
 
-      const nuevoNombre = document.getElementById('edit-cli-nombre').value.trim();
-      if (!nuevoNombre) { alert("El nombre del cliente no puede estar vacío."); return; }
+  const nuevoNombre = document.getElementById('edit-cli-nombre').value.trim();
+  if (!nuevoNombre) { alert("El nombre del cliente no puede estar vacío."); return; }
 
-      cli.nombre = nuevoNombre;
-      cli.cuit = document.getElementById('edit-cli-cuit').value.trim();
-      cli.direccion = document.getElementById('edit-cli-direccion').value.trim();
-      cli.telefono = document.getElementById('edit-cli-telefono').value.trim();
-      cli.email = document.getElementById('edit-cli-email').value.trim();
+  cli.nombre = nuevoNombre;
+  cli.cuit = document.getElementById('edit-cli-cuit').value.trim();
+  // CORRECCIÓN AQUÍ: Guardar dirección y teléfono actualizados
+  cli.direccion = document.getElementById('edit-cli-direccion').value.trim();
+  cli.telefono = document.getElementById('edit-cli-telefono').value.trim();
+  cli.email = document.getElementById('edit-cli-email').value.trim();
 
-      guardarDB('db_clientes', dbClientes);
-      renderizarTablaClientes();
-      cargarSelectorClientesReparto();
-      cargarSelectorClientesRecurrentes();
-      verHistorialCliente(clienteSeleccionadoId);
-    }
-
+  guardarDB('db_clientes', dbClientes);
+  renderizarTablaClientes();
+  cargarSelectorClientesReparto();
+  cargarSelectorClientesRecurrentes();
+  verHistorialCliente(clienteSeleccionadoId);
+  alert("¡Datos del cliente actualizados con éxito!");
+}
     function abrirModalEditarMovCliente(id, origen, fechaOriginal) {
       movClienteEditContext = { id, origen, fechaOriginal };
       let m = null;
