@@ -2221,20 +2221,37 @@
     }
 
     function agregarPedidoPanificado() {
-      const fechaDestino = document.getElementById('rep-fecha-destino').value || fechaActual;
-      if (dbRepartosCerrados[fechaDestino]) { alert(`⚠️ El reparto del día ${fechaDestino} ya se encuentra cerrado.`); return; }
-      
-      const cliId = document.getElementById('rep-cliente').value;
-      const prodNombre = document.getElementById('rep-producto').value;
-      const cant = parseFloat(document.getElementById('rep-cantidad').value);
-      const precioPersonalizado = parseFloat(document.getElementById('rep-precio-unitario').value);
+    const fechaDestino = document.getElementById('rep-fecha-destino').value || fechaActual;
+    
+    // 1. Validar si el día ya está cerrado
+    if (dbRepartosCerrados[fechaDestino]) { 
+        alert(`⚠️ El reparto del día ${fechaDestino} ya se encuentra cerrado.`); 
+        return; 
+    }
+    
+    // 2. NUEVA VALIDACIÓN DE BLOQUEO: Evitar guardar si el semáforo está en rojo (otro usuario editando)
+    const semaforo = document.getElementById("semaforo-badge");
+    if (semaforo && semaforo.classList.contains("semaforo-rojo")) {
+        alert("⚠️ Operación cancelada: Este día está siendo modificado por otro dispositivo/usuario en este momento.");
+        return;
+    }
 
-      if (!cliId || !prodNombre || isNaN(cant) || cant <= 0 || isNaN(precioPersonalizado)) { alert("Verifique los datos cargados."); return; }
-      const cliente = dbClientes[cliId]; const panificado = dbPanificados[prodNombre];
-      if (!cliente) return;
+    const cliId = document.getElementById('rep-cliente').value;
+    const prodNombre = document.getElementById('rep-producto').value;
+    const cant = parseFloat(document.getElementById('rep-cantidad').value);
+    const precioPersonalizado = parseFloat(document.getElementById('rep-precio-unitario').value);
 
-      const sufijoOrigen = obtenerSufijoSucursalActual();
-      const nuevoPedido = {
+    if (!cliId || !prodNombre || isNaN(cant) || cant <= 0 || isNaN(precioPersonalizado)) { 
+        alert("Verifique los datos cargados."); 
+        return; 
+    }
+    
+    const cliente = dbClientes[cliId]; 
+    const panificado = dbPanificados[prodNombre];
+    if (!cliente) return;
+
+    const sufijoOrigen = obtenerSufijoSucursalActual();
+    const nuevoPedido = {
         id: generarID('REP'), 
         clienteId: cliId, 
         clienteNombre: cliente.nombre + sufijoOrigen, 
@@ -2246,19 +2263,19 @@
         origen: 'cuadra', 
         pagado: false, 
         medioPago: "Pendiente"
-      };
+    };
 
-      guardarRepartoConSincronizacion(fechaDestino, nuevoPedido);
-      
-      document.getElementById('rep-cantidad').value = '';
-      document.getElementById('rep-precio-unitario').value = '';
-      document.getElementById('rep-cliente').value = '';
-      
-      alert(`¡Pedido cargado con éxito para la fecha ${fechaDestino}!`);
-      renderizarPlanillaReparto(); 
-      renderizarCuadra(); 
-      renderizarReportesMensuales();
-    }
+    guardarRepartoConSincronizacion(fechaDestino, nuevoPedido);
+    
+    document.getElementById('rep-cantidad').value = '';
+    document.getElementById('rep-precio-unitario').value = '';
+    document.getElementById('rep-cliente').value = '';
+    
+    alert(`¡Pedido cargado con éxito para la fecha ${fechaDestino}!`);
+    renderizarPlanillaReparto(); 
+    renderizarCuadra(); 
+    renderizarReportesMensuales();
+}
 function agregarPedidoReparto(nuevoPedido) {
       const fechaHojaRutaActiva = document.getElementById('hr-fecha-selector').value || fechaActual;
       
@@ -2295,6 +2312,50 @@ function agregarPedidoReparto(nuevoPedido) {
       renderizarCuadra();
       renderizarReportesMensuales();
     }
+const fechaSeleccionada = "2026-06-06";
+const miIdDispositivo = "Dispositivo_Raul_Celular"; // O un ID único generado por sesión
+
+// 1. Verificar y adquirir el bloqueo al abrir la fecha
+async function intentarBloquearFecha(fecha) {
+    const lockRef = db.ref(`locks/${fecha}`);
+    
+    lockRef.once('value', (snapshot) => {
+        const datosLock = snapshot.val();
+        
+        if (datosLock && datosLock.usuario !== miIdDispositivo) {
+            // BLOQUEADO POR OTRO USUARIO
+            mostrarAdvertenciaBloqueo(datosLock.usuario);
+        } else {
+            // LIBRE: Tomar posesión del bloqueo para este dispositivo
+            lockRef.set({
+                usuario: miIdDispositivo,
+                timestamp: Date.now(),
+                estado: "ocupado"
+            });
+            habilitarFormulario();
+        }
+    });
+}
+
+// 2. Mostrar la leyenda restrictiva en la interfaz
+function mostrarAdvertenciaBloqueo(usuarioOcupante) {
+    const semaforo = document.getElementById("semaforo-badge");
+    semaforo.className = "semaforo-rojo"; // Clase visual del Source 6
+    semaforo.innerText = `⚠️ Editando por: ${usuarioOcupante}`;
+    
+    // Deshabilitar inputs y botones de guardado para evitar sobrescrituras
+    document.querySelectorAll(".input-reparto, .btn-guardar").forEach(el => {
+        el.disabled = true;
+    });
+    
+    alert(`Atención: El usuario/dispositivo "${usuarioOcupante}" está modificando esta fecha en este momento. No puedes guardar cambios para evitar errores.`);
+}
+
+// 3. Liberar el bloqueo al salir o cambiar de fecha (Desonexión o cambio de vista)
+function liberarBloqueoFecha(fecha) {
+    const lockRef = db.ref(`locks/${fecha}`);
+    lockRef.remove();
+}
     function agregarPedidoDespacho() {
       const fechaDestino = document.getElementById('rep-fecha-destino').value || fechaActual;
       if (dbRepartosCerrados[fechaDestino]) { alert(`⚠️ El reparto del día ${fechaDestino} ya se encuentra cerrado.`); return; }
