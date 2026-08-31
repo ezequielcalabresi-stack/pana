@@ -2259,7 +2259,42 @@
       renderizarCuadra(); 
       renderizarReportesMensuales();
     }
+function agregarPedidoReparto(nuevoPedido) {
+      const fechaHojaRutaActiva = document.getElementById('hr-fecha-selector').value || fechaActual;
+      
+      // Aseguramos que el nodo de la fecha exista y sea un objeto (evitando arrays)
+      if (!dbRepartos[fechaHojaRutaActiva]) {
+          dbRepartos[fechaHojaRutaActiva] = {};
+      } else if (Array.isArray(dbRepartos[fechaHojaRutaActiva])) {
+          let objetoConvertido = {};
+          dbRepartos[fechaHojaRutaActiva].forEach(p => {
+              if (p && (p.id || p.producto)) {
+                  objetoConvertido[p.id || generarID('REP')] = p;
+              }
+          });
+          dbRepartos[fechaHojaRutaActiva] = objetoConvertido;
+      }
 
+      // Generar un ID único inalterable si no lo tiene
+      const idUnico = nuevoPedido.id || generarID('REP');
+      nuevoPedido.id = idUnico;
+      nuevoPedido.dispositivoOrigen = dispositivoId;
+
+      // GUARDADO SEGURO POR CLAVE (ID) EN EL OBJETO DE ESA FECHA
+      dbRepartos[fechaHojaRutaActiva][idUnico] = nuevoPedido;
+
+      // Persistencia local y sincronización con Firebase
+      localStorage.setItem('db_repartos', JSON.stringify(dbRepartos));
+      if (rtdb) {
+        rtdb.ref(`db_repartos/${fechaHojaRutaActiva}/${idUnico}`).set(nuevoPedido).catch(err => {
+          console.warn("Aviso de sincronización en red:", err);
+        });
+      }
+      
+      renderizarPlanillaReparto();
+      renderizarCuadra();
+      renderizarReportesMensuales();
+    }
     function agregarPedidoDespacho() {
       const fechaDestino = document.getElementById('rep-fecha-destino').value || fechaActual;
       if (dbRepartosCerrados[fechaDestino]) { alert(`⚠️ El reparto del día ${fechaDestino} ya se encuentra cerrado.`); return; }
