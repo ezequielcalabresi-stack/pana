@@ -1996,24 +1996,26 @@ function eliminarPedidoReparto(pedidoId, productoNombre) {
     }
 
 function actualizarBadgeRol() {
-      const badge = document.getElementById('badge-rol-activo');
-      const usr = dbUsuarios[usuarioActivoId];
-      if (badge && usr) {
-        badge.textContent = `${PERMISOS_ROLES[usr.rol]?.nombre || usr.rol} | ${ETIQUETAS_SUCURSAL[usr.sucursal || 'todas']}`;
-        const selPanaderia = document.getElementById('select-panaderia-activa');
-        if (selPanaderia) {
-          if (usr.sucursal === 'espiga') {
-            selPanaderia.value = 'espiga';
-            selPanaderia.disabled = true;
-          } else if (usr.sucursal === 'alem') {
-            selPanaderia.value = 'alem';
-            selPanaderia.disabled = true;
-          } else {
-            selPanaderia.disabled = false;
-          }
-        }
+  const badge = document.getElementById('badge-rol-activo');
+  const usr = dbUsuarios[usuarioActivoId];
+  if (badge && usr) {
+    badge.textContent = `${PERMISOS_ROLES[usr.rol]?.nombre || usr.rol} | ${ETIQUETAS_SUCURSAL[usr.sucursal || 'todas']}`;
+    const selPanaderia = document.getElementById('select-panaderia-activa');
+    if (selPanaderia) {
+      if (usr.sucursal === 'espiga') {
+        selPanaderia.value = 'espiga';
+        selPanaderia.disabled = true;
+      } else if (usr.sucursal === 'alem') {
+        selPanaderia.value = 'alem';
+        selPanaderia.disabled = true;
+      } else {
+        selPanaderia.disabled = false;
       }
     }
+  }
+  // Aplicar filtro de interfaz para Espiga
+  aplicarRestriccionesEspigaUI();
+}
 function cambiarPanaderiaActiva() {
   cargarCajasHoyUI();
   renderizarTablaEgresosHoy();
@@ -2079,36 +2081,103 @@ function obtenerSucursalActiva() {
       alert("¡PIN actualizado con éxito!");
     }
 
-    function cambiarUsuarioActivo() {
-      const sel = document.getElementById('select-usuario-activo');
-      if (!sel) return;
-      const nuevoId = sel.value;
-      const usuarioDestino = dbUsuarios[nuevoId];
+  function cambiarUsuarioActivo() {
+  const sel = document.getElementById('select-usuario-activo');
+  if (!sel) return;
+  
+  const nuevoId = sel.value;
+  if (nuevoId === usuarioActivoId) return;
 
-      if (usuarioDestino) {
-        const pinIngresado = prompt(`Ingrese el PIN de ${usuarioDestino.nombre}:`);
-        if (pinIngresado !== (usuarioDestino.pin || '1234')) {
-          alert("PIN incorrecto. Acceso denegado.");
-          sel.value = usuarioActivoId; 
-          return;
-        }
-      }
+  const usuarioDestino = dbUsuarios[nuevoId];
+  if (!usuarioDestino) {
+    sel.value = usuarioActivoId;
+    return;
+  }
 
-      usuarioActivoId = nuevoId;
-      localStorage.setItem(`usuario_activo_${dispositivoId}`, usuarioActivoId);
-      actualizarBadgeRol();
-      renderizarMenuNavegacion();
-      cargarCajasHoyUI();
-      renderizarTablaEgresosHoy();
-      renderizarReportesMensuales();
-      renderizarCuadra();
-      renderizarPlanillaReparto();
-      renderizarStockInsumos();
-      cargarSelectorInsumosFactura();
-      cargarSelectorInsumosMovimiento();
+  const pinIngresado = prompt(`Ingrese el PIN de acceso para "${usuarioDestino.nombre}":`);
+  
+  if (pinIngresado === null) {
+    sel.value = usuarioActivoId;
+    return;
+  }
+
+  const pinCorrecto = usuarioDestino.pin || '1234';
+  if (pinIngresado.trim() !== pinCorrecto) {
+    alert("⚠️ PIN incorrecto. Acceso denegado.");
+    sel.value = usuarioActivoId;
+    return;
+  }
+
+  // Cambio exitoso
+  usuarioActivoId = nuevoId;
+  localStorage.setItem(`usuario_activo_${dispositivoId}`, usuarioActivoId);
+  
+  // Habilitar temporalmente los selectores bloqueados para permitir la transición de UI
+  const selPanaderia = document.getElementById('select-panaderia-activa');
+  if (selPanaderia) selPanaderia.disabled = false;
+
+  actualizarBadgeRol();
+  renderizarMenuNavegacion();
+  cargarCajasHoyUI();
+  renderizarTablaEgresosHoy();
+  renderizarReportesMensuales();
+  renderizarCuadra();
+  renderizarPlanillaReparto();
+  renderizarStockInsumos();
+  cargarSelectorInsumosFactura();
+  cargarSelectorInsumosMovimiento();
+  
+  if (typeof aplicarRestriccionesEspigaUI === 'function') {
+    aplicarRestriccionesEspigaUI();
+  }
+}
+function aplicarRestriccionesEspigaUI() {
+  const usr = dbUsuarios[usuarioActivoId];
+  const esEspigaRestringido = (usr && usr.sucursal === 'espiga' && usr.rol !== 'admin');
+
+  // 1. Buscar automáticamente el ID del cliente "Espiga de Oro" en la base de datos
+  let espigaClienteId = "";
+  Object.values(dbClientes).forEach(c => {
+    if (c && c.nombre && c.nombre.toLowerCase().includes('espiga de oro')) {
+      espigaClienteId = c.id;
     }
+  });
 
-    function renderizarMenuNavegacion() {
+  // 2. Preseleccionar y bloquear el cliente en los selectores de carga de Reparto (Panificados y Despacho)
+  const selClientePan = document.getElementById('rep-cliente');
+  const selClienteDesp = document.getElementById('rep-despacho-cliente');
+
+  if (selClientePan && espigaClienteId) {
+    selClientePan.value = espigaClienteId;
+    selClientePan.disabled = esEspigaRestringido;
+  }
+  if (selClienteDesp && espigaClienteId) {
+    selClienteDesp.value = espigaClienteId;
+    selClienteDesp.disabled = esEspigaRestringido;
+  }
+
+  // 3. Ocultar la tabla de visualización de pedidos del día y automatización para usuarios de Espiga
+  // Buscamos los contenedores correspondientes en la pestaña Reparto
+  const tablasRepartoContainer = document.querySelector('#sec-reparto .bg-white p-4 rounded-xl shadow border:has(#tabla-reparto)') || document.getElementById('tabla-reparto')?.closest('.bg-white');
+  const panelAutomatizacion = document.getElementById('panel-automatizacion');
+
+  if (esEspigaRestringido) {
+    if (tablasRepartoContainer) {
+      tablasRepartoContainer.style.display = 'none'; // Oculta la lista de pedidos realizados y automatizados
+    }
+    if (panelAutomatizacion) {
+      panelAutomatizacion.style.display = 'none'; // Oculta reglas recurrentes
+    }
+  } else {
+    if (tablasRepartoContainer) {
+      tablasRepartoContainer.style.display = '';
+    }
+    if (panelAutomatizacion) {
+      panelAutomatizacion.style.display = '';
+    }
+  }
+} 
+   function renderizarMenuNavegacion() {
       const usr = dbUsuarios[usuarioActivoId];
       if (!usr) return;
       let permisos = usr.pestanas || PERMISOS_ROLES[usr.rol]?.pestanas || [];
@@ -2487,130 +2556,160 @@ function agregarNotaMostrador() {
     }
 
    function renderizarPlanillaReparto() {
-      procesarPedidosRecurrentesAutomaticos();
-      const fechaDestinoActiva = document.getElementById('rep-fecha-destino')?.value || fechaActual;
+  procesarPedidosRecurrentesAutomaticos();
+  const fechaDestinoActiva = document.getElementById('rep-fecha-destino')?.value || fechaActual;
+  
+  const tbody = document.getElementById('tabla-reparto');
+  const tbodyHojaRuta = document.getElementById('tabla-hoja-ruta');
+  if (!tbody && !tbodyHojaRuta) return;
+
+  if (tbody) tbody.innerHTML = '';
+  if (tbodyHojaRuta) tbodyHojaRuta.innerHTML = '';
+
+  const fechaHojaRutaActiva = document.getElementById('hr-fecha-selector')?.value || fechaDestinoActiva;
+  const fechaFormateada = obtenerFechaConDia(fechaDestinoActiva);
+  const labelFechaRep = document.getElementById('label-fecha-reparto');
+  if (labelFechaRep) labelFechaRep.textContent = `Fecha: ${fechaFormateada}`;
+
+  const isCerrado = dbRepartosCerrados[fechaHojaRutaActiva] === true;
+  const usr = dbUsuarios[usuarioActivoId];
+  const esAdmin = (usr && usr.rol === 'admin');
+  
+  // Detectar si el usuario activo pertenece estrictamente a Espiga (y no es admin)
+  const esEspigaRestringido = (usr && usr.sucursal === 'espiga' && !esAdmin);
+
+  // Ocultar / Mostrar paneles según el rol (como automatizaciones y botones de automáticos)
+  const btnVerAuto = document.querySelector('button[onclick="abrirModalPedidosAuto()"]');
+  const panelAuto = document.getElementById('panel-automatizacion');
+  if (btnVerAuto) btnVerAuto.style.display = esEspigaRestringido ? 'none' : '';
+  if (panelAuto) panelAuto.style.display = esEspigaRestringido ? 'none' : '';
+
+  const banner = document.getElementById('banner-reparto-cerrado');
+  const btnCerrarReparto = document.getElementById('btn-cerrar-reparto-dia');
+  const contReabrir = document.getElementById('contenedor-btn-reabrir-reparto');
+
+  if (isCerrado) {
+    if (banner) banner.classList.remove('hidden');
+    if (btnCerrarReparto) btnCerrarReparto.classList.add('hidden');
+    if (contReabrir && esAdmin) {
+      contReabrir.innerHTML = `<button type="button" onclick="reabrirRepartoDelDia()" class="bg-amber-800 hover:bg-amber-900 text-white font-bold px-3 py-1.5 rounded text-xs shadow">🔓 Reabrir Reparto (Admin)</button>`;
+    } else if (contReabrir) {
+      contReabrir.innerHTML = '';
+    }
+  } else {
+    if (banner) banner.classList.add('hidden');
+    if (btnCerrarReparto) btnCerrarReparto.classList.remove('hidden');
+    if (contReabrir) contReabrir.innerHTML = '';
+  }
+
+  const pedidosDestinoObj = dbRepartos[fechaDestinoActiva] || {};
+  let pedidosDestino = Array.isArray(pedidosDestinoObj) ? pedidosDestinoObj : Object.values(pedidosDestinoObj);
+  
+  // FILTRADO EXCLUSIVO PARA ESPIGA: Solo ve sus propios pedidos y descarta los automáticos globales
+  if (esEspigaRestringido) {
+    pedidosDestino = pedidosDestino.filter(p => {
+      if (!p) return false;
+      const nombreCli = (p.clienteNombre || '').toLowerCase();
+      // Debe pertenecer a Espiga y no ser un pedido automático general de otros clientes
+      return nombreCli.includes('espiga') && !p.origenAuto;
+    });
+  }
+
+  pedidosDestino.sort((a, b) => (a.clienteNombre || "").toLowerCase().localeCompare((b.clienteNombre || "").toLowerCase()));
+
+  pedidosDestino.forEach((p) => {
+    if (tbody) {
+      const iconoAuto = p.origenAuto ? '🤖 ' : '';
+      const trPed = document.createElement('tr'); 
+      trPed.className = "border-b hover:bg-gray-50 text-xs md:text-sm";
+      trPed.innerHTML = `
+        <td class="p-2 font-semibold text-gray-800">${p.clienteNombre}</td>
+        <td class="p-2">${iconoAuto}${p.producto}</td>
+        <td class="p-2">${p.origen === 'despacho' ? `<span class="bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded text-[10px] font-bold">Despacho</span>` : `<span class="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded text-[10px] font-bold">Cuadra</span>`}</td>
+        <td class="p-2">${p.unidades} un.</td>
+        <td class="p-2 font-bold"><input type="number" step="0.01" value="${p.precioUnitario}" ${esEspigaRestringido ? 'disabled' : ''} onchange="modificarPrecioPedidoDirecto('${p.id}', this.value)" class="w-20 border rounded p-1 text-xs font-bold"></td>
+        <td class="p-2 font-bold text-amber-900">$${p.monto.toLocaleString()}</td>
+        <td class="p-2 text-center">
+          <button onclick="eliminarPedidoReparto('${p.id}', '${p.producto}')" class="bg-red-600 hover:bg-red-700 text-white text-xs px-2.5 py-1 rounded font-bold shadow">✕ Borrar</button>
+        </td>
+      `;
+      tbody.appendChild(trPed);
+    }
+  });
+
+  const pedidosHojaRutaObj = dbRepartos[fechaHojaRutaActiva] || {};
+  let pedidosHojaRuta = Array.isArray(pedidosHojaRutaObj) ? pedidosHojaRutaObj : Object.values(pedidosHojaRutaObj);
+  
+  if (esEspigaRestringido) {
+    pedidosHojaRuta = pedidosHojaRuta.filter(p => {
+      if (!p) return false;
+      const nombreCli = (p.clienteNombre || '').toLowerCase();
+      return nombreCli.includes('espiga') && !p.origenAuto;
+    });
+  }
+
+  pedidosHojaRuta.sort((a, b) => (a.clienteNombre || "").toLowerCase().localeCompare((b.clienteNombre || "").toLowerCase()));
+
+  let totalMonto = 0, totalEfectivo = 0, totalCtaCte = 0;
+
+  pedidosHojaRuta.forEach((p) => {
+    totalMonto += p.monto;
+    if (p.pagado && p.medioPago === 'Efectivo') totalEfectivo += p.monto;
+    else if (!p.pagado) totalCtaCte += p.monto;
+    
+    const iconoAuto = p.origenAuto ? '🤖 ' : '';
+
+    if (tbodyHojaRuta) {
+      const trHr = document.createElement('tr'); 
+      trHr.className = "border-b hover:bg-gray-50 text-xs md:text-sm";
       
-      const tbody = document.getElementById('tabla-reparto');
-      const tbodyHojaRuta = document.getElementById('tabla-hoja-ruta');
-      if (!tbody && !tbodyHojaRuta) return;
-
-      if (tbody) tbody.innerHTML = '';
-      if (tbodyHojaRuta) tbodyHojaRuta.innerHTML = '';
-
-      const fechaHojaRutaActiva = document.getElementById('hr-fecha-selector')?.value || fechaDestinoActiva;
-      const fechaFormateada = obtenerFechaConDia(fechaDestinoActiva);
-      const labelFechaRep = document.getElementById('label-fecha-reparto');
-      if (labelFechaRep) labelFechaRep.textContent = `Fecha: ${fechaFormateada}`;
-
-      const isCerrado = dbRepartosCerrados[fechaHojaRutaActiva] === true;
-      const usr = dbUsuarios[usuarioActivoId];
-      const esAdmin = (usr && usr.rol === 'admin');
-
-      const banner = document.getElementById('banner-reparto-cerrado');
-      const btnCerrarReparto = document.getElementById('btn-cerrar-reparto-dia');
-      const contReabrir = document.getElementById('contenedor-btn-reabrir-reparto');
-
+      let colAccionesHr = '';
       if (isCerrado) {
-        if (banner) banner.classList.remove('hidden');
-        if (btnCerrarReparto) btnCerrarReparto.classList.add('hidden');
-        if (contReabrir && esAdmin) {
-          contReabrir.innerHTML = `<button type="button" onclick="reabrirRepartoDelDia()" class="bg-amber-800 hover:bg-amber-900 text-white font-bold px-3 py-1.5 rounded text-xs shadow">🔓 Reabrir Reparto (Admin)</button>`;
-        } else if (contReabrir) {
-          contReabrir.innerHTML = '';
-        }
+        colAccionesHr = p.pagado ? `<span class="bg-green-100 text-green-800 px-2 py-0.5 rounded text-[11px] font-bold">Cobrado (${p.medioPago})</span>` : `<span class="bg-red-100 text-red-800 px-2 py-0.5 rounded text-[11px] font-bold">En Cta. Cte.</span>`;
       } else {
-        if (banner) banner.classList.add('hidden');
-        if (btnCerrarReparto) btnCerrarReparto.classList.remove('hidden');
-        if (contReabrir) contReabrir.innerHTML = '';
+        const selectPago = !p.pagado ? `
+          <select onchange="marcarPedidoCobrado('${p.id}', this.value)" class="border rounded text-xs p-1 bg-white font-medium">
+            <option value="">-- Pago --</option>
+            <option value="Efectivo">Efectivo</option>
+            <option value="Transferencia">Transferencia</option>
+            <option value="Mercado Pago">Mercado Pago</option>
+          </select>
+        ` : `
+          <button onclick="deshacerCobroPedido('${p.id}')" class="text-xs text-amber-700 underline font-bold">Cambiar</button>
+        `;
+        const btnCancelarPedido = `<button onclick="eliminarPedidoHojaRuta('${p.id}', '${p.producto}')" class="bg-red-600 hover:bg-red-700 text-white text-xs px-2.5 py-1 rounded font-bold shadow">✕ Borrar</button>`;
+        colAccionesHr = `<div class="flex items-center gap-2 justify-center">${selectPago}${btnCancelarPedido}</div>`;
       }
 
-      const pedidosDestinoObj = dbRepartos[fechaDestinoActiva] || {};
-      const pedidosDestino = Array.isArray(pedidosDestinoObj) ? pedidosDestinoObj : Object.values(pedidosDestinoObj);
-      pedidosDestino.sort((a, b) => (a.clienteNombre || "").toLowerCase().localeCompare((b.clienteNombre || "").toLowerCase()));
-
-      pedidosDestino.forEach((p) => {
-        if (tbody) {
-          const iconoAuto = p.origenAuto ? '🤖 ' : '';
-          const trPed = document.createElement('tr'); 
-          trPed.className = "border-b hover:bg-gray-50 text-xs md:text-sm";
-          trPed.innerHTML = `
-            <td class="p-2 font-semibold text-gray-800">${p.clienteNombre}</td>
-            <td class="p-2">${iconoAuto}${p.producto}</td>
-            <td class="p-2">${p.origen === 'despacho' ? `<span class="bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded text-[10px] font-bold">Despacho</span>` : `<span class="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded text-[10px] font-bold">Cuadra</span>`}</td>
-            <td class="p-2">${p.unidades} un.</td>
-            <td class="p-2 font-bold"><input type="number" step="0.01" value="${p.precioUnitario}" onchange="modificarPrecioPedidoDirecto('${p.id}', this.value)" class="w-20 border rounded p-1 text-xs font-bold"></td>
-            <td class="p-2 font-bold text-amber-900">$${p.monto.toLocaleString()}</td>
-            <td class="p-2 text-center">
-              <button onclick="eliminarPedidoReparto('${p.id}', '${p.producto}')" class="bg-red-600 hover:bg-red-700 text-white text-xs px-2.5 py-1 rounded font-bold shadow">✕ Borrar</button>
-            </td>
-          `;
-          tbody.appendChild(trPed);
-        }
-      });
-
-      const pedidosHojaRutaObj = dbRepartos[fechaHojaRutaActiva] || {};
-      const pedidosHojaRuta = Array.isArray(pedidosHojaRutaObj) ? pedidosHojaRutaObj : Object.values(pedidosHojaRutaObj);
-      pedidosHojaRuta.sort((a, b) => (a.clienteNombre || "").toLowerCase().localeCompare((b.clienteNombre || "").toLowerCase()));
-
-      let totalMonto = 0, totalEfectivo = 0, totalCtaCte = 0;
-
-      pedidosHojaRuta.forEach((p) => {
-        totalMonto += p.monto;
-        if (p.pagado && p.medioPago === 'Efectivo') totalEfectivo += p.monto;
-        else if (!p.pagado) totalCtaCte += p.monto;
-        
-        const iconoAuto = p.origenAuto ? '🤖 ' : '';
-
-        if (tbodyHojaRuta) {
-          const trHr = document.createElement('tr'); 
-          trHr.className = "border-b hover:bg-gray-50 text-xs md:text-sm";
-          
-          let colAccionesHr = '';
-          if (isCerrado) {
-            colAccionesHr = p.pagado ? `<span class="bg-green-100 text-green-800 px-2 py-0.5 rounded text-[11px] font-bold">Cobrado (${p.medioPago})</span>` : `<span class="bg-red-100 text-red-800 px-2 py-0.5 rounded text-[11px] font-bold">En Cta. Cte.</span>`;
-          } else {
-            const selectPago = !p.pagado ? `
-              <select onchange="marcarPedidoCobrado('${p.id}', this.value)" class="border rounded text-xs p-1 bg-white font-medium">
-                <option value="">-- Pago --</option>
-                <option value="Efectivo">Efectivo</option>
-                <option value="Transferencia">Transferencia</option>
-                <option value="Mercado Pago">Mercado Pago</option>
-              </select>
-            ` : `
-              <button onclick="deshacerCobroPedido('${p.id}')" class="text-xs text-amber-700 underline font-bold">Cambiar</button>
-            `;
-            const btnCancelarPedido = `<button onclick="eliminarPedidoHojaRuta('${p.id}', '${p.producto}')" class="bg-red-600 hover:bg-red-700 text-white text-xs px-2.5 py-1 rounded font-bold shadow">✕ Borrar</button>`;
-            colAccionesHr = `<div class="flex items-center gap-2 justify-center">${selectPago}${btnCancelarPedido}</div>`;
-          }
-
-          trHr.innerHTML = `
-            <td class="p-2 font-semibold text-gray-800">${p.clienteNombre}</td>
-            <td class="p-2">${iconoAuto}${p.producto}</td>
-            <td class="p-2">${p.origen === 'despacho' ? `<span class="bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded text-[10px] font-bold">Despacho</span>` : `<span class="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded text-[10px] font-bold">Cuadra</span>`}</td>
-            <td class="p-2">${p.unidades} un.</td>
-            <td class="p-2 font-bold text-amber-900">$${p.monto.toLocaleString()}</td>
-            <td class="p-2">${p.pagado ? `<span class="bg-green-100 text-green-800 px-2 py-0.5 rounded text-[11px] font-bold">Cobrado (${p.medioPago})</span>` : `<span class="bg-red-100 text-red-800 px-2 py-0.5 rounded text-[11px] font-bold">Pendiente</span>`}</td>
-            <td class="p-2 text-center">${colAccionesHr}</td>
-          `;
-          tbodyHojaRuta.appendChild(trHr);
-        }
-      });
-
-      const elTotMonto = document.getElementById('tot-rep-monto');
-      const elTotEfec = document.getElementById('tot-rep-efectivo');
-      const elTotCta = document.getElementById('tot-rep-ctacte');
-
-      if (elTotMonto) elTotMonto.textContent = `$${totalMonto.toLocaleString()}`;
-      if (elTotEfec) elTotEfec.textContent = `$${totalEfectivo.toLocaleString()}`;
-      if (elTotCta) elTotCta.textContent = `$${totalCtaCte.toLocaleString()}`;
-
-      let totalTransf = 0;
-      pedidosHojaRuta.forEach(p => { if (p.pagado && p.medioPago !== 'Efectivo') totalTransf += p.monto; });
-      const elEf = document.getElementById('caja-rep-efectivo'); const elTr = document.getElementById('caja-rep-transf');
-      if (elEf) elEf.textContent = `$${totalEfectivo.toLocaleString()}`;
-      if (elTr) elTr.textContent = `$${totalTransf.toLocaleString()}`;
+      trHr.innerHTML = `
+        <td class="p-2 font-semibold text-gray-800">${p.clienteNombre}</td>
+        <td class="p-2">${iconoAuto}${p.producto}</td>
+        <td class="p-2">${p.origen === 'despacho' ? `<span class="bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded text-[10px] font-bold">Despacho</span>` : `<span class="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded text-[10px] font-bold">Cuadra</span>`}</td>
+        <td class="p-2">${p.unidades} un.</td>
+        <td class="p-2 font-bold text-amber-900">$${p.monto.toLocaleString()}</td>
+        <td class="p-2">${p.pagado ? `<span class="bg-green-100 text-green-800 px-2 py-0.5 rounded text-[11px] font-bold">Cobrado (${p.medioPago})</span>` : `<span class="bg-red-100 text-red-800 px-2 py-0.5 rounded text-[11px] font-bold">Pendiente</span>`}</td>
+        <td class="p-2 text-center">${colAccionesHr}</td>
+      `;
+      tbodyHojaRuta.appendChild(trHr);
     }
-    function marcarPedidoCobrado(pedidoId, medioPago) {
+  });
+
+  const elTotMonto = document.getElementById('tot-rep-monto');
+  const elTotEfec = document.getElementById('tot-rep-efectivo');
+  const elTotCta = document.getElementById('tot-rep-ctacte');
+
+  if (elTotMonto) elTotMonto.textContent = `$${totalMonto.toLocaleString()}`;
+  if (elTotEfec) elTotEfec.textContent = `$${totalEfectivo.toLocaleString()}`;
+  if (elTotCta) elTotCta.textContent = `$${totalCtaCte.toLocaleString()}`;
+
+  let totalTransf = 0;
+  pedidosHojaRuta.forEach(p => { if (p.pagado && p.medioPago !== 'Efectivo') totalTransf += p.monto; });
+  const elEf = document.getElementById('caja-rep-efectivo'); 
+  const elTr = document.getElementById('caja-rep-transf');
+  if (elEf) elEf.textContent = `$${totalEfectivo.toLocaleString()}`;
+  if (elTr) elTr.textContent = `$${totalTransf.toLocaleString()}`;
+}
+  function marcarPedidoCobrado(pedidoId, medioPago) {
       const fechaHojaRutaActiva = document.getElementById('hr-fecha-selector').value || fechaActual;
       if (dbRepartosCerrados[fechaHojaRutaActiva]) return;
       if (!medioPago) return;
