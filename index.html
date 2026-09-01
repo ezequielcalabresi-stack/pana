@@ -612,9 +612,17 @@
     </section>
    <!-- 7. CATÁLOGO Y PRECIOS -->
     <section id="sec-precios" class="hidden space-y-6">
+      <!-- 🍞 PRODUCTOS PANIFICADOS -->
       <div class="bg-amber-50 p-4 rounded-xl shadow border border-amber-300 space-y-4">
-        <h2 class="text-base font-bold text-amber-900">🍞 Productos Panificados</h2>
-        <div class="bg-white p-3 rounded-lg border border-amber-200 space-y-2">
+        <div class="flex justify-between items-center">
+          <h2 class="text-base font-bold text-amber-900">🍞 Productos Panificados</h2>
+          <button onclick="imprimirListadoProductos()" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold text-sm shadow hover:bg-blue-700">
+            🖨️ Imprimir Listado Panificados
+          </button>
+        </div>
+
+        <!-- Formulario protegido de Alta Panificados -->
+        <div class="bg-white p-3 rounded-lg border border-amber-200 space-y-2 solo-admin">
           <h3 class="text-xs font-bold text-gray-700">➕ Agregar Nuevo Panificado</h3>
           <div class="grid grid-cols-1 md:grid-cols-5 gap-2">
             <input type="text" id="nuevo-panificado-nombre" placeholder="Nombre" class="border p-2 rounded text-xs md:col-span-1">
@@ -641,9 +649,17 @@
         </div>
       </div>
 
+      <!-- 📋 CATÁLOGO DESPACHO -->
       <div class="bg-white p-4 rounded-xl shadow border space-y-4">
-        <h2 class="text-base font-bold text-gray-800">📋 Catálogo Despacho</h2>
-        <div class="bg-amber-50 p-3 rounded-lg border border-amber-300 space-y-2">
+        <div class="flex justify-between items-center">
+          <h2 class="text-base font-bold text-gray-800">📋 Catálogo Despacho</h2>
+          <button onclick="imprimirCatalogoDespacho()" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold text-sm shadow hover:bg-blue-700">
+            🖨️ Imprimir Catálogo Despacho
+          </button>
+        </div>
+        
+        <!-- Ajuste Masivo Protegido -->
+        <div class="bg-amber-50 p-3 rounded-lg border border-amber-300 space-y-2 solo-admin">
           <h3 class="text-xs font-bold text-amber-900">📈 Ajuste Masivo por Porcentaje</h3>
           <div class="flex flex-wrap items-center gap-2">
             <select id="ajuste-columna-precio" class="border p-1.5 rounded text-xs bg-white font-medium">
@@ -657,10 +673,12 @@
               <span class="text-xs font-bold text-gray-600">%</span>
             </div>
             <button type="button" onclick="aplicarAumentoPorcentaje()" class="bg-amber-800 text-white font-bold text-xs px-3 py-1.5 rounded hover:bg-amber-900 shadow">Aplicar Porcentaje</button>
+            <button type="button" onclick="deshacerUltimoAumento()" class="bg-red-700 text-white font-bold text-xs px-3 py-1.5 rounded hover:bg-red-800 shadow">↩️ Deshacer Aumento</button>
           </div>
         </div>
 
-        <div class="p-3 bg-gray-50 rounded-lg border space-y-2">
+        <!-- Añadir Producto Protegido -->
+        <div class="p-3 bg-gray-50 rounded-lg border space-y-2 solo-admin">
           <h3 class="text-xs font-bold text-gray-700">➕ Añadir Producto a Catálogo</h3>
           <div class="grid grid-cols-1 md:grid-cols-5 gap-2">
             <input type="text" id="nuevo-prod-nombre" placeholder="Nombre Producto" class="border p-2 rounded text-xs md:col-span-2">
@@ -671,6 +689,7 @@
           <button type="button" onclick="agregarNuevoProducto()" class="bg-amber-700 text-white font-bold px-4 py-2 rounded text-xs hover:bg-amber-800 w-full">Guardar Producto</button>
         </div>
 
+        <!-- Listado Despacho -->
         <div>
           <div class="flex justify-between items-center mb-3">
             <h3 class="text-xs font-bold text-gray-600">Listado Catálogo Despacho</h3>
@@ -693,7 +712,6 @@
         </div>
       </div>
     </section>
-
     <!-- 8. USUARIOS Y BACKUPS -->
     <section id="sec-usuarios" class="hidden space-y-4">
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1230,6 +1248,90 @@
         statusDiv.className = "text-[10px] bg-blue-200 text-blue-900 px-2 py-0.5 rounded-full font-bold shadow-sm whitespace-nowrap";
       }
     }
+let lockRefActivo = null;
+
+    // 1. Intentar adquirir el semáforo de bloqueo para la fecha actual
+    function adquirirBloqueoFecha(fecha) {
+      if (!rtdb) return;
+      
+      // Si ya teníamos un bloqueo activo en otra fecha, lo liberamos primero
+      if (lockRefActivo) {
+        lockRefActivo.remove();
+      }
+
+      lockRefActivo = rtdb.ref(`locks/${fecha}`);
+      
+      // Consultamos quién tiene el semáforo
+      lockRefActivo.once('value', (snapshot) => {
+        const datosLock = snapshot.val();
+        const ahora = Date.now();
+
+        // Si hay un lock activo de OTRO dispositivo con menos de 2 minutos de antigüedad
+        if (datosLock && datosLock.dispositivo !== dispositivoId && (ahora - datosLock.timestamp < 120000)) {
+          bloquearInterfazEscritura(datosLock.usuarioNombre || "Otro usuario");
+        } else {
+          // Tomamos posesión del semáforo
+          lockRefActivo.set({
+            dispositivo: dispositivoId,
+            usuarioNombre: dbUsuarios[usuarioActivoId]?.nombre || "Operario",
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            estado: "escribiendo"
+          });
+
+          // MAGIA DE FIREBASE: Si este usuario se desconecta/cierra el navegador, el lock se borra solo
+          lockRefActivo.onDisconnect().remove();
+          
+          liberarInterfazEscritura();
+        }
+      });
+
+      // Escuchamos en tiempo real si alguien más entra a pisar o si se libera
+      lockRefActivo.on('value', (snapshot) => {
+        const val = snapshot.val();
+        if (val && val.dispositivo !== dispositivoId) {
+          bloquearInterfazEscritura(val.usuarioNombre || "Otro usuario");
+        }
+      });
+    }
+
+    // 2. Deshabilitar formularios e inputs si el semáforo está en ROJO
+    function bloquearInterfazEscritura(nombreUsuario) {
+      let semaforo = document.getElementById("semaforo-badge");
+      if (!semaforo) {
+        const headerDiv = document.querySelector('header > div:last-child');
+        if (headerDiv) {
+          semaforo = document.createElement('div');
+          semaforo.id = "semaforo-badge";
+          headerDiv.prepend(semaforo);
+        }
+      }
+      if (semaforo) {
+        semaforo.className = "text-[10px] bg-red-600 text-white px-2 py-0.5 rounded-full font-bold shadow-sm whitespace-nowrap animate-pulse";
+        semaforo.innerHTML = `🔴 Ocupado por: ${nombreUsuario} (Solo Lectura)`;
+      }
+
+      // Deshabilitamos de forma preventiva los botones de carga principales de reparto
+      document.querySelectorAll('#sec-reparto input, #sec-reparto select, #sec-reparto button').forEach(el => {
+        if (!el.id.includes('fecha-destino') && !el.id.includes('select-panaderia')) {
+          el.disabled = true;
+          el.style.opacity = '0.6';
+        }
+      });
+    }
+
+    // 3. Habilitar formularios si el semáforo está en VERDE
+    function liberarInterfazEscritura() {
+      let semaforo = document.getElementById("semaforo-badge");
+      if (semaforo) {
+        semaforo.className = "text-[10px] bg-green-600 text-white px-2 py-0.5 rounded-full font-bold shadow-sm whitespace-nowrap";
+        semaforo.innerHTML = `🟢 Fecha Libre (Escritura Habilitada)`;
+      }
+
+      document.querySelectorAll('#sec-reparto input, #sec-reparto select, #sec-reparto button').forEach(el => {
+        el.disabled = false;
+        el.style.opacity = '1';
+      });
+    }
 
     function generarID(prefijo) {
   return prefijo + '_' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
@@ -1254,33 +1356,36 @@
     var dbRemanentesCuadra = cargarDB('db_remanentes_cuadra', {});
 
     // FUNCIÓN DE GUARDADO ATÓMICO POR ID PARA EVITAR QUE UN CELULAR PISE A OTRO
-    function guardarRepartoConSincronizacion(fechaDestino, nuevoPedido) {
-      if (!dbRepartos[fechaDestino]) dbRepartos[fechaDestino] = {};
-      
-      if (Array.isArray(dbRepartos[fechaDestino])) {
-        let objConvertido = {};
-        dbRepartos[fechaDestino].forEach(p => { 
-          if (p) objConvertido[p.id || generarID('REP')] = p; 
-        });
-        dbRepartos[fechaDestino] = objConvertido;
-      }
+  function guardarRepartoConSincronizacion(fechaDestino, nuevoPedido) {
+  if (!dbRepartos[fechaDestino]) dbRepartos[fechaDestino] = {};
+  
+  // Si la fecha estaba como Array, la normalizamos a objeto de forma segura
+  if (Array.isArray(dbRepartos[fechaDestino])) {
+    let objConvertido = {};
+    dbRepartos[fechaDestino].forEach(p => { 
+      if (p) objConvertido[p.id || generarID('REP')] = p; 
+    });
+    dbRepartos[fechaDestino] = objConvertido;
+  }
 
-      nuevoPedido.dispositivoOrigen = dispositivoId;
-      
-      dbRepartos[fechaDestino][nuevoPedido.id] = nuevoPedido;
-      localStorage.setItem('db_repartos', JSON.stringify(dbRepartos));
-      
-      if (rtdb) {
-        rtdb.ref(`db_repartos/${fechaDestino}/${nuevoPedido.id}`).set(nuevoPedido).catch(err => {
-          console.warn("Aviso de sincronización en red:", err);
-        });
-      }
-      
-      renderizarPlanillaReparto();
-      renderizarCuadra();
-      renderizarReportesMensuales();
-    }
-
+  nuevoPedido.dispositivoOrigen = dispositivoId;
+  const idUnico = nuevoPedido.id || generarID('REP');
+  nuevoPedido.id = idUnico;
+  
+  // Guardado individual por clave de ID (nunca pisa a los demás pedidos de la fecha)
+  dbRepartos[fechaDestino][idUnico] = nuevoPedido;
+  localStorage.setItem('db_repartos', JSON.stringify(dbRepartos));
+  
+  if (rtdb) {
+    rtdb.ref(`db_repartos/${fechaDestino}/${idUnico}`).set(nuevoPedido).catch(err => {
+      console.warn("Aviso de sincronización en red:", err);
+    });
+  }
+  
+  renderizarPlanillaReparto();
+  renderizarCuadra();
+  renderizarReportesMensuales();
+}
     function cargarSelectorRemanentesCuadra() {
       const sel = document.getElementById('ajuste-cuadra-producto');
       if (!sel) return;
@@ -1399,27 +1504,40 @@
     var dbBackupsDiarios = {};
     var dbRepartosCerrados = {};
     
-    let dispositivoId = localStorage.getItem('dispositivo_usuario_id');
+   let dispositivoId = localStorage.getItem('dispositivo_usuario_id');
     if (!dispositivoId) {
       dispositivoId = generarID('DEV');
       localStorage.setItem('dispositivo_usuario_id', dispositivoId);
     }
     var usuarioActivoId = localStorage.getItem(`usuario_activo_${dispositivoId}`) || 'USR-1';
 
-    function cargarDB(key, fallback) {
+function cargarDB(key, fallback) {
       const data = localStorage.getItem(key);
       let valorInicial = data ? JSON.parse(data) : fallback;
 
+      // Aplicamos de inmediato los datos locales para que la app abra al instante (Cero demora)
       aplicarDatosEnMemoriaLocal(key, valorInicial);
 
       if (rtdb) {
         try {
-          rtdb.ref(key).on('value', (snapshot) => {
+          // CAMBIO CRÍTICO: Usamos .once('value') en lugar de .on('value'). 
+          // Esto descarga los datos de la nube una sola vez al abrir, evitando que un dispositivo 
+          // pisotee a otro en tiempo real mientras estás operando.
+          rtdb.ref(key).once('value', (snapshot) => {
             const val = snapshot.val();
             if (val !== null && val !== undefined) {
-              valorInicial = val;
-              localStorage.setItem(key, JSON.stringify(val));
-              aplicarDatosEnMemoriaLocal(key, val);
+              // Fusión inteligente (Merge) para objetos indexados por ID
+              if (typeof val === 'object' && !Array.isArray(val) && typeof valorInicial === 'object' && !Array.isArray(valorInicial)) {
+                // Combinamos la nube y lo local priorizando IDs existentes para no perder nada
+                let datosFusionados = { ...val, ...valorInicial };
+                valorInicial = datosFusionados;
+                localStorage.setItem(key, JSON.stringify(datosFusionados));
+                aplicarDatosEnMemoriaLocal(key, datosFusionados);
+              } else {
+                valorInicial = val;
+                localStorage.setItem(key, JSON.stringify(val));
+                aplicarDatosEnMemoriaLocal(key, val);
+              }
             } else if (!data) {
               rtdb.ref(key).set(fallback);
             }
@@ -1430,7 +1548,6 @@
       }
       return valorInicial;
     }
-
     function aplicarDatosEnMemoriaLocal(key, val) {
       if (key === 'db_repartos') { 
         dbRepartos = val || {}; 
@@ -1590,6 +1707,11 @@
       let d = new Date();
       if (hora >= 15) {
         d.setDate(d.getDate() + 1);
+        // Limpieza automática de notas/pedidos especiales temporales al iniciar nuevo ciclo de día pasado las 15 hs[cite: 1]
+        const nuevaFechaStr = d.toISOString().split('T')[0];
+        if (!dbNotasMostrador[nuevaFechaStr]) {
+          dbNotasMostrador[nuevaFechaStr] = [];
+        }
       }
       const year = d.getFullYear();
       const month = String(d.getMonth() + 1).padStart(2, '0');
@@ -1599,7 +1721,6 @@
       const inputCuadra = document.getElementById('cuadra-fecha-selector');
       if (inputCuadra) inputCuadra.value = fechaCuadraActiva;
     }
-
     function cambiarFechaCuadra() {
       const input = document.getElementById('cuadra-fecha-selector');
       if (input && input.value) {
@@ -1608,10 +1729,11 @@
       }
     }
 
-    function cambiarFechaDestinoPedidos() {
+  function cambiarFechaDestinoPedidos() {
+      const fechaDestino = document.getElementById('rep-fecha-destino').value || fechaActual;
+      adquirirBloqueoFecha(fechaDestino); // <--- Activa el semáforo para esta fecha
       renderizarPlanillaReparto();
     }
-
     function cambiarFechaHojaRuta() {
       renderizarPlanillaReparto();
     }
@@ -2261,7 +2383,40 @@ function aplicarRestriccionesEspigaUI() {
       if (!panificado) return;
       inputPrecio.value = (valCant > (panificado.unidPorPaq || 1)) ? panificado.mayor : panificado.menor;
     }
+function verificarEsAdmin() {
+      // Asumiendo que tenés un objeto de usuarios activos o variable de sesión
+      const usuarioActual = window.dbUsuarios ? dbUsuarios[usuarioActivoId] : null;
+      return usuarioActual && usuarioActual.rol === 'admin';
+    }
 
+ function aplicarRestriccionesAdminEnPrecios() {
+      const esAdmin = verificarEsAdmin();
+      
+      // Bloquear o mostrar elementos con clase solo-admin
+      document.querySelectorAll('.solo-admin').forEach(el => {
+        if (!esAdmin) {
+          el.disabled = true;
+          el.style.display = 'none';
+        } else {
+          el.disabled = false;
+          el.style.display = '';
+        }
+      });
+
+      // Deshabilitar todos los inputs, selects y botones de eliminación dentro de las tablas de precios si no es admin
+      document.querySelectorAll('#tabla-panificados-precios input, #tabla-panificados-precios button, #tabla-catalogo-precios input, #tabla-catalogo-precios button').forEach(el => {
+        el.disabled = !esAdmin;
+        if (!esAdmin) {
+          el.style.backgroundColor = '#f3f4f6';
+          el.style.cursor = 'not-allowed';
+          el.style.opacity = '0.7';
+        } else {
+          el.style.backgroundColor = '';
+          el.style.cursor = '';
+          el.style.opacity = '1';
+        }
+      });
+    }
     function cargarSelectorDespachoReparto() {
       const sel = document.getElementById('rep-despacho-producto');
       if (!sel) return;
@@ -2283,7 +2438,53 @@ function aplicarRestriccionesEspigaUI() {
       const precioUnit = prodCatalogo ? (prodCatalogo.reparto || prodCatalogo.mostrador || 0) : 0;
       inputSubtotal.value = Number((precioUnit * valCant).toFixed(2));
     }
+// Aplicar aumento masivo con respaldo automático
+    function aplicarAumentoMasivo(porcentaje) {
+      if (!verificarEsAdmin()) {
+        alert("Acción restringida solo al Administrador General.");
+        return;
+      }
 
+      // 1. Guardar copia de seguridad exacta del estado anterior de los precios
+      const respaldoPrecios = JSON.parse(JSON.stringify(dbPanificados)); // o la tabla de precios que uses
+      localStorage.setItem('respaldo_precios_anterior', JSON.stringify(respaldoPrecios));
+
+      // 2. Aplicar el aumento a cada producto
+      const factor = 1 + (porcentaje / 100);
+      for (let id in dbPanificados) {
+        if (dbPanificados[id].precioMinorista) {
+          dbPanificados[id].precioMinorista = Math.round(dbPanificados[id].precioMinorista * factor);
+        }
+        if (dbPanificados[id].precioMayorista) {
+          dbPanificados[id].precioMayorista = Math.round(dbPanificados[id].precioMayorista * factor);
+        }
+      }
+
+      // 3. Guardar y actualizar vista
+      guardarYSincronizarPrecios(); 
+      alert(`¡Aumento del ${porcentaje}% aplicado con éxito! Se creó un punto de restauración.`);
+    }
+
+    // Botón para deshacer el último aumento
+    function deshacerUltimoAumento() {
+      if (!verificarEsAdmin()) {
+        alert("Acción restringida solo al Administrador General.");
+        return;
+      }
+
+      const respaldo = localStorage.getItem('respaldo_precios_anterior');
+      if (!respaldo) {
+        alert("No hay ningún aumento previo registrado para deshacer.");
+        return;
+      }
+
+      if (confirm("¿Estás seguro de volver a los precios anteriores al último aumento?")) {
+        dbPanificados = JSON.parse(respaldo);
+        guardarYSincronizarPrecios();
+        localStorage.removeItem('respaldo_precios_anterior'); // Limpiamos el respaldo
+        alert("Se han restaurado los precios anteriores correctamente.");
+      }
+    }
     function obtenerSufijoSucursalActual() {
       const selectPanaderia = document.getElementById('select-panaderia-activa');
       const sucursalActual = selectPanaderia ? selectPanaderia.value : 'alem';
@@ -2419,41 +2620,41 @@ const fechaSeleccionada = "2026-06-06";
 const miIdDispositivo = "Dispositivo_Raul_Celular"; // O un ID único generado por sesión
 
 // 1. Verificar y adquirir el bloqueo al abrir la fecha
-async function intentarBloquearFecha(fecha) {
-    const lockRef = db.ref(`locks/${fecha}`);
-    
-    lockRef.once('value', (snapshot) => {
-        const datosLock = snapshot.val();
-        
-        if (datosLock && datosLock.usuario !== miIdDispositivo) {
-            // BLOQUEADO POR OTRO USUARIO
-            mostrarAdvertenciaBloqueo(datosLock.usuario);
-        } else {
-            // LIBRE: Tomar posesión del bloqueo para este dispositivo
-            lockRef.set({
-                usuario: miIdDispositivo,
-                timestamp: Date.now(),
-                estado: "ocupado"
-            });
-            habilitarFormulario();
-        }
-    });
-}
-
+function intentarBloquearFecha(fecha) {
+      if (!rtdb) return;
+      const lockRef = rtdb.ref(`locks/${fecha}`);
+      
+      lockRef.once('value', (snapshot) => {
+          const datosLock = snapshot.val();
+          
+          if (datosLock && datosLock.usuario !== dispositivoId) {
+              mostrarAdvertenciaBloqueo(datosLock.usuario);
+          } else {
+              lockRef.set({
+                  usuario: dispositivoId,
+                  timestamp: Date.now(),
+                  estado: "ocupado"
+              });
+          }
+      });
+    }
 // 2. Mostrar la leyenda restrictiva en la interfaz
 function mostrarAdvertenciaBloqueo(usuarioOcupante) {
-    const semaforo = document.getElementById("semaforo-badge");
-    semaforo.className = "semaforo-rojo"; // Clase visual del Source 6
-    semaforo.innerText = `⚠️ Editando por: ${usuarioOcupante}`;
-    
-    // Deshabilitar inputs y botones de guardado para evitar sobrescrituras
-    document.querySelectorAll(".input-reparto, .btn-guardar").forEach(el => {
-        el.disabled = true;
-    });
-    
-    alert(`Atención: El usuario/dispositivo "${usuarioOcupante}" está modificando esta fecha en este momento. No puedes guardar cambios para evitar errores.`);
-}
-
+      let semaforo = document.getElementById("semaforo-badge");
+      if (!semaforo) {
+        // Si no existe el badge visualmente, lo creamos en el header para que te avise
+        const headerDiv = document.querySelector('header > div:last-child');
+        if (headerDiv) {
+          semaforo = document.createElement('div');
+          semaforo.id = "semaforo-badge";
+          headerDiv.prepend(semaforo);
+        }
+      }
+      if (semaforo) {
+        semaforo.className = "text-[10px] bg-red-600 text-white px-2 py-0.5 rounded-full font-bold shadow-sm whitespace-nowrap";
+        semaforo.innerHTML = `⚠️ Editando otro usuario`;
+      }
+    }
 // 3. Liberar el bloqueo al salir o cambiar de fecha (Desonexión o cambio de vista)
 function liberarBloqueoFecha(fecha) {
     const lockRef = db.ref(`locks/${fecha}`);
@@ -2813,6 +3014,7 @@ function obtenerPedidosComoArray(fechaSeleccionada) {
  function guardarDB(key, valor) {
       localStorage.setItem(key, JSON.stringify(valor));
       if (rtdb) {
+        // Guardado seguro que nunca corrompe estructuras enteras
         rtdb.ref(key).set(valor).catch(err => console.warn("Error al guardar en la nube:", err));
       }
     }
@@ -2984,6 +3186,122 @@ function imprimirReparto() {
 
   window.print();
 }
+function imprimirCatalogoDespacho() {
+      let contenidoImpresion = `
+        <html>
+          <head>
+            <title>Catálogo de Despacho</title>
+            <style>
+              body { font-family: Arial, sans-serif; padding: 20px; color: #333; }
+              h2 { text-align: center; color: #333; margin-bottom: 5px; }
+              .fecha { text-align: center; font-size: 12px; color: #666; margin-bottom: 20px; }
+              table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+              th, td { border: 1px solid #ccc; padding: 8px 12px; text-align: left; font-size: 13px; }
+              th { background-color: #f4f4f4; }
+              .text-right { text-align: right; }
+            </style>
+          </head>
+          <body>
+            <h2>Catálogo General de Despacho</h2>
+            <div class="fecha">Generado el: ${new Date().toLocaleDateString()}</div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Producto</th>
+                  <th class="text-right">Precio Mostrador ($)</th>
+                  <th class="text-right">Re-Venta / Reparto ($)</th>
+                  <th class="text-right">Unidad o 1/4 ($)</th>
+                </tr>
+              </thead>
+              <tbody>
+      `;
+
+      for (let id in dbProductos) {
+        const p = dbProductos[id];
+        contenidoImpresion += `
+          <tr>
+            <td>${p.nombre || id}</td>
+            <td class="text-right">$ ${p.mostrador || 0}</td>
+            <td class="text-right">$ ${p.reparto || 0}</td>
+            <td class="text-right">$ ${p.unOcuarto || 0}</td>
+          </tr>
+        `;
+      }
+
+      contenidoImpresion += `
+              </tbody>
+            </table>
+          </body>
+        </html>
+      `;
+
+      const ventanaImpresion = window.open('', '_blank', 'width=800,height=600');
+      ventanaImpresion.document.write(contenidoImpresion);
+      ventanaImpresion.document.close();
+      ventanaImpresion.focus();
+      setTimeout(() => {
+        ventanaImpresion.print();
+        ventanaImpresion.close();
+      }, 300);
+    }
+function imprimirListadoProductos() {
+      let contenidoImpresion = `
+        <html>
+          <head>
+            <title>Listado de Productos Panificados</title>
+            <style>
+              body { font-family: Arial, sans-serif; padding: 20px; color: #333; }
+              h2 { text-align: center; color: #333; margin-bottom: 5px; }
+              .fecha { text-align: center; font-size: 12px; color: #666; margin-bottom: 20px; }
+              table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+              th, td { border: 1px solid #ccc; padding: 8px 12px; text-align: left; font-size: 13px; }
+              th { background-color: #f4f4f4; }
+              .text-right { text-align: right; }
+            </style>
+          </head>
+          <body>
+            <h2>Listado General de Productos Panificados</h2>
+            <div class="fecha">Generado el: ${new Date().toLocaleDateString()}</div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Producto</th>
+                  <th>Mín. x Paquete</th>
+                  <th class="text-right">Precio Minorista</th>
+                  <th class="text-right">Precio Mayorista</th>
+                </tr>
+              </thead>
+              <tbody>
+      `;
+
+      for (let id in dbPanificados) {
+        const p = dbPanificados[id];
+        contenidoImpresion += `
+          <tr>
+            <td>${p.nombre || 'Sin nombre'}</td>
+            <td>${p.minPaquete || 1}</td>
+            <td class="text-right">$ ${p.precioMinorista || 0}</td>
+            <td class="text-right">$ ${p.precioMayorista || 0}</td>
+          </tr>
+        `;
+      }
+
+      contenidoImpresion += `
+              </tbody>
+            </table>
+          </body>
+        </html>
+      `;
+
+      const ventanaImpresion = window.open('', '_blank', 'width=800,height=600');
+      ventanaImpresion.document.write(contenidoImpresion);
+      ventanaImpresion.document.close();
+      ventanaImpresion.focus();
+      setTimeout(() => {
+        ventanaImpresion.print();
+        ventanaImpresion.close();
+      }, 300);
+    }
    function renderizarCuadra() {
       const fechaFormateada = obtenerFechaConDia(fechaCuadraActiva);
       const lblCua = document.getElementById('label-fecha-cuadra'); 
@@ -3120,27 +3438,37 @@ function imprimirReparto() {
     }
 
 function calcularSaldoCliente(cliId) {
-      let saldo = 0;
-      // Los pedidos de reparto SOLO suman a la cuenta corriente si el reparto de ese día YA ESTÁ CERRADO y quedaron pendientes de pago.
-      Object.entries(dbRepartos).forEach(([fecha, pDia]) => { 
-        const estaCerrado = dbRepartosCerrados[fecha] === true;
-        if (estaCerrado) {
-          const pDiaArr = Array.isArray(pDia) ? pDia : Object.values(pDia);
-          pDiaArr.forEach(p => { 
-            if (p && p.clienteId === cliId && !p.pagado) {
-              saldo += p.monto; 
-            }
-          });
+  let saldo = 0;
+  
+  // Recorremos todos los repartos cerrados
+  Object.entries(dbRepartos).forEach(([fecha, pDia]) => { 
+    const estaCerrado = dbRepartosCerrados[fecha] === true;
+    if (estaCerrado && pDia) {
+      // Normalizamos a array sin importar si está guardado como objeto o array
+      const pDiaArr = Array.isArray(pDia) ? pDia : Object.values(pDia);
+      
+      pDiaArr.forEach(p => { 
+        if (p && p.clienteId === cliId && !p.pagado) {
+          saldo += (p.monto || 0); 
         }
       });
-
-      // Los cargos manuales de cuenta corriente sí suman siempre
-      Object.values(dbHistorialClientes[cliId] || {}).forEach(m => { 
-        if (m.tipo === 'debito') saldo += m.monto; 
-        if (m.tipo === 'credito') saldo -= m.monto; 
-      });
-      return saldo;
     }
+  });
+
+  // Sumamos/restamos los cargos y pagos manuales de la cuenta corriente
+  const histCli = dbHistorialClientes[cliId] || {};
+  const histCliArr = Array.isArray(histCli) ? histCli : Object.values(histCli);
+  
+  histCliArr.forEach(m => { 
+    if (m) {
+      const montoMov = parseFloat(m.monto) || 0;
+      if (m.tipo === 'debito') saldo += montoMov; 
+      if (m.tipo === 'credito') saldo -= montoMov; 
+    }
+  });
+  
+  return saldo;
+}
   function renderizarTablaHistorialCliente() {
       if (!clienteSeleccionadoId) return;
       const tbody = document.getElementById('tabla-historial-cliente'); 
@@ -4762,24 +5090,52 @@ function verificarCierreAutomaticoGlobal() {
       `;
     }
 
-    function renderizarTablaPanificados() {
-      const tbody = document.getElementById('tabla-panificados-precios'); if (!tbody) return; tbody.innerHTML = '';
+   function renderizarTablaPanificados() {
+      const tbody = document.getElementById('tabla-panificados-precios'); 
+      if (!tbody) return; 
+      tbody.innerHTML = '';
+
+      // Verificamos si es admin para bloquear o dejar libre
+      const esAdmin = verificarEsAdmin();
+      const estadoDisabled = esAdmin ? '' : 'disabled style="background-color: #f3f4f6; cursor: not-allowed;"';
+
       Object.entries(dbPanificados).sort((a,b) => a[0].localeCompare(b[0])).forEach(([nombre, p]) => {
-        const tr = document.createElement('tr'); tr.className = "border-b hover:bg-gray-50";
+        const tr = document.createElement('tr'); 
+        tr.className = "border-b hover:bg-gray-50";
+        
         const menorFmt = Number(p.menor || 0).toLocaleString('es-AR', { minimumFractionDigits: 0 });
         const mayorFmt = Number(p.mayor || 0).toLocaleString('es-AR', { minimumFractionDigits: 0 });
 
         tr.innerHTML = `
           <td class="p-2 font-bold">${nombre}</td>
-          <td class="p-2"><input type="number" value="${p.unidPorPaq || 0}" onchange="actualizarPanificadoDirecto('${nombre}', 'unidPorPaq', this)" class="border p-1 rounded w-20 text-center font-bold"></td>
-          <td class="p-2"><div class="flex items-center gap-1"><span>$</span><input type="text" value="${menorFmt}" onchange="actualizarPanificadoDirecto('${nombre}', 'menor', this)" class="border p-1 rounded w-28 font-bold text-sm"></div></td>
-          <td class="p-2"><div class="flex items-center gap-1"><span>$</span><input type="text" value="${mayorFmt}" onchange="actualizarPanificadoDirecto('${nombre}', 'mayor', this)" class="border p-1 rounded w-28 font-bold text-amber-900 text-sm"></div></td>
-          <td class="p-2 text-center"><button onclick="eliminarPanificado('${nombre}')" class="text-xs bg-red-600 text-white px-2 py-1 rounded font-bold hover:bg-red-700 shadow">✕</button></td>
+          <td class="p-2">
+            <input type="number" value="${p.unidPorPaq || 0}" ${estadoDisabled} 
+              onchange="actualizarPanificadoDirecto('${nombre}', 'unidPorPaq', this)" 
+              class="border p-1 rounded w-20 text-center font-bold">
+          </td>
+          <td class="p-2">
+            <div class="flex items-center gap-1">
+              <span>$</span>
+              <input type="text" value="${menorFmt}" ${estadoDisabled} 
+                onchange="actualizarPanificadoDirecto('${nombre}', 'menor', this)" 
+                class="border p-1 rounded w-28 font-bold text-sm">
+            </div>
+          </td>
+          <td class="p-2">
+            <div class="flex items-center gap-1">
+              <span>$</span>
+              <input type="text" value="${mayorFmt}" ${estadoDisabled} 
+                onchange="actualizarPanificadoDirecto('${nombre}', 'mayor', this)" 
+                class="border p-1 rounded w-28 font-bold text-amber-900 text-sm">
+            </div>
+          </td>
+          <td class="p-2 text-center">
+            ${esAdmin ? `<button onclick="eliminarPanificado('${nombre}')" class="text-xs bg-red-600 text-white px-2 py-1 rounded font-bold hover:bg-red-700 shadow">✕</button>` : '<span class="text-gray-400 text-xs">Lectura</span>'}
+          </td>
         `;
         tbody.appendChild(tr);
       });
     }
-
     function agregarNuevoPanificado() {
       const nombre = document.getElementById('nuevo-panificado-nombre').value.trim();
       const unids = parseInt(document.getElementById('nuevo-panificado-unidades').value);
@@ -4835,12 +5191,20 @@ function verificarCierreAutomaticoGlobal() {
     }
 
     function renderizarTablaCatalogo() {
-      const tbody = document.getElementById('tabla-catalogo-precios'); if (!tbody) return; tbody.innerHTML = '';
+      const tbody = document.getElementById('tabla-catalogo-precios'); 
+      if (!tbody) return; 
+      tbody.innerHTML = '';
+      
       const busqueda = (document.getElementById('buscar-producto')?.value || '').toLowerCase();
       
+      // Verificamos si es admin para bloquear o dejar libre
+      const esAdmin = verificarEsAdmin();
+      const estadoDisabled = esAdmin ? '' : 'disabled style="background-color: #f3f4f6; cursor: not-allowed;"';
+
       Object.entries(dbProductos).sort((a,b) => a[0].localeCompare(b[0])).forEach(([nombre, p]) => {
         if (busqueda && !nombre.toLowerCase().includes(busqueda)) return;
-        const tr = document.createElement('tr'); tr.className = "border-b hover:bg-gray-50";
+        const tr = document.createElement('tr'); 
+        tr.className = "border-b hover:bg-gray-50";
         
         const mostradorFmt = Number(p.mostrador || 0).toLocaleString('es-AR', { minimumFractionDigits: 0 });
         const repartoFmt = Number(p.reparto || 0).toLocaleString('es-AR', { minimumFractionDigits: 0 });
@@ -4848,10 +5212,33 @@ function verificarCierreAutomaticoGlobal() {
 
         tr.innerHTML = `
           <td class="p-2 font-bold">${nombre}</td>
-          <td class="p-2"><div class="flex items-center gap-1"><span>$</span><input type="text" value="${mostradorFmt}" onchange="actualizarProductoDirecto('${nombre}', 'mostrador', this)" class="border p-1 rounded w-28 font-bold text-sm"></div></td>
-          <td class="p-2 font-bold text-amber-900"><div class="flex items-center gap-1"><span>$</span><input type="text" value="${repartoFmt}" onchange="actualizarProductoDirecto('${nombre}', 'reparto', this)" class="border p-1 rounded w-28 font-bold text-amber-900 text-sm"></div></td>
-          <td class="p-2"><div class="flex items-center gap-1"><span>$</span><input type="text" value="${unOcuartoFmt}" onchange="actualizarProductoDirecto('${nombre}', 'unOcuarto', this)" class="border p-1 rounded w-28 font-bold text-sm"></div></td>
-          <td class="p-2 text-center"><button onclick="eliminarProductoCatalogo('${nombre}')" class="text-xs bg-red-600 text-white px-2 py-1 rounded font-bold hover:bg-red-700 shadow">✕</button></td>
+          <td class="p-2">
+            <div class="flex items-center gap-1">
+              <span>$</span>
+              <input type="text" value="${mostradorFmt}" ${estadoDisabled} 
+                onchange="actualizarProductoDirecto('${nombre}', 'mostrador', this)" 
+                class="border p-1 rounded w-28 font-bold text-sm">
+            </div>
+          </td>
+          <td class="p-2 font-bold text-amber-900">
+            <div class="flex items-center gap-1">
+              <span>$</span>
+              <input type="text" value="${repartoFmt}" ${estadoDisabled} 
+                onchange="actualizarProductoDirecto('${nombre}', 'reparto', this)" 
+                class="border p-1 rounded w-28 font-bold text-amber-900 text-sm">
+            </div>
+          </td>
+          <td class="p-2">
+            <div class="flex items-center gap-1">
+              <span>$</span>
+              <input type="text" value="${unOcuartoFmt}" ${estadoDisabled} 
+                onchange="actualizarProductoDirecto('${nombre}', 'unOcuarto', this)" 
+                class="border p-1 rounded w-28 font-bold text-sm">
+            </div>
+          </td>
+          <td class="p-2 text-center">
+            ${esAdmin ? `<button onclick="eliminarProductoCatalogo('${nombre}')" class="text-xs bg-red-600 text-white px-2 py-1 rounded font-bold hover:bg-red-700 shadow">✕</button>` : '<span class="text-gray-400 text-xs">Lectura</span>'}
+          </td>
         `;
         tbody.appendChild(tr);
       });
@@ -5000,43 +5387,43 @@ function verificarCierreAutomaticoGlobal() {
     }
 
     function descargarBackupManual() {
-  const usuarioActual = dbUsuarios[usuarioActivoId] ? dbUsuarios[usuarioActivoId].nombre : "Desconocido";
-  
-  const backupData = {
-    // 1. METADATOS DE AUDITORÍA (Quién y cuándo hizo el respaldo)
-    auditoria: {
-      fechaRespaldo: new Date().toISOString(),
-      usuarioId: usuarioActivoId,
-      usuarioNombre: usuarioActual,
-      dispositivoId: dispositivoId || "Desconocido",
-      sucursal: obtenerSucursalActiva()
-    },
-    // 2. TOTALIDAD DE LOS MÓDULOS DEL SISTEMA
-    db_usuarios,
-    db_panificados,
-    db_productos,
-    db_clientes,
-    db_proveedores,
-    db_insumos,
-    db_repartos,
-    db_recurrentes,
-    db_notas_mostrador,
-    db_historial_clientes,
-    db_historial_proveedores,
-    db_cajas_diarias,
-    db_egresos_caja,
-    db_repartos_cerrados,
-    db_remanentes_cuadra
-  };
+      const usuarioActual = dbUsuarios[usuarioActivoId] ? dbUsuarios[usuarioActivoId].nombre : "Desconocido";
+      
+      const backupData = {
+        auditoria: {
+          fechaRespaldo: new Date().toISOString(),
+          usuarioId: usuarioActivoId,
+          usuarioNombre: usuarioActual,
+          dispositivoId: dispositivoId || "Desconocido",
+          sucursal: obtenerSucursalActiva()
+        },
+        db_usuarios: dbUsuarios,
+        db_panificados: dbPanificados,
+        db_productos: dbProductos,
+        db_clientes: dbClientes,
+        db_proveedores: dbProveedores,
+        db_insumos: dbInsumos,
+        db_repartos: dbRepartos,
+        db_recurrentes: dbRecurrentes,
+        db_notas_mostrador: dbNotasMostrador,
+        db_historial_clientes: dbHistorialClientes,
+        db_historial_proveedores: dbHistorialProveedores,
+        db_cajas_diarias: dbCajasDiarias,
+        db_egresos_caja: dbEgresosCaja,
+        db_repartos_cerrados: dbRepartosCerrados,
+        db_remanentes_cuadra: dbRemanentesCuadra
+      };
 
-  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
-  const downloadAnchor = document.createElement('a');
-  downloadAnchor.setAttribute("href", dataStr);
-  downloadAnchor.setAttribute("download", `Respaldo_Total_Panaderia_${obtenerFechaHoyLocal()}_User_${usuarioActual.replace(/\s+/g, '_')}.json`);
-  document.body.appendChild(downloadAnchor);
-  downloadAnchor.click();
-  downloadAnchor.remove();
-}
+      const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.href = url;
+      downloadAnchor.download = `Respaldo_Total_Panaderia_${obtenerFechaHoyLocal()}_User_${usuarioActual.replace(/\s+/g, '_')}.json`;
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      document.body.removeChild(downloadAnchor);
+      URL.revokeObjectURL(url);
+    }
     function subirBackupManual(event) {
   const file = event.target.files[0];
   if (!file) return;
