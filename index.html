@@ -309,6 +309,7 @@
       </div>
 
       <div class="bg-amber-50 p-4 rounded-xl shadow border border-amber-300 space-y-3">
+     <div id="panel-ajuste-stock-cuadra" class="bg-amber-50 p-4 rounded-xl shadow border border-amber-300 space-y-3">
         <h2 class="text-base font-bold text-amber-900 flex items-center gap-1">🔄 Ajuste de Producción por Stock Remanente / Cancelación</h2>
         <p class="text-xs text-gray-600">Permite descontar de la producción del día los saldos sobrantes o pedidos cancelados para evitar sobreproducción, sin alterar las cuentas corrientes.</p>
         
@@ -913,7 +914,7 @@
         </div>
       </div>
 
-      <div class="overflow-x-auto max-h-60 overflow-y-auto">
+      <div class="overflow-x-auto max-h-[50vh] overflow-y-auto">
         <table class="w-full text-left text-xs md:text-sm">
           <thead>
             <tr class="bg-amber-100 border-b text-amber-900 font-bold sticky top-0">
@@ -1000,7 +1001,7 @@
         <button type="button" onclick="registrarPagoProveedor()" class="bg-green-700 text-white font-bold px-3 py-2 rounded text-xs hover:bg-green-800 w-full">Registrar Pago</button>
       </div>
 
-      <div class="overflow-x-auto max-h-60 overflow-y-auto border rounded-lg mt-2 bg-white">
+      <div class="overflow-x-auto max-h-[50vh] overflow-y-auto border rounded-lg mt-2 bg-white">
         <table class="w-full text-left text-xs md:text-sm">
           <thead>
             <tr class="bg-amber-100 border-b text-amber-900 font-bold sticky top-0">
@@ -1515,21 +1516,19 @@ function cargarDB(key, fallback) {
       const data = localStorage.getItem(key);
       let valorInicial = data ? JSON.parse(data) : fallback;
 
-      // Aplicamos de inmediato los datos locales para que la app abra al instante (Cero demora)
+      // Aplicamos los datos locales de inmediato para apertura instantánea
       aplicarDatosEnMemoriaLocal(key, valorInicial);
 
       if (rtdb) {
         try {
-          // CAMBIO CRÍTICO: Usamos .once('value') en lugar de .on('value'). 
-          // Esto descarga los datos de la nube una sola vez al abrir, evitando que un dispositivo 
-          // pisotee a otro en tiempo real mientras estás operando.
-          rtdb.ref(key).once('value', (snapshot) => {
+          // CAMBIO CLAVE: Usamos .on('value') en lugar de .once('value') 
+          // Esto mantiene un canal abierto: si el celular guarda algo, la PC lo recibe al instante.
+          rtdb.ref(key).on('value', (snapshot) => {
             const val = snapshot.val();
             if (val !== null && val !== undefined) {
-              // Fusión inteligente (Merge) para objetos indexados por ID
               if (typeof val === 'object' && !Array.isArray(val) && typeof valorInicial === 'object' && !Array.isArray(valorInicial)) {
-                // Combinamos la nube y lo local priorizando IDs existentes para no perder nada
-                let datosFusionados = { ...val, ...valorInicial };
+                // Fusionamos inteligentemente priorizando la frescura de los datos entrantes
+                let datosFusionados = { ...valorInicial, ...val };
                 valorInicial = datosFusionados;
                 localStorage.setItem(key, JSON.stringify(datosFusionados));
                 aplicarDatosEnMemoriaLocal(key, datosFusionados);
@@ -1538,8 +1537,6 @@ function cargarDB(key, fallback) {
                 localStorage.setItem(key, JSON.stringify(val));
                 aplicarDatosEnMemoriaLocal(key, val);
               }
-            } else if (!data) {
-              rtdb.ref(key).set(fallback);
             }
           });
         } catch (e) {
@@ -1551,15 +1548,35 @@ function cargarDB(key, fallback) {
     function aplicarDatosEnMemoriaLocal(key, val) {
       if (key === 'db_repartos') { 
         dbRepartos = val || {}; 
+        
+        // CONVERSOR UNIVERSAL: Asegura que cualquier pedido manual o antiguo se convierta a un objeto indexado legible
         Object.keys(dbRepartos).forEach(fec => {
-          if (Array.isArray(dbRepartos[fec])) {
-            let obj = {};
-            dbRepartos[fec].forEach(p => { 
-              if (p) obj[p.id || generarID('REP')] = p; 
-            });
-            dbRepartos[fec] = obj;
+          let nodoDia = dbRepartos[fec];
+          if (nodoDia) {
+            let objConvertido = {};
+            if (Array.isArray(nodoDia)) {
+              nodoDia.forEach(p => { 
+                if (p) {
+                  let idUnico = p.id || p.idUnico || generarID('REP');
+                  p.id = idUnico;
+                  objConvertido[idUnico] = p; 
+                }
+              });
+            } else if (typeof nodoDia === 'object') {
+              // Si es un objeto, revisamos que cada elemento tenga su ID interno correcto
+              Object.keys(nodoDia.internal || nodoDia).forEach(k => {
+                let p = nodoDia[k];
+                if (p && typeof p === 'object') {
+                  let idUnico = p.id || p.idUnico || k || generarID('REP');
+                  p.id = idUnico;
+                  objConvertido[idUnico] = p;
+                }
+              });
+            }
+            dbRepartos[fec] = objConvertido;
           }
         });
+
         renderizarPlanillaReparto(); 
         renderizarCuadra(); 
       }
@@ -1575,7 +1592,6 @@ function cargarDB(key, fallback) {
       if (key === 'db_repartos_cerrados') { dbRepartosCerrados = val || {}; renderizarPlanillaReparto(); }
       if (key === 'db_historial_proveedores') { dbHistorialProveedores = val || {}; if (proveedorSeleccionadoId) renderizarTablaHistorialProveedor(); }
     }
-
     function guardarRepartoPorFecha(fecha) {
        if (rtdb) {
           const subNodo = dbRepartos[fecha] || {};
@@ -2282,6 +2298,8 @@ function aplicarRestriccionesEspigaUI() {
   // Buscamos los contenedores correspondientes en la pestaña Reparto
   const tablasRepartoContainer = document.querySelector('#sec-reparto .bg-white p-4 rounded-xl shadow border:has(#tabla-reparto)') || document.getElementById('tabla-reparto')?.closest('.bg-white');
   const panelAutomatizacion = document.getElementById('panel-automatizacion');
+const panelAjusteStock = document.getElementById('panel-ajuste-stock-cuadra');
+if (panelAjusteStock) panelAjusteStock.style.display = esEspigaRestringido ? 'none' : '';
 
   if (esEspigaRestringido) {
     if (tablasRepartoContainer) {
@@ -2485,6 +2503,44 @@ function verificarEsAdmin() {
         alert("Se han restaurado los precios anteriores correctamente.");
       }
     }
+function aplicarAumentoPorcentaje() {
+  if (!verificarEsAdmin()) {
+    alert("Acción restringida solo al Administrador General.");
+    return;
+  }
+
+  const porcentajeInput = document.getElementById('ajuste-porcentaje-valor');
+  const porcentaje = parseFloat(porcentajeInput?.value);
+
+  if (isNaN(porcentaje) || porcentaje === 0) {
+    alert("Ingrese un porcentaje válido (ej: 10 para aumentar o -5 para descontar).");
+    return;
+  }
+
+  if (!confirm(`¿Confirma aplicar un ajuste del ${porcentaje}% a los precios?`)) return;
+
+  // 1. Guardar respaldo de seguridad anterior
+  const respaldoPrecios = JSON.parse(JSON.stringify(dbPanificados));
+  localStorage.setItem('respaldo_precios_anterior', JSON.stringify(respaldoPrecios));
+
+  // 2. Aplicar factor multiplicador
+  const factor = 1 + (porcentaje / 100);
+  for (let id in dbPanificados) {
+    if (dbPanificados[id].menor) {
+      dbPanificados[id].menor = Math.round(dbPanificados[id].menor * factor);
+    }
+    if (dbPanificados[id].mayor) {
+      dbPanificados[id].mayor = Math.round(dbPanificados[id].mayor * factor);
+    }
+  }
+
+  // 3. Guardar y refrescar tablas
+  guardarDB('db_panificados', dbPanificados);
+  renderizarTablaPanificados();
+  
+  porcentajeInput.value = '';
+  alert(`¡Aumento del ${porcentaje}% aplicado con éxito a los panificados!`);
+}
     function obtenerSufijoSucursalActual() {
       const selectPanaderia = document.getElementById('select-panaderia-activa');
       const sucursalActual = selectPanaderia ? selectPanaderia.value : 'alem';
@@ -2496,89 +2552,58 @@ function verificarEsAdmin() {
       return " (A)";
     }
 
-   function agregarPedidoPanificado() {
+function agregarPedidoPanificado() {
   const fechaDestino = document.getElementById('rep-fecha-destino').value || fechaActual;
   
-  // 1. Validar si el día ya está cerrado
-  if (dbRepartosCerrados[fechaDestino]) { 
-      alert(`⚠️ El reparto del día ${fechaDestino} ya se encuentra cerrado.`); 
-      return; 
-  }
-  
-  // 2. Validación de bloqueo: Evitar guardar si el semáforo está en rojo (otro usuario editando)
-  const semaforo = document.getElementById("semaforo-badge");
-  if (semaforo && semaforo.classList.contains("semaforo-rojo")) {
-      alert("⚠️ Operación cancelada: Este día está siendo modificado por otro dispositivo/usuario en este momento.");
-      return;
+  if (dbRepartosCerrados[fechaDestino]) {
+    alert(`⚠️ El reparto del día ${fechaDestino} ya se encuentra cerrado.`);
+    return;
   }
 
   const cliId = document.getElementById('rep-cliente').value;
-  const prodNombre = document.getElementById('rep-producto').value;
-  const cantAgregada = parseFloat(document.getElementById('rep-cantidad').value);
-  const precioPersonalizado = parseFloat(document.getElementById('rep-precio-unitario').value);
+  const prodId = document.getElementById('rep-producto').value;
+  const cantidadInput = document.getElementById('rep-cantidad');
+  const cant = parseFloat(cantidadInput.value);
 
-  if (!cliId || !prodNombre || isNaN(cantAgregada) || cantAgregada <= 0 || isNaN(precioPersonalizado)) { 
-      alert("Verifique los datos cargados."); 
-      return; 
-  }
-  
-  const cliente = dbClientes[cliId]; 
-  const panificado = dbPanificados[prodNombre];
-  if (!cliente) return;
-
-  // Asegurar estructura de datos para la fecha (convertir array a objeto si fuera necesario)
-  if (!dbRepartos[fechaDestino]) dbRepartos[fechaDestino] = {};
-  if (Array.isArray(dbRepartos[fechaDestino])) {
-    let objConvertido = {};
-    dbRepartos[fechaDestino].forEach(p => { if (p) objConvertido[p.id || generarID('REP')] = p; });
-    dbRepartos[fechaDestino] = objConvertido;
+  if (!cliId || !prodId || isNaN(cant) || cant <= 0) {
+    alert("Por favor seleccione un cliente, un producto y una cantidad válida.");
+    return;
   }
 
-  // 3. BUSCAR SI YA EXISTE UN PEDIDO ACTIVO (NO CERRADO/COBRADO) PARA EL MISMO CLIENTE Y PRODUCTO
-  let pedidoExistente = null;
-  Object.values(dbRepartos[fechaDestino]).forEach(p => {
-    if (p && p.clienteId === cliId && p.producto === prodNombre && !p.pagado && !p.origenAuto) {
-      pedidoExistente = p;
-    }
-  });
+  const cliente = dbClientes[cliId];
+  const producto = dbPanificados[prodId];
+  if (!cliente || !producto) return;
 
-  if (pedidoExistente) {
-    // SI YA EXISTE: ACUMULAR LA CANTIDAD Y RECALCULAR EL MONTO
-    pedidoExistente.unidades += cantAgregada;
-    pedidoExistente.precioUnitario = precioPersonalizado; // Actualiza al precio vigente si cambió
-    pedidoExistente.monto = pedidoExistente.unidades * precioPersonalizado;
-    
-    guardarRepartoConSincronizacion(fechaDestino, pedidoExistente);
-    alert(`¡Se sumaron ${cantAgregada} unidades al pedido existente de ${prodNombre} para ${cliente.nombre}! Total actual: ${pedidoExistente.unidades} un.`);
-  } else {
-    // SI NO EXISTE: CREAR UN NUEVO REGISTRO
-    const sufijoOrigen = obtenerSufijoSucursalActual();
-    const nuevoPedido = {
-        id: generarID('REP'), 
-        clienteId: cliId, 
-        clienteNombre: cliente.nombre + sufijoOrigen, 
-        producto: prodNombre,
-        unidades: cantAgregada, 
-        unidPorPaq: panificado ? panificado.unidPorPaq : 1, 
-        precioUnitario: precioPersonalizado,
-        monto: cantAgregada * precioPersonalizado, 
-        origen: 'cuadra', 
-        pagado: false, 
-        medioPago: "Pendiente"
-    };
+  // Tomamos el precio unitario del input (por si el usuario lo editó a mano) o calculamos el sugerido
+  const inputPrecioVal = parseFloat(document.getElementById('rep-precio-unitario').value);
+  const precioUnit = !isNaN(inputPrecioVal) && inputPrecioVal > 0 
+    ? inputPrecioVal 
+    : (cant > (producto.unidPorPaq || 1) ? producto.mayor : producto.menor);
 
-    guardarRepartoConSincronizacion(fechaDestino, nuevoPedido);
-    alert(`¡Pedido cargado con éxito para la fecha ${fechaDestino}!`);
-  }
-  
-  // Limpiar campos del formulario
-  document.getElementById('rep-cantidad').value = '';
-  document.getElementById('rep-precio-unitario').value = '';
-  document.getElementById('rep-cliente').value = '';
-  
-  renderizarPlanillaReparto(); 
-  renderizarCuadra(); 
-  renderizarReportesMensuales();
+  const sufijoOrigen = obtenerSufijoSucursalActual();
+  const nuevoPedido = {
+    id: generarID('REP'),
+    clienteId: cliId,
+    clienteNombre: cliente.nombre + sufijoOrigen,
+    producto: prodId, // 👈 Corregido: prodId es la clave exacta del panificado
+    unidades: cant,
+    unidPorPaq: producto.unidPorPaq || 1,
+    precioUnitario: precioUnit,
+    monto: cant * precioUnit,
+    origen: 'principal',
+    pagado: false,
+    medioPago: "Pendiente"
+  };
+
+  guardarRepartoConSincronizacion(fechaDestino, nuevoPedido);
+
+  // 🧹 Limpieza quirúrgica: vacía la cantidad pero mantiene seleccionado el cliente
+  cantidadInput.value = '';
+  const inputPrecio = document.getElementById('rep-precio-unitario');
+  if (inputPrecio) inputPrecio.value = '';
+
+  renderizarPlanillaReparto();
+  renderizarCuadra();
 }
 function agregarPedidoReparto(nuevoPedido) {
       const fechaHojaRutaActiva = document.getElementById('hr-fecha-selector').value || fechaActual;
@@ -2660,7 +2685,54 @@ function liberarBloqueoFecha(fecha) {
     const lockRef = db.ref(`locks/${fecha}`);
     lockRef.remove();
 }
+function cargarPedidoPrincipal() {
+  const fechaDestino = document.getElementById('rep-fecha-destino').value || fechaActual;
+  
+  if (dbRepartosCerrados[fechaDestino]) {
+    alert(`⚠️ El reparto del día ${fechaDestino} ya se encuentra cerrado.`);
+    return;
+  }
 
+  const cliId = document.getElementById('rep-cliente').value;
+  const prodId = document.getElementById('rep-producto').value; // O el selector de panificados correspondiente
+  const cantidadInput = document.getElementById('rep-cantidad'); // Asegúrate que este sea el ID de tu input de cantidad
+  const cant = parseFloat(cantidadInput.value);
+
+  if (!cliId || !prodId || isNaN(cant) || cant <= 0) {
+    alert("Por favor seleccione un cliente, un producto y una cantidad válida.");
+    return;
+  }
+
+  const cliente = dbClientes[cliId];
+  const producto = dbPanificados[prodId];
+  if (!cliente || !producto) return;
+
+  const sufijoOrigen = obtenerSufijoSucursalActual();
+  const nuevoPedido = {
+    id: generarID('REP'),
+    clienteId: cliId,
+    clienteNombre: cliente.nombre + sufijoOrigen,
+    producto: producto.nombre,
+    unidades: cant,
+    unidPorPaq: producto.unidPorPaq || 1,
+    precioUnitario: producto.mayor || producto.precio || 0,
+    monto: cant * (producto.mayor || producto.precio || 0),
+    origen: 'principal',
+    pagado: false,
+    medioPago: "Pendiente"
+  };
+
+  guardarRepartoConSincronizacion(fechaDestino, nuevoPedido);
+
+  // 🧹 LIMPIEZA SOLICITADA: Reseteamos cantidad y subtotal, pero MANTENEMOS el cliente
+  cantidadInput.value = '';
+  const displaySubtotal = document.getElementById('rep-subtotal-monto'); // O el span/input donde se muestra el precio calculado
+  if (displaySubtotal) displaySubtotal.textContent = '$ 0';
+
+  // Refresco de vistas
+  renderizarPlanillaReparto();
+  renderizarCuadra();
+}
 function agregarPedidoDespacho() {
   const fechaDestino = document.getElementById('rep-fecha-destino').value || fechaActual;
   if (dbRepartosCerrados[fechaDestino]) { alert(`⚠️ El reparto del día ${fechaDestino} ya se encuentra cerrado.`); return; }
@@ -2688,47 +2760,15 @@ function agregarPedidoDespacho() {
     medioPago: "Pendiente"
   };
 
-  // Llamada al guardado sincronizado que sigue abajo
   guardarRepartoConSincronizacion(fechaDestino, nuevoPedido);
-} // <--- ¡Faltaba esta llave que cerraba agregarPedidoDespacho!
-
-// ✅ FORMA CORRECTA Y ATÓMICA DE GUARDAR UN PEDIDO
-function guardarRepartoConSincronizacion(fechaDestino, nuevoPedido) {
-  if (!dbRepartos[fechaDestino]) dbRepartos[fechaDestino] = {};
+  alert(`¡Ítem de despacho cargado con éxito!`);
   
-  const idUnico = nuevoPedido.id || generarID('REP');
-  nuevoPedido.id = idUnico;
+  document.getElementById('rep-despacho-cantidad').value = '';
+  document.getElementById('rep-despacho-precio-unitario').value = '';
   
-  // Guardado por clave específica (No pisa a otros pedidos)
-  dbRepartos[fechaDestino][idUnico] = nuevoPedido;
-  localStorage.setItem('db_repartos', JSON.stringify(dbRepartos));
-  
-  if (rtdb) {
-    // Sincroniza SOLO este pedido en la nube sin tocar el resto
-    rtdb.ref(`db_repartos/${fechaDestino}/${idUnico}`).set(nuevoPedido);
-  }
-}
-// <--- Cierre correcto de guardarRepartoConSincronizacion    
-function agregarNotaMostrador() {
-      const input = document.getElementById('nota-mostrador'); 
-      if (!input || !input.value.trim()) return;
-      
-      const fechaClave = document.getElementById('cuadra-fecha-selector').value || fechaCuadraActiva;
-      if (!fechaClave) { alert("⚠️ Por favor, seleccione una Fecha válida."); return; }
-
-      const sufijoOrigen = obtenerSufijoSucursalActual();
-      const textoNota = input.value.trim() + sufijoOrigen;
-
-      if (!dbNotasMostrador[fechaClave]) dbNotasMostrador[fechaClave] = [];
-      dbNotasMostrador[fechaClave].push(textoNota);
-      
-      if (rtdb) rtdb.ref('db_notas_mostrador/' + fechaClave).set(dbNotasMostrador[fechaClave]).catch(e => console.warn(e));
-      localStorage.setItem('db_notas_mostrador', JSON.stringify(dbNotasMostrador));
-      
-      input.value = ''; 
-      renderizarCuadra();
-    }
-    
+  renderizarPlanillaReparto();
+  renderizarCuadra();
+}    
     function cerrarRepartoDelDia() {
       const fechaDestinoActiva = document.getElementById('rep-fecha-destino').value || fechaActual;
       if (dbRepartosCerrados[fechaDestinoActiva]) { alert("El reparto de este día ya está cerrado."); return; }
@@ -2756,7 +2796,7 @@ function agregarNotaMostrador() {
       }
     }
 
-   function renderizarPlanillaReparto() {
+  function renderizarPlanillaReparto() {
   procesarPedidosRecurrentesAutomaticos();
   const fechaDestinoActiva = document.getElementById('rep-fecha-destino')?.value || fechaActual;
   
@@ -2776,10 +2816,8 @@ function agregarNotaMostrador() {
   const usr = dbUsuarios[usuarioActivoId];
   const esAdmin = (usr && usr.rol === 'admin');
   
-  // Detectar si el usuario activo pertenece estrictamente a Espiga (y no es admin)
   const esEspigaRestringido = (usr && usr.sucursal === 'espiga' && !esAdmin);
 
-  // Ocultar / Mostrar paneles según el rol (como automatizaciones y botones de automáticos)
   const btnVerAuto = document.querySelector('button[onclick="abrirModalPedidosAuto()"]');
   const panelAuto = document.getElementById('panel-automatizacion');
   if (btnVerAuto) btnVerAuto.style.display = esEspigaRestringido ? 'none' : '';
@@ -2804,19 +2842,26 @@ function agregarNotaMostrador() {
   }
 
   const pedidosDestinoObj = dbRepartos[fechaDestinoActiva] || {};
-  let pedidosDestino = Array.isArray(pedidosDestinoObj) ? pedidosDestinoObj : Object.values(pedidosDestinoObj);
+  let pedidosDestino = [];
+  if (Array.isArray(pedidosDestinoObj)) {
+    pedidosDestino = pedidosDestinoObj.filter(p => p !== null && p !== undefined);
+  } else {
+    pedidosDestino = Object.values(pedidosDestinoObj).filter(p => p !== null && p !== undefined);
+  }
   
-  // FILTRADO EXCLUSIVO PARA ESPIGA: Solo ve sus propios pedidos y descarta los automáticos globales
   if (esEspigaRestringido) {
     pedidosDestino = pedidosDestino.filter(p => {
       if (!p) return false;
       const nombreCli = (p.clienteNombre || '').toLowerCase();
-      // Debe pertenecer a Espiga y no ser un pedido automático general de otros clientes
       return nombreCli.includes('espiga') && !p.origenAuto;
     });
   }
 
-  pedidosDestino.sort((a, b) => (a.clienteNombre || "").toLowerCase().localeCompare((b.clienteNombre || "").toLowerCase()));
+ pedidosDestino.sort((a, b) => {
+  let comparacionCliente = (a.clienteNombre || "").toLowerCase().localeCompare((b.clienteNombre || "").toLowerCase());
+  if (comparacionCliente !== 0) return comparacionCliente;
+  return (a.producto || "").toLowerCase().localeCompare((b.producto || "").toLowerCase());
+});
 
   pedidosDestino.forEach((p) => {
     if (tbody) {
@@ -2828,10 +2873,10 @@ function agregarNotaMostrador() {
         <td class="p-2">${iconoAuto}${p.producto}</td>
         <td class="p-2">${p.origen === 'despacho' ? `<span class="bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded text-[10px] font-bold">Despacho</span>` : `<span class="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded text-[10px] font-bold">Cuadra</span>`}</td>
         <td class="p-2">${p.unidades} un.</td>
-        <td class="p-2 font-bold"><input type="number" step="0.01" value="${p.precioUnitario}" ${esEspigaRestringido ? 'disabled' : ''} onchange="modificarPrecioPedidoDirecto('${p.id}', this.value)" class="w-20 border rounded p-1 text-xs font-bold"></td>
+        <td class="p-2 font-bold"><input type="number" step="0.01" value="${p.precioUnitario}" ${esEspigaRestringido ? 'disabled' : ''} onchange="modificarPrecioPedidoDirecto('${p.id || p.idUnico}', this.value)" class="w-20 border rounded p-1 text-xs font-bold"></td>
         <td class="p-2 font-bold text-amber-900">$${p.monto.toLocaleString()}</td>
         <td class="p-2 text-center">
-          <button onclick="eliminarPedidoReparto('${p.id}', '${p.producto}')" class="bg-red-600 hover:bg-red-700 text-white text-xs px-2.5 py-1 rounded font-bold shadow">✕ Borrar</button>
+          <button onclick="eliminarPedidoReparto('${p.id || p.idUnico}', '${p.producto}')" class="bg-red-600 hover:bg-red-700 text-white text-xs px-2.5 py-1 rounded font-bold shadow">✕ Borrar</button>
         </td>
       `;
       tbody.appendChild(trPed);
@@ -2839,7 +2884,12 @@ function agregarNotaMostrador() {
   });
 
   const pedidosHojaRutaObj = dbRepartos[fechaHojaRutaActiva] || {};
-  let pedidosHojaRuta = Array.isArray(pedidosHojaRutaObj) ? pedidosHojaRutaObj : Object.values(pedidosHojaRutaObj);
+  let pedidosHojaRuta = [];
+  if (Array.isArray(pedidosHojaRutaObj)) {
+    pedidosHojaRuta = pedidosHojaRutaObj.filter(p => p !== null && p !== undefined);
+  } else {
+    pedidosHojaRuta = Object.values(pedidosHojaRutaObj).filter(p => p !== null && p !== undefined);
+  }
   
   if (esEspigaRestringido) {
     pedidosHojaRuta = pedidosHojaRuta.filter(p => {
@@ -2849,8 +2899,11 @@ function agregarNotaMostrador() {
     });
   }
 
-  pedidosHojaRuta.sort((a, b) => (a.clienteNombre || "").toLowerCase().localeCompare((b.clienteNombre || "").toLowerCase()));
-
+  pedidosHojaRuta.sort((a, b) => {
+let comparacionCliente = (a.clienteNombre || "").toLowerCase().localeCompare((b.clienteNombre || "").toLowerCase());
+  if (comparacionCliente !== 0) return comparacionCliente;
+  return (a.producto || "").toLowerCase().localeCompare((b.producto || "").toLowerCase());
+});
   let totalMonto = 0, totalEfectivo = 0, totalCtaCte = 0;
 
   pedidosHojaRuta.forEach((p) => {
@@ -2869,28 +2922,28 @@ function agregarNotaMostrador() {
         colAccionesHr = p.pagado ? `<span class="bg-green-100 text-green-800 px-2 py-0.5 rounded text-[11px] font-bold">Cobrado (${p.medioPago})</span>` : `<span class="bg-red-100 text-red-800 px-2 py-0.5 rounded text-[11px] font-bold">En Cta. Cte.</span>`;
       } else {
         const selectPago = !p.pagado ? `
-          <select onchange="marcarPedidoCobrado('${p.id}', this.value)" class="border rounded text-xs p-1 bg-white font-medium">
+          <select onchange="marcarPedidoCobrado('${p.id || p.idUnico}', this.value)" class="border rounded text-xs p-1 bg-white font-medium">
             <option value="">-- Pago --</option>
             <option value="Efectivo">Efectivo</option>
             <option value="Transferencia">Transferencia</option>
             <option value="Mercado Pago">Mercado Pago</option>
           </select>
         ` : `
-          <button onclick="deshacerCobroPedido('${p.id}')" class="text-xs text-amber-700 underline font-bold">Cambiar</button>
+          <button onclick="deshacerCobroPedido('${p.id || p.idUnico}')" class="text-xs text-amber-700 underline font-bold">Cambiar</button>
         `;
-        const btnCancelarPedido = `<button onclick="eliminarPedidoHojaRuta('${p.id}', '${p.producto}')" class="bg-red-600 hover:bg-red-700 text-white text-xs px-2.5 py-1 rounded font-bold shadow">✕ Borrar</button>`;
+        const btnCancelarPedido = `<button onclick="eliminarPedidoHojaRuta('${fechaHojaRutaActiva}', '${p.id || p.idUnico}')" class="bg-red-600 hover:bg-red-700 text-white text-xs px-2.5 py-1 rounded font-bold shadow">✕ Borrar</button>`;
         colAccionesHr = `<div class="flex items-center gap-2 justify-center">${selectPago}${btnCancelarPedido}</div>`;
       }
 
-      trHr.innerHTML = `
-        <td class="p-2 font-semibold text-gray-800">${p.clienteNombre}</td>
-        <td class="p-2">${iconoAuto}${p.producto}</td>
-        <td class="p-2">${p.origen === 'despacho' ? `<span class="bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded text-[10px] font-bold">Despacho</span>` : `<span class="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded text-[10px] font-bold">Cuadra</span>`}</td>
-        <td class="p-2">${p.unidades} un.</td>
-        <td class="p-2 font-bold text-amber-900">$${p.monto.toLocaleString()}</td>
-        <td class="p-2">${p.pagado ? `<span class="bg-green-100 text-green-800 px-2 py-0.5 rounded text-[11px] font-bold">Cobrado (${p.medioPago})</span>` : `<span class="bg-red-100 text-red-800 px-2 py-0.5 rounded text-[11px] font-bold">Pendiente</span>`}</td>
-        <td class="p-2 text-center">${colAccionesHr}</td>
-      `;
+     trHr.innerHTML = `
+  <td class="p-2 font-semibold text-gray-800">${p.clienteNombre}</td>
+  <td class="p-2">${iconoAuto}${p.producto}</td>
+  <td class="p-2">${p.origen === 'despacho' ? `<span class="bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded text-[10px] font-bold">Despacho</span>` : `<span class="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded text-[10px] font-bold">Cuadra</span>`}</td>
+  <td class="p-2">${p.unidades} un.</td>
+  <td class="p-2 font-bold text-amber-900">$${p.monto.toLocaleString()}</td>
+  <td class="p-2 text-center">${colAccionesHr}</td>
+  <td class="p-2">${p.pagado ? `<span class="bg-green-100 text-green-800 px-2 py-0.5 rounded text-[11px] font-bold">Cobrado (${p.medioPago})</span>` : `<span class="bg-red-100 text-red-800 px-2 py-0.5 rounded text-[11px] font-bold">Pendiente</span>`}</td>
+`;
       tbodyHojaRuta.appendChild(trHr);
     }
   });
@@ -3321,8 +3374,10 @@ function imprimirListadoProductos() {
 
       const consolidados = {};
       pedidosDiaArr.forEach(p => {
+        if (!p) return;
+        // Solo excluimos si es explícitamente un ítem de despacho/reventa
         if (p.origen === 'despacho') return;
-        consolidados[p.producto] = (consolidados[p.producto] || 0) + p.unidades;
+        consolidados[p.producto] = (consolidados[p.producto] || 0) + (p.unidades || 0);
       });
 
       const remanentesDia = dbRemanentesCuadra[fechaCuadraActiva] || [];
@@ -3404,7 +3459,6 @@ function imprimirListadoProductos() {
         cargarSelectorRemanentesCuadra();
       }
     }
-
     function guardarCliente() {
       const nombreInput = document.getElementById('cli-nombre');
       const nombre = nombreInput.value.trim(); 
