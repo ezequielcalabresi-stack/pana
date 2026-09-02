@@ -1356,15 +1356,20 @@ let lockRefActivo = null;
 
     var dbRemanentesCuadra = cargarDB('db_remanentes_cuadra', {});
 
-    // FUNCIÓN DE GUARDADO ATÓMICO POR ID PARA EVITAR QUE UN CELULAR PISE A OTRO
-  function guardarRepartoConSincronizacion(fechaDestino, nuevoPedido) {
+     // 1. GUARDADO ATÓMICO POR ID (Garantiza que ningún pedido pise a otro)
+function guardarRepartoConSincronizacion(fechaDestino, nuevoPedido) {
+  if (!dbRepartos) dbRepartos = {};
   if (!dbRepartos[fechaDestino]) dbRepartos[fechaDestino] = {};
   
-  // Si la fecha estaba como Array, la normalizamos a objeto de forma segura
+  // Si por alguna razón la fecha quedó como Array antiguo, lo convertimos a Objeto sin perder nada
   if (Array.isArray(dbRepartos[fechaDestino])) {
     let objConvertido = {};
     dbRepartos[fechaDestino].forEach(p => { 
-      if (p) objConvertido[p.id || generarID('REP')] = p; 
+      if (p) {
+        let idUnico = p.id || p.idUnico || generarID('REP');
+        p.id = idUnico;
+        objConvertido[idUnico] = p; 
+      }
     });
     dbRepartos[fechaDestino] = objConvertido;
   }
@@ -1373,10 +1378,11 @@ let lockRefActivo = null;
   const idUnico = nuevoPedido.id || generarID('REP');
   nuevoPedido.id = idUnico;
   
-  // Guardado individual por clave de ID (nunca pisa a los demás pedidos de la fecha)
+  // Guardado individual en memoria local y en el objeto de la fecha
   dbRepartos[fechaDestino][idUnico] = nuevoPedido;
   localStorage.setItem('db_repartos', JSON.stringify(dbRepartos));
   
+  // Sincronización atómica directa a Firebase (sube solo el ítem nuevo sin tocar los demás)
   if (rtdb) {
     rtdb.ref(`db_repartos/${fechaDestino}/${idUnico}`).set(nuevoPedido).catch(err => {
       console.warn("Aviso de sincronización en red:", err);
@@ -1386,6 +1392,40 @@ let lockRefActivo = null;
   renderizarPlanillaReparto();
   renderizarCuadra();
   renderizarReportesMensuales();
+}
+// 2. CARGA Y ESCUCHA SEGURA EN TIEMPO REAL (Evita que la nube pise datos locales)
+function cargarDBRepartosSegura() {
+  const data = localStorage.getItem('db_repartos');
+  let valorInicial = data ? JSON.parse(data) : {};
+  dbRepartos = valorInicial;
+
+  if (rtdb) {
+    // Escuchamos cambios en la nube pero fusionando inteligentemente por ID
+    rtdb.ref('db_repartos').on('value', (snapshot) => {
+      const valRemoto = snapshot.val();
+      if (valRemoto) {
+        // Fusionamos fecha por fecha y pedido por pedido para no perder nada
+        Object.keys(valRemoto).forEach(fecha => {
+          if (!dbRepartos[fecha]) dbRepartos[fecha] = {};
+          
+          let nodoRemoto = valRemoto[fecha];
+          let remotoObj = {};
+          if (Array.isArray(nodoRemoto)) {
+            nodoRemoto.forEach(p => { if (p) remotoObj[p.id || generarID('REP')] = p; });
+          } else {
+            remotoObj = nodoRemoto;
+          }
+
+          // Mezclamos lo local con lo remoto priorizando la existencia de ambos
+          dbRepartos[fecha] = { ...dbRepartos[fecha], ...remotoObj };
+        });
+
+        localStorage.setItem('db_repartos', JSON.stringify(dbRepartos));
+        renderizarPlanillaReparto();
+        renderizarCuadra();
+      }
+    });
+  }
 }
     function cargarSelectorRemanentesCuadra() {
       const sel = document.getElementById('ajuste-cuadra-producto');
@@ -1513,39 +1553,94 @@ let lockRefActivo = null;
     var usuarioActivoId = localStorage.getItem(`usuario_activo_${dispositivoId}`) || 'USR-1';
 
 function cargarDB(key, fallback) {
-      const data = localStorage.getItem(key);
-      let valorInicial = data ? JSON.parse(data) : fallback;
+  const data = localStorage.getItem(key);
+  let valorLocal = data ? JSON.parse(data) : fallback;
 
-      // Aplicamos los datos locales de inmediato para apertura instantánea
-      aplicarDatosEnMemoriaLocal(key, valorInicial);
+  // Aplicamos lo local de inmediato para que la pantalla no quede en blanco
+  aplicarDatosEnMemoriaLocal(key, valorLocal);
 
-      if (rtdb) {
-        try {
-          // CAMBIO CLAVE: Usamos .on('value') en lugar de .once('value') 
-          // Esto mantiene un canal abierto: si el celular guarda algo, la PC lo recibe al instante.
-          rtdb.ref(key).on('value', (snapshot) => {
-            const val = snapshot.val();
-            if (val !== null && val !== undefined) {
-              if (typeof val === 'object' && !Array.isArray(val) && typeof valorInicial === 'object' && !Array.isArray(valorInicial)) {
-                // Fusionamos inteligentemente priorizando la frescura de los datos entrantes
-                let datosFusionados = { ...valorInicial, ...val };
-                valorInicial = datosFusionados;
-                localStorage.setItem(key, JSON.stringify(datosFusionados));
-                aplicarDatosEnMemoriaLocal(key, datosFusionados);
+  if (rtdb) {
+    try {
+      // Escuchamos la nube de forma persistente pero PROTEGIENDO el almacenamiento local
+      rtdb.ref(key).on('value', (snapshot) => {
+        const valRemoto = snapshot.val();
+        
+        if (valRemoto !== null && valRemoto !== undefined) {
+          // Si es un objeto complejo (como repartos, clientes, proveedores)
+          if (typeof valRemoto === 'object' && !Array.isArray(valRemoto) && typeof valorLocal === 'object' && !Array.isArray(valorLocal)) {
+            
+            // FUSIÓN PROFUNDA OBLIGATORIA: Si hay datos locales que no están en la nube, se suman en lugar de borrarse
+            let fusionados = JSON.parse(JSON.stringify(valorLocal));
+            
+            Object.keys(valRemoto).forEach(kPrincipal => {
+              if (!fusionados[kPrincipal]) {
+                fusionados[kPrincipal] = valRemoto[kPrincipal];
+              } else if (typeof valRemoto[kPrincipal] === 'object' && !Array.isArray(valRemoto[kPrincipal])) {
+                fusionados[kPrincipal] = { ...valRemoto[kPrincipal], ...fusionados[kPrincipal] };
               } else {
-                valorInicial = val;
-                localStorage.setItem(key, JSON.stringify(val));
-                aplicarDatosEnMemoriaLocal(key, val);
+                fusionados[kPrincipal] = valRemoto[kPrincipal];
               }
-            }
-          });
-        } catch (e) {
-          console.warn("Modo offline activo para:", key);
+            });
+
+            valorLocal = fusionados;
+          } else {
+            valorLocal = valRemoto;
+          }
+
+          localStorage.setItem(key, JSON.stringify(valorLocal));
+          aplicarDatosEnMemoriaLocal(key, valorLocal);
+        } else {
+          // Si la nube está vacía pero tenemos datos locales, SUBIMOS lo local para que no se pierda nada
+          if (valorLocal && Object.keys(valorLocal).length > 0) {
+            rtdb.ref(key).set(valorLocal).catch(err => console.warn("Error al auto-completar nube:", err));
+          }
         }
-      }
-      return valorInicial;
+      });
+    } catch (e) {
+      console.warn("Modo offline activo para:", key);
     }
-    function aplicarDatosEnMemoriaLocal(key, val) {
+  }
+  return valorLocal;
+}
+function agregarNotaMostrador() {
+  const inputNota = document.getElementById('nota-mostrador');
+  if (!inputNota) return;
+  
+  let textoNota = inputNota.value.trim();
+  if (!textoNota) {
+    alert("Por favor, escribí el detalle del pedido especial.");
+    return;
+  }
+
+  // Identificamos de qué panadería/sucursal viene para marcarla visualmente
+  const sufijoSucursal = obtenerSufijoSucursalActual(); // Devuelve " (A)" o " (E)"
+  if (!textoNota.endsWith('(A)') && !textoNota.endsWith('(E)')) {
+    textoNota += sufijoSucursal;
+  }
+
+  const fechaClave = document.getElementById('cuadra-fecha-selector')?.value || fechaCuadraActiva || fechaActual;
+
+  if (!dbNotasMostrador[fechaClave]) {
+    dbNotasMostrador[fechaClave] = [];
+  }
+
+  // Agregamos la nota al array de esa fecha
+  dbNotasMostrador[fechaClave].push(textoNota);
+
+  // Guardamos localmente y sincronizamos con Firebase de forma segura
+  localStorage.setItem('db_notas_mostrador', JSON.stringify(dbNotasMostrador));
+  if (rtdb) {
+    rtdb.ref('db_notas_mostrador/' + fechaClave).set(dbNotasMostrador[fechaClave]).catch(err => {
+      console.warn("Aviso de sincronización en red:", err);
+    });
+  }
+
+  // Limpiamos el input y actualizamos la vista de la Cuadra
+  inputNota.value = '';
+  renderizarCuadra();
+}
+
+ function aplicarDatosEnMemoriaLocal(key, val) {
       if (key === 'db_repartos') { 
         dbRepartos = val || {}; 
         
@@ -2737,19 +2832,38 @@ function agregarPedidoDespacho() {
   const fechaDestino = document.getElementById('rep-fecha-destino').value || fechaActual;
   if (dbRepartosCerrados[fechaDestino]) { alert(`⚠️ El reparto del día ${fechaDestino} ya se encuentra cerrado.`); return; }
 
-  let cliId = document.getElementById('rep-despacho-cliente').value || document.getElementById('rep-cliente').value;
+  // Forzamos la detección del cliente de Espiga si el usuario actual es de esa sucursal
+  let cliId = document.getElementById('rep-despacho-cliente')?.value || document.getElementById('rep-cliente')?.value;
+  
+  if (!cliId) {
+    // Si sigue vacío, buscamos automáticamente el cliente "Espiga de Oro" en la base de datos
+    Object.values(dbClientes).forEach(c => {
+      if (c && c.nombre && c.nombre.toLowerCase().includes('espiga')) {
+        cliId = c.id;
+      }
+    });
+  }
+
   const prodNombre = document.getElementById('rep-despacho-producto').value;
   const cant = parseFloat(document.getElementById('rep-despacho-cantidad').value);
   const montoTotal = parseFloat(document.getElementById('rep-despacho-precio-unitario').value);
 
-  if (!cliId || !prodNombre || isNaN(cant) || cant <= 0 || isNaN(montoTotal)) { alert("Verifique los datos del adicional."); return; }
-  const cliente = dbClientes[cliId]; if (!cliente) return;
+  if (!cliId || !prodNombre || isNaN(cant) || cant <= 0 || isNaN(montoTotal)) { 
+    alert("⚠️ Verifique que el producto, la cantidad y el precio del despacho estén completos."); 
+    return; 
+  }
+  
+  const cliente = dbClientes[cliId]; 
+  if (!cliente) {
+    alert("⚠️ No se encontró el cliente asociado para este pedido de despacho.");
+    return;
+  }
 
   const sufijoOrigen = obtenerSufijoSucursalActual();
   const nuevoPedido = {
     id: generarID('REP'), 
     clienteId: cliId, 
-    clienteNombre: cliente.nombre + sufijoOrigen, 
+    clienteNombre: cliente.nombre + (cliente.nombre.includes('(') ? '' : sufijoOrigen), 
     producto: prodNombre,
     unidades: cant, 
     unidPorPaq: 1, 
@@ -2761,15 +2875,15 @@ function agregarPedidoDespacho() {
   };
 
   guardarRepartoConSincronizacion(fechaDestino, nuevoPedido);
-  alert(`¡Ítem de despacho cargado con éxito!`);
+  alert(`¡Ítem de despacho cargado con éxito en La Espiga!`);
   
   document.getElementById('rep-despacho-cantidad').value = '';
   document.getElementById('rep-despacho-precio-unitario').value = '';
   
   renderizarPlanillaReparto();
   renderizarCuadra();
-}    
-    function cerrarRepartoDelDia() {
+}
+  function cerrarRepartoDelDia() {
       const fechaDestinoActiva = document.getElementById('rep-fecha-destino').value || fechaActual;
       if (dbRepartosCerrados[fechaDestinoActiva]) { alert("El reparto de este día ya está cerrado."); return; }
       if (!confirm(`🔒 ¿Desea cerrar el Reparto del día ${fechaDestinoActiva}?\n\nLos pedidos que queden pendientes pasarán formalmente a la Cuenta Corriente los clientes y se bloqueará la edición operativa.`)) return;
