@@ -1687,21 +1687,14 @@ function agregarNotaMostrador() {
       if (key === 'db_repartos_cerrados') { dbRepartosCerrados = val || {}; renderizarPlanillaReparto(); }
       if (key === 'db_historial_proveedores') { dbHistorialProveedores = val || {}; if (proveedorSeleccionadoId) renderizarTablaHistorialProveedor(); }
     }
-    function guardarRepartoPorFecha(fecha) {
-       if (rtdb) {
-          const subNodo = dbRepartos[fecha] || {};
-          rtdb.ref('db_repartos/' + fecha).set(subNodo).catch(err => console.warn(err));
-       }
-       localStorage.setItem('db_repartos', JSON.stringify(dbRepartos));
-    }
-
+   
     dbUsuarios = cargarDB('db_usuarios', window.LISTA_USUARIOS_BASE);
     dbPanificados = cargarDB('db_panificados', window.LISTA_PANIFICADOS_REPARTO_BASE);
     dbProductos = cargarDB('db_productos', window.LISTA_PRODUCTOS_BASE);
     dbClientes = cargarDB('db_clientes', {});
     dbProveedores = cargarDB('db_proveedores', {});
     dbInsumos = cargarDB('db_insumos', {});
-    dbRepartos = cargarDB('db_repartos', {});
+    cargarDBRepartosSegura();
     dbRecurrentes = cargarDB('db_recurrentes', {});
     dbNotasMostrador = cargarDB('db_notas_mostrador', {});
     dbHistorialClientes = cargarDB('db_historial_clientes', {});
@@ -1777,7 +1770,14 @@ function agregarNotaMostrador() {
       ahora.setMinutes(ahora.getMinutes() - ahora.getTimezoneOffset());
       return ahora.toISOString().split('T')[0];
     }
-
+function actualizarPedidoEnNube(fecha, pedido) {
+  if (!pedido || !pedido.id) return;
+  localStorage.setItem('db_repartos', JSON.stringify(dbRepartos));
+  if (rtdb) {
+    // Actualiza exclusivamente el ID del pedido sin tocar los demás del día
+    rtdb.ref(`db_repartos/${fecha}/${pedido.id}`).set(pedido).catch(err => console.warn(err));
+  }
+}
     function habilitarNavegacionPorEnterEnModal(modalId) {
       const modal = document.getElementById(modalId);
       if (!modal) return;
@@ -2020,85 +2020,94 @@ function agregarNotaMostrador() {
       }
     }
 
-    function procesarPedidosRecurrentesAutomaticos() {
-      const fechaDestinoActiva = document.getElementById('rep-fecha-destino')?.value || fechaActual;
-      if (!dbRepartos[fechaDestinoActiva]) dbRepartos[fechaDestinoActiva] = {};
-      
-      if (Array.isArray(dbRepartos[fechaDestinoActiva])) {
-        let obj = {};
-        dbRepartos[fechaDestinoActiva].forEach(p => { if (p) obj[p.id || generarID('REP')] = p; });
-        dbRepartos[fechaDestinoActiva] = obj;
-      }
+ function procesarPedidosRecurrentesAutomaticos() {
+  const fechaDestinoActiva = document.getElementById('rep-fecha-destino')?.value || fechaActual;
+  if (!dbRepartos[fechaDestinoActiva]) dbRepartos[fechaDestinoActiva] = {};
+  
+  if (Array.isArray(dbRepartos[fechaDestinoActiva])) {
+    let obj = {};
+    dbRepartos[fechaDestinoActiva].forEach(p => { if (p) obj[p.id || generarID('REP')] = p; });
+    dbRepartos[fechaDestinoActiva] = obj;
+  }
 
-      const [anio, mes, dia] = fechaDestinoActiva.split('-').map(Number);
-      const fechaObj = new Date(anio, mes - 1, dia);
-      const diaSemanaActual = fechaObj.getDay();
+  const [anio, mes, dia] = fechaDestinoActiva.split('-').map(Number);
+  const fechaObj = new Date(anio, mes - 1, dia);
+  const diaSemanaActual = fechaObj.getDay();
 
-      let huboCambiosNuevos = false;
+  let huboCambiosNuevos = false;
 
-      Object.values(dbRecurrentes).forEach(r => {
-        let cumpleCondicion = false;
+  Object.values(dbRecurrentes).forEach(r => {
+    let cumpleCondicion = false;
 
-        if (r.tipoFreq === 'todos_dias') {
-          cumpleCondicion = true;
-        } else if (r.tipoFreq === 'dias_semana') {
-          if (r.diasSemana.includes(diaSemanaActual)) cumpleCondicion = true;
-        } else if (r.tipoFreq === 'rango_mes') {
-          const dDesde = r.rangoDesde;
-          const dHasta = r.rangoHasta;
-          if (dDesde <= dHasta) {
-            if (dia >= dDesde && dia <= dHasta) cumpleCondicion = true;
-          } else {
-            if (dia >= dDesde || dia <= dHasta) cumpleCondicion = true;
-          }
-        }
-
-        if (cumpleCondicion) {
-          const pedidosArr = Object.values(dbRepartos[fechaDestinoActiva]);
-          const yaExiste = pedidosArr.some(p => p && p.clienteId === r.clienteId && p.producto === r.producto && p.origenAuto);
-          
-          if (!yaExiste) {
-            let precioUnit = 0;
-            let unidPaq = 1;
-
-            if (r.origenTipo === 'panificado') {
-              const pan = dbPanificados[r.producto];
-              if (pan) {
-                precioUnit = (r.cantidad > pan.unidPorPaq) ? pan.mayor : pan.menor;
-                unidPaq = pan.unidPorPaq;
-              }
-            } else {
-              const prod = dbProductos[r.producto];
-              if (prod) {
-                precioUnit = prod.reparto || prod.mostrador || 0;
-              }
-            }
-
-            const nuevoId = generarID('AUTO');
-            dbRepartos[fechaDestinoActiva][nuevoId] = {
-              id: nuevoId,
-              clienteId: r.clienteId,
-              clienteNombre: r.clienteNombre,
-              producto: r.producto,
-              unidades: r.cantidad,
-              unidPorPaq: unidPaq,
-              precioUnitario: precioUnit,
-              monto: r.cantidad * precioUnit,
-              origen: r.origenTipo === 'panificado' ? 'cuadra' : 'despacho',
-              origenAuto: true,
-              pagado: false,
-              medioPago: "Pendiente"
-            };
-
-            huboCambiosNuevos = true;
-          }
-        }
-      });
-
-      if (huboCambiosNuevos) {
-        guardarRepartoPorFecha(fechaDestinoActiva);
+    if (r.tipoFreq === 'todos_dias') {
+      cumpleCondicion = true;
+    } else if (r.tipoFreq === 'dias_semana') {
+      if (r.diasSemana.includes(diaSemanaActual)) cumpleCondicion = true;
+    } else if (r.tipoFreq === 'rango_mes') {
+      const dDesde = r.rangoDesde;
+      const dHasta = r.rangoHasta;
+      if (dDesde <= dHasta) {
+        if (dia >= dDesde && dia <= dHasta) cumpleCondicion = true;
+      } else {
+        if (dia >= dDesde || dia <= dHasta) cumpleCondicion = true;
       }
     }
+
+    if (cumpleCondicion) {
+      const pedidosArr = Object.values(dbRepartos[fechaDestinoActiva]);
+      const yaExiste = pedidosArr.some(p => p && p.clienteId === r.clienteId && p.producto === r.producto && p.origenAuto);
+      
+      if (!yaExiste) {
+        let precioUnit = 0;
+        let unidPaq = 1;
+
+        if (r.origenTipo === 'panificado') {
+          const pan = dbPanificados[r.producto];
+          if (pan) {
+            precioUnit = (r.cantidad > pan.unidPorPaq) ? pan.mayor : pan.menor;
+            unidPaq = pan.unidPorPaq;
+          }
+        } else {
+          const prod = dbProductos[r.producto];
+          if (prod) {
+            precioUnit = prod.reparto || prod.mostrador || 0;
+          }
+        }
+
+        const nuevoId = generarID('AUTO');
+        const nuevoPedidoAuto = {
+          id: nuevoId,
+          clienteId: r.clienteId,
+          clienteNombre: r.clienteNombre,
+          producto: r.producto,
+          unidades: r.cantidad,
+          unidPorPaq: unidPaq,
+          precioUnitario: precioUnit,
+          monto: r.cantidad * precioUnit,
+          origen: r.origenTipo === 'panificado' ? 'cuadra' : 'despacho',
+          origenAuto: true,
+          pagado: false,
+          medioPago: "Pendiente"
+        };
+
+        // Inserción atómica individual en memoria local y Firebase
+        dbRepartos[fechaDestinoActiva][nuevoId] = nuevoPedidoAuto;
+        localStorage.setItem('db_repartos', JSON.stringify(dbRepartos));
+        
+        if (rtdb) {
+          rtdb.ref(`db_repartos/${fechaDestinoActiva}/${nuevoId}`).set(nuevoPedidoAuto).catch(err => console.warn(err));
+        }
+
+        huboCambiosNuevos = true;
+      }
+    }
+  });
+
+  if (huboCambiosNuevos) {
+    renderizarPlanillaReparto();
+    renderizarCuadra();
+  }
+}
 
     function abrirModalPedidosAuto() {
       document.getElementById('modal-pedidos-auto').classList.remove('hidden');
@@ -2141,45 +2150,56 @@ function agregarNotaMostrador() {
       });
     }
 
-    function modificarCantidadPedido(pedidoId, nuevaCantVal) {
-      const fechaDestinoActiva = document.getElementById('rep-fecha-destino').value || fechaActual;
-      if (dbRepartosCerrados[fechaDestinoActiva]) return;
-      const nuevaCant = parseFloat(nuevaCantVal);
-      if (isNaN(nuevaCant) || nuevaCant <= 0) return;
-      const pedido = (dbRepartos[fechaDestinoActiva] || []).find(p => p.id === pedidoId);
-      if (pedido) { 
-        pedido.unidades = nuevaCant; 
-        pedido.monto = nuevaCant * pedido.precioUnitario; 
-        guardarRepartoPorFecha(fechaDestinoActiva);
-        renderizarPlanillaReparto(); 
-        renderizarReportesMensuales(); 
-        if(!document.getElementById('modal-pedidos-auto').classList.contains('hidden')) { renderizarTablaPedidosAuto(); }
-      }
+ function modificarCantidadPedido(pedidoId, nuevaCantVal) {
+  const fechaDestinoActiva = document.getElementById('rep-fecha-destino').value || fechaActual;
+  if (dbRepartosCerrados[fechaDestinoActiva]) return;
+  const nuevaCant = parseFloat(nuevaCantVal);
+  if (isNaN(nuevaCant) || nuevaCant <= 0) return;
+  
+  let lista = dbRepartos[fechaDestinoActiva];
+  if (!lista) return;
+  let pedido = Array.isArray(lista) ? lista.find(p => p && p.id === pedidoId) : lista[pedidoId];
+
+  if (pedido) { 
+    pedido.unidades = nuevaCant; 
+    pedido.monto = Number((nuevaCant * pedido.precioUnitario).toFixed(2)); 
+    
+    // Guardado atómico seguro por ID (Evita pisar otros pedidos del día)
+    localStorage.setItem('db_repartos', JSON.stringify(dbRepartos));
+    if (rtdb) {
+      rtdb.ref(`db_repartos/${fechaDestinoActiva}/${pedido.id}`).set(pedido).catch(err => console.warn(err));
     }
+    
+    renderizarPlanillaReparto(); 
+    renderizarReportesMensuales(); 
+    if(!document.getElementById('modal-pedidos-auto').classList.contains('hidden')) { renderizarTablaPedidosAuto(); }
+  }
+}
 
     function modificarPrecioPedidoDirecto(pedidoId, nuevoPrecioVal) {
-      const fechaDestinoActiva = document.getElementById('rep-fecha-destino').value || fechaActual;
-      if (dbRepartosCerrados[fechaDestinoActiva]) return;
-      const nuevoPrecio = parseFloat(nuevoPrecioVal); 
-      if (isNaN(nuevoPrecio)) return;
+  const fechaDestinoActiva = document.getElementById('rep-fecha-destino').value || fechaActual;
+  if (dbRepartosCerrados[fechaDestinoActiva]) return;
+  const nuevoPrecio = parseFloat(nuevoPrecioVal); 
+  if (isNaN(nuevoPrecio)) return;
 
-      let lista = dbRepartos[fechaDestinoActiva];
-      if (!lista) return;
+  let lista = dbRepartos[fechaDestinoActiva];
+  if (!lista) return;
+  let pedidoEncontrado = Array.isArray(lista) ? lista.find(p => p && p.id === pedidoId) : lista[pedidoId];
 
-      let esArray = Array.isArray(lista);
-      let pedidosArray = esArray ? lista : Object.values(lista);
-      const pedidoEncontrado = pedidosArray.find(p => p && p.id === pedidoId);
-
-      if (pedidoEncontrado) { 
-        pedidoEncontrado.precioUnitario = nuevoPrecio; 
-        pedidoEncontrado.monto = Number((pedidoEncontrado.unidades * nuevoPrecio).toFixed(2)); 
-        if (!esArray) { dbRepartos[fechaDestinoActiva] = pedidosArray; }
-        guardarRepartoPorFecha(fechaDestinoActiva);
-        renderizarPlanillaReparto(); 
-        renderizarReportesMensuales(); 
-        if (!document.getElementById('modal-pedidos-auto').classList.contains('hidden')) { renderizarTablaPedidosAuto(); }
-      }
+  if (pedidoEncontrado) { 
+    pedidoEncontrado.precioUnitario = nuevoPrecio; 
+    pedidoEncontrado.monto = Number((pedidoEncontrado.unidades * nuevoPrecio).toFixed(2)); 
+    
+    localStorage.setItem('db_repartos', JSON.stringify(dbRepartos));
+    if (rtdb) {
+      rtdb.ref(`db_repartos/${fechaDestinoActiva}/${pedidoEncontrado.id}`).set(pedidoEncontrado).catch(err => console.warn(err));
     }
+
+    renderizarPlanillaReparto(); 
+    renderizarReportesMensuales(); 
+    if (!document.getElementById('modal-pedidos-auto').classList.contains('hidden')) { renderizarTablaPedidosAuto(); }
+  }
+}
 
     // REEMPLAZAR TU FUNCIÓN ACTUAL POR ESTA:
 function eliminarPedidoReparto(pedidoId, productoNombre) {
@@ -2201,13 +2221,16 @@ function eliminarPedidoReparto(pedidoId, productoNombre) {
 }
 function eliminarPedidoHojaRuta(fecha, idPedido) {
   if (confirm("¿Desea eliminar este pedido de la hoja de ruta?")) {
-    if (Array.isArray(dbRepartos[fecha])) {
-      dbRepartos[fecha] = dbRepartos[fecha].filter(p => p.id !== idPedido && p.idUnico !== idPedido);
-    } else if (dbRepartos[fecha] && typeof dbRepartos[fecha] === 'object') {
-      delete dbRepartos[fecha][idPedido];
+    if (dbRepartos[fecha]) {
+      if (Array.isArray(dbRepartos[fecha])) {
+        dbRepartos[fecha] = dbRepartos[fecha].filter(p => p && p.id !== idPedido && p.idUnico !== idPedido);
+      } else if (typeof dbRepartos[fecha] === 'object') {
+        delete dbRepartos[fecha][idPedido];
+      }
     }
     
-    guardarRepartoPorFecha(fecha);
+    // Guardado local y borrado atómico individual en Firebase (sin tocar otros pedidos)
+    localStorage.setItem('db_repartos', JSON.stringify(dbRepartos));
     if (rtdb) {
       rtdb.ref(`db_repartos/${fecha}/${idPedido}`).remove().catch(err => console.warn(err));
     }
@@ -2217,7 +2240,8 @@ function eliminarPedidoHojaRuta(fecha, idPedido) {
     renderizarReportesMensuales();
   }
 }
-   function renderizarUsuariosSelect() {
+
+ function renderizarUsuariosSelect() {
       const sel = document.getElementById('select-usuario-activo');
       if (!sel) return;
       sel.innerHTML = '';
@@ -2880,7 +2904,7 @@ function agregarPedidoDespacho() {
   };
 
   guardarRepartoConSincronizacion(fechaDestino, nuevoPedido);
-  alert(`¡Ítem de despacho cargado con éxito en La Espiga!`);
+  alert(`¡Ítem de despacho cargado con éxito!`);
   
   document.getElementById('rep-despacho-cantidad').value = '';
   document.getElementById('rep-despacho-precio-unitario').value = '';
@@ -3118,32 +3142,27 @@ function quitarAjusteCuadra(idOIndex) {
         renderizarTablaStockRemanente();
     }
 }
-    function deshacerCobroPedido(pedidoId) {
-      const fechaHojaRutaActiva = document.getElementById('hr-fecha-selector').value || fechaActual;
-      if (dbRepartosCerrados[fechaHojaRutaActiva]) return;
+  function deshacerCobroPedido(pedidoId) {
+  const fechaHojaRutaActiva = document.getElementById('hr-fecha-selector').value || fechaActual;
+  if (dbRepartosCerrados[fechaHojaRutaActiva]) return;
 
-      let lista = dbRepartos[fechaHojaRutaActiva];
-      if (!lista) return;
+  let lista = dbRepartos[fechaHojaRutaActiva];
+  if (!lista) return;
 
-      if (Array.isArray(lista)) {
-        // Estructura vieja (Array)
-        const pedido = lista.find(p => p && p.id === pedidoId);
-        if (pedido) {
-          pedido.pagado = false;
-          pedido.medioPago = "Pendiente";
-        }
-      } else {
-        // Estructura nueva (Objeto por ID - Multidispositivo seguro)
-        if (lista[pedidoId]) {
-          lista[pedidoId].pagado = false;
-          lista[pedidoId].medioPago = "Pendiente";
-        }
-      }
-
-      guardarRepartoPorFecha(fechaHojaRutaActiva); 
-      renderizarPlanillaReparto(); 
-      renderizarReportesMensuales(); 
+  let pedido = Array.isArray(lista) ? lista.find(p => p && p.id === pedidoId) : lista[pedidoId];
+  if (pedido) {
+    pedido.pagado = false;
+    pedido.medioPago = "Pendiente";
+    
+    localStorage.setItem('db_repartos', JSON.stringify(dbRepartos));
+    if (rtdb) {
+      rtdb.ref(`db_repartos/${fechaHojaRutaActiva}/${pedido.id}`).set(pedido).catch(err => console.warn(err));
     }
+  }
+
+  renderizarPlanillaReparto(); 
+  renderizarReportesMensuales(); 
+}
 // Función robusta para transformar cualquier estructura de repartos a un Array seguro
 function obtenerPedidosComoArray(fechaSeleccionada) {
     const data = dbRepartos[fechaSeleccionada];
@@ -3168,22 +3187,17 @@ function marcarPedidoCobrado(pedidoId, medioPago) {
   let lista = dbRepartos[fechaHojaRutaActiva];
   if (!lista) return;
 
-  if (Array.isArray(lista)) {
-    // Estructura de Array (soporta tanto id como idUnico)
-    const pedido = lista.find(p => p && (p.id === pedidoId || p.idUnico === pedidoId));
-    if (pedido) {
-      pedido.pagado = true;
-      pedido.medioPago = medioPago;
-    }
-  } else {
-    // Estructura de Objeto por ID
-    if (lista[pedidoId]) {
-      lista[pedidoId].pagado = true;
-      lista[pedidoId].medioPago = medioPago;
+  let pedido = Array.isArray(lista) ? lista.find(p => p && (p.id === pedidoId || p.idUnico === pedidoId)) : lista[pedidoId];
+  if (pedido) {
+    pedido.pagado = true;
+    pedido.medioPago = medioPago;
+    
+    localStorage.setItem('db_repartos', JSON.stringify(dbRepartos));
+    if (rtdb) {
+      rtdb.ref(`db_repartos/${fechaHojaRutaActiva}/${pedido.id}`).set(pedido).catch(err => console.warn(err));
     }
   }
 
-  guardarRepartoPorFecha(fechaHojaRutaActiva);
   renderizarPlanillaReparto(); 
   renderizarReportesMensuales(); 
 }
