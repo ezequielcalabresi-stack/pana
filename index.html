@@ -2199,19 +2199,24 @@ function eliminarPedidoReparto(pedidoId, productoNombre) {
     }
   }
 }
- function eliminarPedidoHojaRuta(fecha, idPedido) {
+function eliminarPedidoHojaRuta(fecha, idPedido) {
+  if (confirm("¿Desea eliminar este pedido de la hoja de ruta?")) {
     if (Array.isArray(dbRepartos[fecha])) {
-        // Si está guardado como Array tradicional
-        dbRepartos[fecha] = dbRepartos[fecha].filter(p => p.id !== idPedido && p.idUnico !== idPedido);
+      dbRepartos[fecha] = dbRepartos[fecha].filter(p => p.id !== idPedido && p.idUnico !== idPedido);
     } else if (dbRepartos[fecha] && typeof dbRepartos[fecha] === 'object') {
-        // Si está guardado como Objeto indexado por ID
-        delete dbRepartos[fecha][idPedido];
+      delete dbRepartos[fecha][idPedido];
     }
     
-    // Guardar cambios en persistencia (localStorage / Firebase)
-    sincronizarYGuardarDatos();
+    guardarRepartoPorFecha(fecha);
+    if (rtdb) {
+      rtdb.ref(`db_repartos/${fecha}/${idPedido}`).remove().catch(err => console.warn(err));
+    }
+    
+    renderizarPlanillaReparto();
+    renderizarCuadra();
+    renderizarReportesMensuales();
+  }
 }
-
    function renderizarUsuariosSelect() {
       const sel = document.getElementById('select-usuario-activo');
       if (!sel) return;
@@ -2909,8 +2914,7 @@ function agregarPedidoDespacho() {
         alert("¡Reparto reabierto con éxito!");
       }
     }
-
-  function renderizarPlanillaReparto() {
+function renderizarPlanillaReparto() {
   procesarPedidosRecurrentesAutomaticos();
   const fechaDestinoActiva = document.getElementById('rep-fecha-destino')?.value || fechaActual;
   
@@ -2971,11 +2975,11 @@ function agregarPedidoDespacho() {
     });
   }
 
- pedidosDestino.sort((a, b) => {
-  let comparacionCliente = (a.clienteNombre || "").toLowerCase().localeCompare((b.clienteNombre || "").toLowerCase());
-  if (comparacionCliente !== 0) return comparacionCliente;
-  return (a.producto || "").toLowerCase().localeCompare((b.producto || "").toLowerCase());
-});
+  pedidosDestino.sort((a, b) => {
+    let comparacionCliente = (a.clienteNombre || "").toLowerCase().localeCompare((b.clienteNombre || "").toLowerCase());
+    if (comparacionCliente !== 0) return comparacionCliente;
+    return (a.producto || "").toLowerCase().localeCompare((b.producto || "").toLowerCase());
+  });
 
   pedidosDestino.forEach((p) => {
     if (tbody) {
@@ -3014,10 +3018,11 @@ function agregarPedidoDespacho() {
   }
 
   pedidosHojaRuta.sort((a, b) => {
-let comparacionCliente = (a.clienteNombre || "").toLowerCase().localeCompare((b.clienteNombre || "").toLowerCase());
-  if (comparacionCliente !== 0) return comparacionCliente;
-  return (a.producto || "").toLowerCase().localeCompare((b.producto || "").toLowerCase());
-});
+    let comparacionCliente = (a.clienteNombre || "").toLowerCase().localeCompare((b.clienteNombre || "").toLowerCase());
+    if (comparacionCliente !== 0) return comparacionCliente;
+    return (a.producto || "").toLowerCase().localeCompare((b.producto || "").toLowerCase());
+  });
+
   let totalMonto = 0, totalEfectivo = 0, totalCtaCte = 0;
 
   pedidosHojaRuta.forEach((p) => {
@@ -3031,11 +3036,14 @@ let comparacionCliente = (a.clienteNombre || "").toLowerCase().localeCompare((b.
       const trHr = document.createElement('tr'); 
       trHr.className = "border-b hover:bg-gray-50 text-xs md:text-sm";
       
+      let colEstadoPago = '';
       let colAccionesHr = '';
+
       if (isCerrado) {
-        colAccionesHr = p.pagado ? `<span class="bg-green-100 text-green-800 px-2 py-0.5 rounded text-[11px] font-bold">Cobrado (${p.medioPago})</span>` : `<span class="bg-red-100 text-red-800 px-2 py-0.5 rounded text-[11px] font-bold">En Cta. Cte.</span>`;
+        colEstadoPago = p.pagado ? `<span class="bg-green-100 text-green-800 px-2 py-0.5 rounded text-[11px] font-bold">Cobrado (${p.medioPago})</span>` : `<span class="bg-red-100 text-red-800 px-2 py-0.5 rounded text-[11px] font-bold">En Cta. Cte.</span>`;
+        colAccionesHr = `<span class="text-xs text-gray-400">Cerrado</span>`;
       } else {
-        const selectPago = !p.pagado ? `
+        colEstadoPago = !p.pagado ? `
           <select onchange="marcarPedidoCobrado('${p.id || p.idUnico}', this.value)" class="border rounded text-xs p-1 bg-white font-medium">
             <option value="">-- Pago --</option>
             <option value="Efectivo">Efectivo</option>
@@ -3043,21 +3051,23 @@ let comparacionCliente = (a.clienteNombre || "").toLowerCase().localeCompare((b.
             <option value="Mercado Pago">Mercado Pago</option>
           </select>
         ` : `
-          <button onclick="deshacerCobroPedido('${p.id || p.idUnico}')" class="text-xs text-amber-700 underline font-bold">Cambiar</button>
+          <div class="flex items-center gap-1">
+            <span class="bg-green-100 text-green-800 px-2 py-0.5 rounded text-[11px] font-bold">Cobrado (${p.medioPago})</span>
+            <button onclick="deshacerCobroPedido('${p.id || p.idUnico}')" class="text-[10px] text-amber-700 underline font-bold">Cambiar</button>
+          </div>
         `;
-        const btnCancelarPedido = `<button onclick="eliminarPedidoHojaRuta('${fechaHojaRutaActiva}', '${p.id || p.idUnico}')" class="bg-red-600 hover:bg-red-700 text-white text-xs px-2.5 py-1 rounded font-bold shadow">✕ Borrar</button>`;
-        colAccionesHr = `<div class="flex items-center gap-2 justify-center">${selectPago}${btnCancelarPedido}</div>`;
+        colAccionesHr = `<button onclick="eliminarPedidoHojaRuta('${fechaHojaRutaActiva}', '${p.id || p.idUnico}')" class="bg-red-600 hover:bg-red-700 text-white text-xs px-2.5 py-1 rounded font-bold shadow">✕ Borrar</button>`;
       }
 
-     trHr.innerHTML = `
-  <td class="p-2 font-semibold text-gray-800">${p.clienteNombre}</td>
-  <td class="p-2">${iconoAuto}${p.producto}</td>
-  <td class="p-2">${p.origen === 'despacho' ? `<span class="bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded text-[10px] font-bold">Despacho</span>` : `<span class="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded text-[10px] font-bold">Cuadra</span>`}</td>
-  <td class="p-2">${p.unidades} un.</td>
-  <td class="p-2 font-bold text-amber-900">$${p.monto.toLocaleString()}</td>
-  <td class="p-2 text-center">${colAccionesHr}</td>
-  <td class="p-2">${p.pagado ? `<span class="bg-green-100 text-green-800 px-2 py-0.5 rounded text-[11px] font-bold">Cobrado (${p.medioPago})</span>` : `<span class="bg-red-100 text-red-800 px-2 py-0.5 rounded text-[11px] font-bold">Pendiente</span>`}</td>
-`;
+      trHr.innerHTML = `
+        <td class="p-2 font-semibold text-gray-800">${p.clienteNombre}</td>
+        <td class="p-2">${iconoAuto}${p.producto}</td>
+        <td class="p-2">${p.origen === 'despacho' ? `<span class="bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded text-[10px] font-bold">Despacho</span>` : `<span class="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded text-[10px] font-bold">Cuadra</span>`}</td>
+        <td class="p-2">${p.unidades} un.</td>
+        <td class="p-2 font-bold text-amber-900">$${p.monto.toLocaleString()}</td>
+        <td class="p-2">${colEstadoPago}</td>
+        <td class="p-2 text-center">${colAccionesHr}</td>
+      `;
       tbodyHojaRuta.appendChild(trHr);
     }
   });
@@ -3077,33 +3087,6 @@ let comparacionCliente = (a.clienteNombre || "").toLowerCase().localeCompare((b.
   if (elEf) elEf.textContent = `$${totalEfectivo.toLocaleString()}`;
   if (elTr) elTr.textContent = `$${totalTransf.toLocaleString()}`;
 }
-  function marcarPedidoCobrado(pedidoId, medioPago) {
-      const fechaHojaRutaActiva = document.getElementById('hr-fecha-selector').value || fechaActual;
-      if (dbRepartosCerrados[fechaHojaRutaActiva]) return;
-      if (!medioPago) return;
-
-      let lista = dbRepartos[fechaHojaRutaActiva];
-      if (!lista) return;
-
-      if (Array.isArray(lista)) {
-        // Estructura vieja (Array)
-        const pedido = lista.find(p => p && p.id === pedidoId);
-        if (pedido) {
-          pedido.pagado = true;
-          pedido.medioPago = medioPago;
-        }
-      } else {
-        // Estructura nueva (Objeto por ID - Multidispositivo seguro)
-        if (lista[pedidoId]) {
-          lista[pedidoId].pagado = true;
-          lista[pedidoId].medioPago = medioPago;
-        }
-      }
-
-      guardarRepartoPorFecha(fechaHojaRutaActiva);
-      renderizarPlanillaReparto(); 
-      renderizarReportesMensuales(); 
-    }
 function quitarAjusteCuadra(idOIndex) {
     const fechaHojaRutaActiva = document.getElementById('hr-fecha-selector').value || fechaActual;
     
@@ -3177,7 +3160,33 @@ function obtenerPedidosComoArray(fechaSeleccionada) {
         };
     });
 }
+function marcarPedidoCobrado(pedidoId, medioPago) {
+  const fechaHojaRutaActiva = document.getElementById('hr-fecha-selector').value || fechaActual;
+  if (dbRepartosCerrados[fechaHojaRutaActiva]) return;
+  if (!medioPago) return;
 
+  let lista = dbRepartos[fechaHojaRutaActiva];
+  if (!lista) return;
+
+  if (Array.isArray(lista)) {
+    // Estructura de Array (soporta tanto id como idUnico)
+    const pedido = lista.find(p => p && (p.id === pedidoId || p.idUnico === pedidoId));
+    if (pedido) {
+      pedido.pagado = true;
+      pedido.medioPago = medioPago;
+    }
+  } else {
+    // Estructura de Objeto por ID
+    if (lista[pedidoId]) {
+      lista[pedidoId].pagado = true;
+      lista[pedidoId].medioPago = medioPago;
+    }
+  }
+
+  guardarRepartoPorFecha(fechaHojaRutaActiva);
+  renderizarPlanillaReparto(); 
+  renderizarReportesMensuales(); 
+}
  function guardarDB(key, valor) {
       localStorage.setItem(key, JSON.stringify(valor));
       if (rtdb) {
