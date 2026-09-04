@@ -280,12 +280,14 @@
         </div>
       </div>
     </section>
-  <!-- 2. MÓDULO PRODUCCIÓN / CUADRA -->
+ <!-- 2. MÓDULO PRODUCCIÓN / CUADRA -->
     <section id="sec-cuadra" class="hidden space-y-4">
+      
+      <!-- 1. PRODUCCIÓN CONSOLIDADA -->
       <div id="box-cuadra-consolidado" class="bg-white p-4 rounded-xl shadow border border-amber-500">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 mb-3">
           <div>
-            <h2 class="text-lg font-bold text-gray-800">📋 Producción Consolidada (Cuadra)</h2>
+            <h2 class="text-lg font-bold text-gray-800">📋 1. Producción Consolidada (Cuadra)</h2>
             <p id="label-fecha-cuadra" class="text-xs text-gray-500 font-semibold"></p>
           </div>
           <div class="flex flex-wrap items-center gap-2">
@@ -299,19 +301,10 @@
         <div id="totales-panificados" class="grid grid-cols-1 gap-2"></div>
       </div>
 
-      <div class="bg-white p-4 rounded-xl shadow border">
-        <h2 class="text-base font-bold text-gray-800 mb-2">🏪 Pedidos Especiales y Mostrador</h2>
-        <div class="panel-carga-pedido flex gap-2 mb-3">
-          <input type="text" id="nota-mostrador" placeholder="Ej: 2 Frolas membrillo, 3 docenas medialunas" class="border p-2 rounded w-full text-base">
-          <button type="button" onclick="agregarNotaMostrador()" class="bg-amber-700 text-white font-bold px-4 rounded text-sm">Añadir</button>
-        </div>
-        <ul id="lista-notas-mostrador" class="list-disc pl-5 text-base space-y-1 text-gray-700"></ul>
-      </div>
-
-      <div class="bg-amber-50 p-4 rounded-xl shadow border border-amber-300 space-y-3">
-     <div id="panel-ajuste-stock-cuadra" class="bg-amber-50 p-4 rounded-xl shadow border border-amber-300 space-y-3">
-        <h2 class="text-base font-bold text-amber-900 flex items-center gap-1">🔄 Ajuste de Producción por Stock Remanente / Cancelación</h2>
-        <p class="text-xs text-gray-600">Permite descontar de la producción del día los saldos sobrantes o pedidos cancelados para evitar sobreproducción, sin alterar las cuentas corrientes.</p>
+      <!-- 2. AJUSTE DE PRODUCCIÓN POR STOCK REMANENTE -->
+      <div id="panel-ajuste-stock-cuadra" class="bg-amber-50 p-4 rounded-xl shadow border border-amber-300 space-y-3">
+        <h2 class="text-base font-bold text-amber-900 flex items-center gap-1">🔄 2. Ajuste de Producción por Stock Remanente / Cancelación</h2>
+        <p class="text-xs text-gray-600">Permite descontar de la producción del día los saldos sobrantes o pedidos cancelados para evitar sobreproducción.</p>
         
         <div class="grid grid-cols-1 md:grid-cols-4 gap-2 text-sm">
           <select id="ajuste-cuadra-producto" class="border p-2 rounded bg-white font-bold text-amber-900 md:col-span-2">
@@ -334,8 +327,89 @@
           </table>
         </div>
       </div>
-    </section>
 
+      <!-- 3. PEDIDOS MOSTRADOR -->
+      <div class="bg-white p-4 rounded-xl shadow border">
+        <h2 class="text-base font-bold text-gray-800 mb-2">🏪 3. Pedidos Especiales y Mostrador</h2>
+        <div class="panel-carga-pedido flex gap-2 mb-3">
+          <input type="text" id="nota-mostrador" placeholder="Ej: 2 Frolas membrillo, 3 docenas medialunas" class="border p-2 rounded w-full text-base">
+          <button type="button" onclick="agregarNotaMostrador()" class="bg-amber-700 text-white font-bold px-4 rounded text-sm">Añadir</button>
+        </div>
+        <ul id="lista-notas-mostrador" class="list-disc pl-5 text-base space-y-1 text-gray-700"></ul>
+      </div>
+
+     <!-- 4. PEDIDOS CATERING / MOSTRADOR EVENTUAL (CON REGLA DE 48 HS) -->
+      <div class="bg-blue-50 p-4 rounded-xl shadow border border-blue-300 space-y-3">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
+          <h2 class="text-base font-bold text-blue-950 flex items-center gap-1">🥐 4. Pedidos Catering / Anticipados (Clientes Mostrador)</h2>
+          <span class="text-xs bg-blue-200 text-blue-900 px-2 py-1 rounded font-semibold">Validación 48 hs activa</span>
+        </div>
+        <p class="text-[11px] text-blue-800">ℹ️ Ideal para clientes ocasionales. El sistema calcula automáticamente la fecha de producción en cuadra (1 día antes del retiro).</p>
+        
+        <!-- Formulario de Carga / Edición -->
+        <input type="hidden" id="catering-edit-id" value="">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm bg-white p-3 rounded-lg border border-blue-200 shadow-sm">
+          <div>
+            <label class="text-[11px] font-bold text-gray-700 block">Nombre y Apellido:</label>
+            <input type="text" id="cat-nombre" placeholder="Ej: Juan Pérez" class="border p-2 rounded w-full text-xs font-semibold">
+          </div>
+          <div>
+            <label class="text-[11px] font-bold text-gray-700 block">Nro de Teléfono:</label>
+            <input type="text" id="cat-telefono" placeholder="Ej: 2346-123456" class="border p-2 rounded w-full text-xs">
+          </div>
+          <div>
+            <label class="text-[11px] font-bold text-gray-700 block">Producto:</label>
+            <select id="cat-producto" class="border p-2 rounded w-full text-xs font-bold text-blue-950 bg-white">
+              <option value="Promo Catering">Promo Catering</option>
+              <option value="Pan para Choripanes">Pan para Choripanes</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-[11px] font-bold text-gray-700 block">Cantidad (Unidades):</label>
+            <input type="number" id="cat-cantidad" placeholder="Ej: 50" step="1" min="1" class="border p-2 rounded w-full text-xs font-bold">
+          </div>
+          <div>
+            <label class="text-[11px] font-bold text-gray-700 block">Fecha que se carga el pedido:</label>
+            <input type="date" id="cat-fecha-carga" class="border p-2 rounded w-full text-xs bg-gray-50 font-medium">
+          </div>
+          <div>
+            <label class="text-[11px] font-bold text-gray-700 block">Fecha que el cliente retira:</label>
+            <input type="date" id="cat-fecha-retiro" onchange="actualizarCalculoProduccionCatering()" class="border p-2 rounded w-full text-xs font-bold text-amber-900">
+          </div>
+        </div>
+
+        <!-- Indicador de fecha automática de producción -->
+        <div class="flex justify-between items-center bg-blue-100 p-2 rounded border border-blue-200 text-xs font-semibold text-blue-900">
+          <span id="label-info-produccion-auto">⚙️ Producción en Cuadra programada para: -</span>
+          <div class="flex gap-2">
+            <button type="button" id="btn-cancelar-edicion-cat" onclick="limpiarFormularioCatering()" class="hidden bg-gray-500 text-white px-3 py-1.5 rounded text-xs">Cancelar</button>
+            <button type="button" onclick="guardarPedidoCateringEspecial()" class="bg-blue-700 hover:bg-blue-800 text-white font-bold px-4 py-1.5 rounded text-xs shadow">Guardar Pedido Catering</button>
+          </div>
+        </div>
+
+        <!-- Tabla Visible de Pedidos a Futuro -->
+        <div class="mt-3">
+          <h3 class="text-xs font-bold text-blue-900 mb-1">📅 Listado de Pedidos a Futuro (Catering / Anticipados):</h3>
+          <div class="overflow-x-auto bg-white rounded border shadow-sm">
+            <table class="w-full text-left text-xs">
+              <thead>
+                <tr class="bg-blue-200 text-blue-950 border-b font-bold">
+                  <th class="p-2">Cliente / Teléfono</th>
+                  <th class="p-2">Producto</th>
+                  <th class="p-2 text-center">Cant.</th>
+                  <th class="p-2 text-center">F. Carga</th>
+                  <th class="p-2 text-center">F. Retiro</th>
+                  <th class="p-2 text-center">F. Producción (Cuadra)</th>
+                  <th class="p-2 text-center">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="tabla-pedidos-catering-cuadra"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </section>
     <!-- 5. CONTROL DE STOCK E INSUMOS -->
     <section id="sec-stock" class="hidden space-y-4">
       <div class="bg-white p-4 rounded-xl shadow border">
@@ -748,7 +822,7 @@
 
         <div class="bg-purple-50 p-4 rounded-xl shadow border border-purple-300 space-y-3">
           <h2 class="text-base font-bold text-purple-900 border-b border-purple-200 pb-2">⏰ Referencia de Fecha</h2>
-          <p class="text-xs text-purple-800">La caja opera con la Fecha Operativa general. Los nuevos pedidos se cargan a la fecha que vos elijas en el selector del formulario y la Cuadra preselecciona el día siguiente pasada las 15:00 hs.</p>
+          <p class="text-xs text-purple-800">La caja opera con la Fecha Operativa general. Los nuevos pedidos se cargan a la fecha que vos elijas en el selector del formulario y la Cuadra preselecciona el día siguiente pasada las 07:00 hs.</p>
         </div>
       </div>
 
@@ -1400,24 +1474,19 @@ function cargarDBRepartosSegura() {
   dbRepartos = valorInicial;
 
   if (rtdb) {
-    // Escuchamos cambios en la nube pero fusionando inteligentemente por ID
     rtdb.ref('db_repartos').on('value', (snapshot) => {
       const valRemoto = snapshot.val();
       if (valRemoto) {
-        // Fusionamos fecha por fecha y pedido por pedido para no perder nada
         Object.keys(valRemoto).forEach(fecha => {
-          if (!dbRepartos[fecha]) dbRepartos[fecha] = {};
-          
           let nodoRemoto = valRemoto[fecha];
           let remotoObj = {};
           if (Array.isArray(nodoRemoto)) {
             nodoRemoto.forEach(p => { if (p) remotoObj[p.id || generarID('REP')] = p; });
-          } else {
+          } else if (nodoRemoto) {
             remotoObj = nodoRemoto;
           }
-
-          // Mezclamos lo local con lo remoto priorizando la existencia de ambos
-          dbRepartos[fecha] = { ...dbRepartos[fecha], ...remotoObj };
+          // La nube pasa a ser la fuente de verdad estructurada por ID para evitar resucitar borrados
+          dbRepartos[fecha] = remotoObj;
         });
 
         localStorage.setItem('db_repartos', JSON.stringify(dbRepartos));
@@ -1427,7 +1496,8 @@ function cargarDBRepartosSegura() {
     });
   }
 }
-    function cargarSelectorRemanentesCuadra() {
+
+ function cargarSelectorRemanentesCuadra() {
       const sel = document.getElementById('ajuste-cuadra-producto');
       if (!sel) return;
       const valorSeleccionadoActual = sel.value;
@@ -1507,13 +1577,13 @@ function cargarDBRepartosSegura() {
     };
 
     window.LISTA_USUARIOS_BASE = {
-      "USR-1": { id: "USR-1", nombre: "Administrador General", rol: "admin", sucursal: "todas", pin: "1234", pestanas: ['reparto', 'hoja-ruta', 'cuadra', 'clientes', 'proveedores', 'stock', 'caja', 'precios', 'usuarios'] },
-      "USR-2": { id: "USR-2", nombre: "Maira (Mostrador Alem)", rol: "mostrador", sucursal: "alem", pin: "1234", pestanas: ['reparto', 'hoja-ruta', 'cuadra', 'clientes', 'proveedores', 'stock', 'caja', 'precios'] },
-      "USR-3": { id: "USR-3", nombre: "Encargado Espiga de Oro", rol: "mostrador", sucursal: "espiga", pin: "1234", pestanas: ['reparto', 'hoja-ruta', 'cuadra', 'caja'] },
-      "USR-4": { id: "USR-4", nombre: "Chofer Reparto", rol: "repartidor", sucursal: "todas", pin: "1234", pestanas: ['reparto', 'hoja-ruta', 'cuadra', 'clientes'] },
-      "USR-5": { id: "USR-5", nombre: "Maestro Panadero", rol: "produccion", sucursal: "todas", pin: "1234", pestanas: ['cuadra', 'stock'] }
-    };
-
+  "USR-1": { id: "USR-1", nombre: "Administrador General", rol: "admin", sucursal: "todas", pin: "3003", pestanas: ['reparto', 'hoja-ruta', 'cuadra', 'clientes', 'proveedores', 'stock', 'caja', 'precios', 'usuarios'] },
+  "USR-4": { id: "USR-4", nombre: "Chofer Reparto", rol: "repartidor", sucursal: "todas", pin: "1234", pestanas: ['reparto', 'hoja-ruta', 'cuadra', 'clientes'] },
+  "USR-5": { id: "USR-5", nombre: "Maestro Panadero", rol: "produccion", sucursal: "todas", pin: "1234", pestanas: ['cuadra', 'stock'] },
+  "USR-mt3piwha-j9oan": { id: "USR-mt3piwha-j9oan", nombre: "Yamila", rol: "mostrador", sucursal: "todas", pin: "1234", pestanas: ['reparto', 'hoja-ruta', 'cuadra', 'clientes', 'proveedores', 'stock', 'caja', 'precios'] },
+  "USR-mt3vmua9-xhey0": { id: "USR-mt3vmua9-xhey0", nombre: "Espiga", rol: "mostrador", sucursal: "espiga", pin: "1234", pestanas: ['reparto', 'hoja-ruta', 'cuadra', 'caja'] },
+  "USR-mtajmuor-dlmsi": { id: "USR-mtajmuor-dlmsi", nombre: "Uchii", rol: "mostrador", sucursal: "espiga", pin: "1234", pestanas: ['reparto', 'hoja-ruta', 'cuadra', 'caja'] }
+};
     window.LISTA_PANIFICADOS_REPARTO_BASE = {
       "Pebete": { unidPorPaq: 24, menor: 550, mayor: 500 },
       "Hamburguesas x 5 (c/u)": { unidPorPaq: 5, menor: 600, mayor: 500 },
@@ -1556,22 +1626,23 @@ function cargarDB(key, fallback) {
   const data = localStorage.getItem(key);
   let valorLocal = data ? JSON.parse(data) : fallback;
 
-  // Aplicamos lo local de inmediato para que la pantalla no quede en blanco
+  // Si es la base de usuarios, fusionamos inteligentemente para preservar IDs remotos/locales
+  if (key === 'db_usuarios' && typeof valorLocal === 'object' && typeof fallback === 'object') {
+    valorLocal = { ...fallback, ...valorLocal };
+  }
+
   aplicarDatosEnMemoriaLocal(key, valorLocal);
 
   if (rtdb) {
     try {
-      // Escuchamos la nube de forma persistente pero PROTEGIENDO el almacenamiento local
       rtdb.ref(key).on('value', (snapshot) => {
         const valRemoto = snapshot.val();
-        
         if (valRemoto !== null && valRemoto !== undefined) {
-          // Si es un objeto complejo (como repartos, clientes, proveedores)
-          if (typeof valRemoto === 'object' && !Array.isArray(valRemoto) && typeof valorLocal === 'object' && !Array.isArray(valorLocal)) {
-            
-            // FUSIÓN PROFUNDA OBLIGATORIA: Si hay datos locales que no están en la nube, se suman en lugar de borrarse
+          if (key === 'db_usuarios' && typeof valRemoto === 'object') {
+            // Fusión segura de usuarios para no pisar ningún ID de mostrador o reparto
+            valorLocal = { ...fallback, ...valRemoto, ...valorLocal };
+          } else if (typeof valRemoto === 'object' && !Array.isArray(valRemoto) && typeof valorLocal === 'object' && !Array.isArray(valorLocal)) {
             let fusionados = JSON.parse(JSON.stringify(valorLocal));
-            
             Object.keys(valRemoto).forEach(kPrincipal => {
               if (!fusionados[kPrincipal]) {
                 fusionados[kPrincipal] = valRemoto[kPrincipal];
@@ -1581,7 +1652,6 @@ function cargarDB(key, fallback) {
                 fusionados[kPrincipal] = valRemoto[kPrincipal];
               }
             });
-
             valorLocal = fusionados;
           } else {
             valorLocal = valRemoto;
@@ -1590,7 +1660,6 @@ function cargarDB(key, fallback) {
           localStorage.setItem(key, JSON.stringify(valorLocal));
           aplicarDatosEnMemoriaLocal(key, valorLocal);
         } else {
-          // Si la nube está vacía pero tenemos datos locales, SUBIMOS lo local para que no se pierda nada
           if (valorLocal && Object.keys(valorLocal).length > 0) {
             rtdb.ref(key).set(valorLocal).catch(err => console.warn("Error al auto-completar nube:", err));
           }
@@ -1602,6 +1671,7 @@ function cargarDB(key, fallback) {
   }
   return valorLocal;
 }
+
 function agregarNotaMostrador() {
   const inputNota = document.getElementById('nota-mostrador');
   if (!inputNota) return;
@@ -1687,7 +1757,14 @@ function agregarNotaMostrador() {
       if (key === 'db_repartos_cerrados') { dbRepartosCerrados = val || {}; renderizarPlanillaReparto(); }
       if (key === 'db_historial_proveedores') { dbHistorialProveedores = val || {}; if (proveedorSeleccionadoId) renderizarTablaHistorialProveedor(); }
     }
-   
+    function guardarRepartoPorFecha(fecha) {
+       if (rtdb) {
+          const subNodo = dbRepartos[fecha] || {};
+          rtdb.ref('db_repartos/' + fecha).set(subNodo).catch(err => console.warn(err));
+       }
+       localStorage.setItem('db_repartos', JSON.stringify(dbRepartos));
+    }
+
     dbUsuarios = cargarDB('db_usuarios', window.LISTA_USUARIOS_BASE);
     dbPanificados = cargarDB('db_panificados', window.LISTA_PANIFICADOS_REPARTO_BASE);
     dbProductos = cargarDB('db_productos', window.LISTA_PRODUCTOS_BASE);
@@ -1720,6 +1797,10 @@ function agregarNotaMostrador() {
       const inputHojaRuta = document.getElementById('hr-fecha-selector');
       if (inputHojaRuta) inputHojaRuta.value = fechaDestinoInicial;
 
+      // Inicializar fechas y validaciones de catering correctamente
+      inicializarFechasCatering();
+      renderizarTablaCateringCuadra();
+      
       inicializarFechaCuadra();
 
       const inputMesRep = document.getElementById('reporte-mes-select');
@@ -1761,9 +1842,9 @@ function agregarNotaMostrador() {
     } else {
       inicializarAplicacion();
     }
-
-   function obtenerFechaDestinoPorHora() {
+function obtenerFechaDestinoPorHora() {
       const ahora = new Date();
+      // Corte operativo a las 15:00 hs (3 PM) para pasar al día siguiente
       if (ahora.getHours() >= 15) {
         ahora.setDate(ahora.getDate() + 1);
       }
@@ -1812,25 +1893,27 @@ function actualizarPedidoEnNube(fecha, pedido) {
     }
     function cerrarModalAltaProveedor() { document.getElementById('modal-alta-proveedor').classList.add('hidden'); }
 
-    function inicializarFechaCuadra() {
+function inicializarFechaCuadra() {
       const ahora = new Date();
       const hora = ahora.getHours();
       let d = new Date();
-      if (hora >= 15) {
-        d.setDate(d.getDate() + 1);
-        // Limpieza automática de notas/pedidos especiales temporales al iniciar nuevo ciclo de día pasado las 15 hs[cite: 1]
-        const nuevaFechaStr = d.toISOString().split('T')[0];
-        if (!dbNotasMostrador[nuevaFechaStr]) {
-          dbNotasMostrador[nuevaFechaStr] = [];
-        }
-      }
-      const year = d.getFullYear();
-      const month = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      fechaCuadraActiva = `${year}-${month}-${day}`;
       
+      // Corte operativo a las 07:00 AM: si es mayor o igual, apunta al día siguiente
+      if (hora >= 7) {
+        d.setDate(d.getDate() + 1);
+      }
+      
+      d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+      fechaCuadraActiva = d.toISOString().split('T')[0];
+
+      if (!dbNotasMostrador[fechaCuadraActiva]) {
+        dbNotasMostrador[fechaCuadraActiva] = [];
+      }
+
       const inputCuadra = document.getElementById('cuadra-fecha-selector');
-      if (inputCuadra) inputCuadra.value = fechaCuadraActiva;
+      if (inputCuadra) {
+        inputCuadra.value = fechaCuadraActiva;
+      }
     }
     function cambiarFechaCuadra() {
       const input = document.getElementById('cuadra-fecha-selector');
@@ -2020,10 +2103,11 @@ function actualizarPedidoEnNube(fecha, pedido) {
       }
     }
 
- function procesarPedidosRecurrentesAutomaticos() {
+   function procesarPedidosRecurrentesAutomaticos() {
   const fechaDestinoActiva = document.getElementById('rep-fecha-destino')?.value || fechaActual;
   if (!dbRepartos[fechaDestinoActiva]) dbRepartos[fechaDestinoActiva] = {};
   
+  // Garantizar que sea un objeto diccionario y nunca un Array
   if (Array.isArray(dbRepartos[fechaDestinoActiva])) {
     let obj = {};
     dbRepartos[fechaDestinoActiva].forEach(p => { if (p) obj[p.id || generarID('REP')] = p; });
@@ -2054,10 +2138,10 @@ function actualizarPedidoEnNube(fecha, pedido) {
     }
 
     if (cumpleCondicion) {
-      const pedidosArr = Object.values(dbRepartos[fechaDestinoActiva]);
-      const yaExiste = pedidosArr.some(p => p && p.clienteId === r.clienteId && p.producto === r.producto && p.origenAuto);
-      
-      if (!yaExiste) {
+      const nuevoId = `AUTO_${r.id}_${fechaDestinoActiva}`;
+
+      // Comprobación estricta en el objeto por clave ID
+      if (!dbRepartos[fechaDestinoActiva][nuevoId]) {
         let precioUnit = 0;
         let unidPaq = 1;
 
@@ -2074,8 +2158,7 @@ function actualizarPedidoEnNube(fecha, pedido) {
           }
         }
 
-        const nuevoId = generarID('AUTO');
-        const nuevoPedidoAuto = {
+        const datosPedidoAutomatico = {
           id: nuevoId,
           clienteId: r.clienteId,
           clienteNombre: r.clienteNombre,
@@ -2090,12 +2173,12 @@ function actualizarPedidoEnNube(fecha, pedido) {
           medioPago: "Pendiente"
         };
 
-        // Inserción atómica individual en memoria local y Firebase
-        dbRepartos[fechaDestinoActiva][nuevoId] = nuevoPedidoAuto;
+        dbRepartos[fechaDestinoActiva][nuevoId] = datosPedidoAutomatico;
         localStorage.setItem('db_repartos', JSON.stringify(dbRepartos));
-        
+
         if (rtdb) {
-          rtdb.ref(`db_repartos/${fechaDestinoActiva}/${nuevoId}`).set(nuevoPedidoAuto).catch(err => console.warn(err));
+          rtdb.ref(`db_repartos/${fechaDestinoActiva}/${nuevoId}`).set(datosPedidoAutomatico)
+            .catch(err => console.warn(err));
         }
 
         huboCambiosNuevos = true;
@@ -2207,11 +2290,15 @@ function eliminarPedidoReparto(pedidoId, productoNombre) {
   
   if (confirm(`¿Desea eliminar el pedido de "${productoNombre}"?`)) {
     if (dbRepartos[fechaDestinoActiva]) {
-      delete dbRepartos[fechaDestinoActiva][pedidoId];
+      if (Array.isArray(dbRepartos[fechaDestinoActiva])) {
+        dbRepartos[fechaDestinoActiva] = dbRepartos[fechaDestinoActiva].filter(p => p && p.id !== pedidoId && p.idUnico !== pedidoId);
+      } else {
+        delete dbRepartos[fechaDestinoActiva][pedidoId];
+      }
       
       localStorage.setItem('db_repartos', JSON.stringify(dbRepartos));
       if (rtdb) {
-        // Borra unívocamente la clave en la nube
+        // Borrado definitivo en la base de datos en la nube
         rtdb.ref(`db_repartos/${fechaDestinoActiva}/${pedidoId}`).remove();
       }
       renderizarPlanillaReparto(); 
@@ -2221,16 +2308,13 @@ function eliminarPedidoReparto(pedidoId, productoNombre) {
 }
 function eliminarPedidoHojaRuta(fecha, idPedido) {
   if (confirm("¿Desea eliminar este pedido de la hoja de ruta?")) {
-    if (dbRepartos[fecha]) {
-      if (Array.isArray(dbRepartos[fecha])) {
-        dbRepartos[fecha] = dbRepartos[fecha].filter(p => p && p.id !== idPedido && p.idUnico !== idPedido);
-      } else if (typeof dbRepartos[fecha] === 'object') {
-        delete dbRepartos[fecha][idPedido];
-      }
+    if (Array.isArray(dbRepartos[fecha])) {
+      dbRepartos[fecha] = dbRepartos[fecha].filter(p => p.id !== idPedido && p.idUnico !== idPedido);
+    } else if (dbRepartos[fecha] && typeof dbRepartos[fecha] === 'object') {
+      delete dbRepartos[fecha][idPedido];
     }
     
-    // Guardado local y borrado atómico individual en Firebase (sin tocar otros pedidos)
-    localStorage.setItem('db_repartos', JSON.stringify(dbRepartos));
+    guardarRepartoPorFecha(fecha);
     if (rtdb) {
       rtdb.ref(`db_repartos/${fecha}/${idPedido}`).remove().catch(err => console.warn(err));
     }
@@ -2240,8 +2324,7 @@ function eliminarPedidoHojaRuta(fecha, idPedido) {
     renderizarReportesMensuales();
   }
 }
-
- function renderizarUsuariosSelect() {
+   function renderizarUsuariosSelect() {
       const sel = document.getElementById('select-usuario-activo');
       if (!sel) return;
       sel.innerHTML = '';
@@ -2904,7 +2987,7 @@ function agregarPedidoDespacho() {
   };
 
   guardarRepartoConSincronizacion(fechaDestino, nuevoPedido);
-  alert(`¡Ítem de despacho cargado con éxito!`);
+  alert(`¡Ítem de despacho cargado con éxito en La Espiga!`);
   
   document.getElementById('rep-despacho-cantidad').value = '';
   document.getElementById('rep-despacho-precio-unitario').value = '';
@@ -2914,8 +2997,19 @@ function agregarPedidoDespacho() {
 }
   function cerrarRepartoDelDia() {
       const fechaDestinoActiva = document.getElementById('rep-fecha-destino').value || fechaActual;
-      if (dbRepartosCerrados[fechaDestinoActiva]) { alert("El reparto de este día ya está cerrado."); return; }
-      if (!confirm(`🔒 ¿Desea cerrar el Reparto del día ${fechaDestinoActiva}?\n\nLos pedidos que queden pendientes pasarán formalmente a la Cuenta Corriente los clientes y se bloqueará la edición operativa.`)) return;
+      
+      // 🛡️ VALIDACIÓN ESTRICTA: Impide cerrar repartos con fechas posteriores a la fecha operativa actual
+      if (fechaDestinoActiva > fechaActual) {
+        alert(`⚠️ Acción bloqueada: No se puede cerrar el reparto del día ${fechaDestinoActiva} porque es posterior a la fecha operativa actual (${fechaActual}). Verifique el selector de fecha.`);
+        return;
+      }
+
+      if (dbRepartosCerrados[fechaDestinoActiva]) { 
+        alert("El reparto de este día ya se encuentra cerrado."); 
+        return; 
+      }
+
+      if (!confirm(`🔒 ¿Desea cerrar el Reparto del día ${fechaDestinoActiva}?\n\nLos pedidos pendientes pasarán formalmente a la Cuenta Corriente de los clientes con esta fecha exacta y se bloqueará la edición operativa.`)) return;
 
       dbRepartosCerrados[fechaDestinoActiva] = true;
       guardarDB('db_repartos_cerrados', dbRepartosCerrados);
@@ -2939,178 +3033,184 @@ function agregarPedidoDespacho() {
       }
     }
 function renderizarPlanillaReparto() {
-  procesarPedidosRecurrentesAutomaticos();
-  const fechaDestinoActiva = document.getElementById('rep-fecha-destino')?.value || fechaActual;
-  
-  const tbody = document.getElementById('tabla-reparto');
-  const tbodyHojaRuta = document.getElementById('tabla-hoja-ruta');
-  if (!tbody && !tbodyHojaRuta) return;
-
-  if (tbody) tbody.innerHTML = '';
-  if (tbodyHojaRuta) tbodyHojaRuta.innerHTML = '';
-
-  const fechaHojaRutaActiva = document.getElementById('hr-fecha-selector')?.value || fechaDestinoActiva;
-  const fechaFormateada = obtenerFechaConDia(fechaDestinoActiva);
-  const labelFechaRep = document.getElementById('label-fecha-reparto');
-  if (labelFechaRep) labelFechaRep.textContent = `Fecha: ${fechaFormateada}`;
-
-  const isCerrado = dbRepartosCerrados[fechaHojaRutaActiva] === true;
-  const usr = dbUsuarios[usuarioActivoId];
-  const esAdmin = (usr && usr.rol === 'admin');
-  
-  const esEspigaRestringido = (usr && usr.sucursal === 'espiga' && !esAdmin);
-
-  const btnVerAuto = document.querySelector('button[onclick="abrirModalPedidosAuto()"]');
-  const panelAuto = document.getElementById('panel-automatizacion');
-  if (btnVerAuto) btnVerAuto.style.display = esEspigaRestringido ? 'none' : '';
-  if (panelAuto) panelAuto.style.display = esEspigaRestringido ? 'none' : '';
-
-  const banner = document.getElementById('banner-reparto-cerrado');
-  const btnCerrarReparto = document.getElementById('btn-cerrar-reparto-dia');
-  const contReabrir = document.getElementById('contenedor-btn-reabrir-reparto');
-
-  if (isCerrado) {
-    if (banner) banner.classList.remove('hidden');
-    if (btnCerrarReparto) btnCerrarReparto.classList.add('hidden');
-    if (contReabrir && esAdmin) {
-      contReabrir.innerHTML = `<button type="button" onclick="reabrirRepartoDelDia()" class="bg-amber-800 hover:bg-amber-900 text-white font-bold px-3 py-1.5 rounded text-xs shadow">🔓 Reabrir Reparto (Admin)</button>`;
-    } else if (contReabrir) {
-      contReabrir.innerHTML = '';
-    }
-  } else {
-    if (banner) banner.classList.add('hidden');
-    if (btnCerrarReparto) btnCerrarReparto.classList.remove('hidden');
-    if (contReabrir) contReabrir.innerHTML = '';
-  }
-
-  const pedidosDestinoObj = dbRepartos[fechaDestinoActiva] || {};
-  let pedidosDestino = [];
-  if (Array.isArray(pedidosDestinoObj)) {
-    pedidosDestino = pedidosDestinoObj.filter(p => p !== null && p !== undefined);
-  } else {
-    pedidosDestino = Object.values(pedidosDestinoObj).filter(p => p !== null && p !== undefined);
-  }
-  
-  if (esEspigaRestringido) {
-    pedidosDestino = pedidosDestino.filter(p => {
-      if (!p) return false;
-      const nombreCli = (p.clienteNombre || '').toLowerCase();
-      return nombreCli.includes('espiga') && !p.origenAuto;
-    });
-  }
-
-  pedidosDestino.sort((a, b) => {
-    let comparacionCliente = (a.clienteNombre || "").toLowerCase().localeCompare((b.clienteNombre || "").toLowerCase());
-    if (comparacionCliente !== 0) return comparacionCliente;
-    return (a.producto || "").toLowerCase().localeCompare((b.producto || "").toLowerCase());
-  });
-
-  pedidosDestino.forEach((p) => {
-    if (tbody) {
-      const iconoAuto = p.origenAuto ? '🤖 ' : '';
-      const trPed = document.createElement('tr'); 
-      trPed.className = "border-b hover:bg-gray-50 text-xs md:text-sm";
-      trPed.innerHTML = `
-        <td class="p-2 font-semibold text-gray-800">${p.clienteNombre}</td>
-        <td class="p-2">${iconoAuto}${p.producto}</td>
-        <td class="p-2">${p.origen === 'despacho' ? `<span class="bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded text-[10px] font-bold">Despacho</span>` : `<span class="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded text-[10px] font-bold">Cuadra</span>`}</td>
-        <td class="p-2">${p.unidades} un.</td>
-        <td class="p-2 font-bold"><input type="number" step="0.01" value="${p.precioUnitario}" ${esEspigaRestringido ? 'disabled' : ''} onchange="modificarPrecioPedidoDirecto('${p.id || p.idUnico}', this.value)" class="w-20 border rounded p-1 text-xs font-bold"></td>
-        <td class="p-2 font-bold text-amber-900">$${p.monto.toLocaleString()}</td>
-        <td class="p-2 text-center">
-          <button onclick="eliminarPedidoReparto('${p.id || p.idUnico}', '${p.producto}')" class="bg-red-600 hover:bg-red-700 text-white text-xs px-2.5 py-1 rounded font-bold shadow">✕ Borrar</button>
-        </td>
-      `;
-      tbody.appendChild(trPed);
-    }
-  });
-
-  const pedidosHojaRutaObj = dbRepartos[fechaHojaRutaActiva] || {};
-  let pedidosHojaRuta = [];
-  if (Array.isArray(pedidosHojaRutaObj)) {
-    pedidosHojaRuta = pedidosHojaRutaObj.filter(p => p !== null && p !== undefined);
-  } else {
-    pedidosHojaRuta = Object.values(pedidosHojaRutaObj).filter(p => p !== null && p !== undefined);
-  }
-  
-  if (esEspigaRestringido) {
-    pedidosHojaRuta = pedidosHojaRuta.filter(p => {
-      if (!p) return false;
-      const nombreCli = (p.clienteNombre || '').toLowerCase();
-      return nombreCli.includes('espiga') && !p.origenAuto;
-    });
-  }
-
-  pedidosHojaRuta.sort((a, b) => {
-    let comparacionCliente = (a.clienteNombre || "").toLowerCase().localeCompare((b.clienteNombre || "").toLowerCase());
-    if (comparacionCliente !== 0) return comparacionCliente;
-    return (a.producto || "").toLowerCase().localeCompare((b.producto || "").toLowerCase());
-  });
-
-  let totalMonto = 0, totalEfectivo = 0, totalCtaCte = 0;
-
-  pedidosHojaRuta.forEach((p) => {
-    totalMonto += p.monto;
-    if (p.pagado && p.medioPago === 'Efectivo') totalEfectivo += p.monto;
-    else if (!p.pagado) totalCtaCte += p.monto;
-    
-    const iconoAuto = p.origenAuto ? '🤖 ' : '';
-
-    if (tbodyHojaRuta) {
-      const trHr = document.createElement('tr'); 
-      trHr.className = "border-b hover:bg-gray-50 text-xs md:text-sm";
+      procesarPedidosRecurrentesAutomaticos();
+      const fechaDestinoActiva = document.getElementById('rep-fecha-destino')?.value || fechaActual;
       
-      let colEstadoPago = '';
-      let colAccionesHr = '';
+      const tbody = document.getElementById('tabla-reparto');
+      const tbodyHojaRuta = document.getElementById('tabla-hoja-ruta');
+      if (!tbody && !tbodyHojaRuta) return;
+
+      if (tbody) tbody.innerHTML = '';
+      if (tbodyHojaRuta) tbodyHojaRuta.innerHTML = '';
+
+      const fechaHojaRutaActiva = document.getElementById('hr-fecha-selector')?.value || fechaDestinoActiva;
+      const fechaFormateada = obtenerFechaConDia(fechaDestinoActiva);
+      const labelFechaRep = document.getElementById('label-fecha-reparto');
+      if (labelFechaRep) labelFechaRep.textContent = `Fecha: ${fechaFormateada}`;
+
+      const isCerrado = dbRepartosCerrados[fechaHojaRutaActiva] === true;
+      const usr = dbUsuarios[usuarioActivoId];
+      const esAdmin = (usr && usr.rol === 'admin');
+      
+      const esEspigaRestringido = (usr && usr.sucursal === 'espiga' && !esAdmin);
+
+      const btnVerAuto = document.querySelector('button[onclick="abrirModalPedidosAuto()"]');
+      const panelAuto = document.getElementById('panel-automatizacion');
+      if (btnVerAuto) btnVerAuto.style.display = esEspigaRestringido ? 'none' : '';
+      if (panelAuto) panelAuto.style.display = esEspigaRestringido ? 'none' : '';
+
+      const banner = document.getElementById('banner-reparto-cerrado');
+      const btnCerrarReparto = document.getElementById('btn-cerrar-reparto-dia');
+      const contReabrir = document.getElementById('contenedor-btn-reabrir-reparto');
 
       if (isCerrado) {
-        colEstadoPago = p.pagado ? `<span class="bg-green-100 text-green-800 px-2 py-0.5 rounded text-[11px] font-bold">Cobrado (${p.medioPago})</span>` : `<span class="bg-red-100 text-red-800 px-2 py-0.5 rounded text-[11px] font-bold">En Cta. Cte.</span>`;
-        colAccionesHr = `<span class="text-xs text-gray-400">Cerrado</span>`;
+        if (banner) banner.classList.remove('hidden');
+        if (btnCerrarReparto) btnCerrarReparto.classList.add('hidden');
+        if (contReabrir && esAdmin) {
+          contReabrir.innerHTML = `<button type="button" onclick="reabrirRepartoDelDia()" class="bg-amber-800 hover:bg-amber-900 text-white font-bold px-3 py-1.5 rounded text-xs shadow">🔓 Reabrir Reparto (Admin)</button>`;
+        } else if (contReabrir) {
+          contReabrir.innerHTML = '';
+        }
       } else {
-        colEstadoPago = !p.pagado ? `
-          <select onchange="marcarPedidoCobrado('${p.id || p.idUnico}', this.value)" class="border rounded text-xs p-1 bg-white font-medium">
-            <option value="">-- Pago --</option>
-            <option value="Efectivo">Efectivo</option>
-            <option value="Transferencia">Transferencia</option>
-            <option value="Mercado Pago">Mercado Pago</option>
-          </select>
-        ` : `
-          <div class="flex items-center gap-1">
-            <span class="bg-green-100 text-green-800 px-2 py-0.5 rounded text-[11px] font-bold">Cobrado (${p.medioPago})</span>
-            <button onclick="deshacerCobroPedido('${p.id || p.idUnico}')" class="text-[10px] text-amber-700 underline font-bold">Cambiar</button>
-          </div>
-        `;
-        colAccionesHr = `<button onclick="eliminarPedidoHojaRuta('${fechaHojaRutaActiva}', '${p.id || p.idUnico}')" class="bg-red-600 hover:bg-red-700 text-white text-xs px-2.5 py-1 rounded font-bold shadow">✕ Borrar</button>`;
+        if (banner) banner.classList.add('hidden');
+        if (btnCerrarReparto) btnCerrarReparto.classList.remove('hidden');
+        if (contReabrir) contReabrir.innerHTML = '';
       }
 
-      trHr.innerHTML = `
-        <td class="p-2 font-semibold text-gray-800">${p.clienteNombre}</td>
-        <td class="p-2">${iconoAuto}${p.producto}</td>
-        <td class="p-2">${p.origen === 'despacho' ? `<span class="bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded text-[10px] font-bold">Despacho</span>` : `<span class="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded text-[10px] font-bold">Cuadra</span>`}</td>
-        <td class="p-2">${p.unidades} un.</td>
-        <td class="p-2 font-bold text-amber-900">$${p.monto.toLocaleString()}</td>
-        <td class="p-2">${colEstadoPago}</td>
-        <td class="p-2 text-center">${colAccionesHr}</td>
-      `;
-      tbodyHojaRuta.appendChild(trHr);
+      const pedidosDestinoObj = dbRepartos[fechaDestinoActiva] || {};
+      let pedidosDestino = [];
+      if (Array.isArray(pedidosDestinoObj)) {
+        pedidosDestino = pedidosDestinoObj.filter(p => p !== null && p !== undefined);
+      } else {
+        pedidosDestino = Object.values(pedidosDestinoObj).filter(p => p !== null && p !== undefined);
+      }
+      
+      // 🚫 FILTRO: Excluir pedidos de catering/mostrador del módulo principal de reparto
+      pedidosDestino = pedidosDestino.filter(p => p && p.origen !== 'catering-mostrador');
+
+      if (esEspigaRestringido) {
+        pedidosDestino = pedidosDestino.filter(p => {
+          if (!p) return false;
+          const nombreCli = (p.clienteNombre || '').toLowerCase();
+          return nombreCli.includes('espiga') && !p.origenAuto;
+        });
+      }
+
+      pedidosDestino.sort((a, b) => {
+        let comparacionCliente = (a.clienteNombre || "").toLowerCase().localeCompare((b.clienteNombre || "").toLowerCase());
+        if (comparacionCliente !== 0) return comparacionCliente;
+        return (a.producto || "").toLowerCase().localeCompare((b.producto || "").toLowerCase());
+      });
+
+      pedidosDestino.forEach((p) => {
+        if (tbody) {
+          const iconoAuto = p.origenAuto ? '🤖 ' : '';
+          const trPed = document.createElement('tr'); 
+          trPed.className = "border-b hover:bg-gray-50 text-xs md:text-sm";
+          trPed.innerHTML = `
+            <td class="p-2 font-semibold text-gray-800">${p.clienteNombre}</td>
+            <td class="p-2">${iconoAuto}${p.producto}</td>
+            <td class="p-2">${p.origen === 'despacho' ? `<span class="bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded text-[10px] font-bold">Despacho</span>` : `<span class="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded text-[10px] font-bold">Cuadra</span>`}</td>
+            <td class="p-2">${p.unidades} un.</td>
+            <td class="p-2 font-bold"><input type="number" step="0.01" value="${p.precioUnitario}" ${esEspigaRestringido ? 'disabled' : ''} onchange="modificarPrecioPedidoDirecto('${p.id || p.idUnico}', this.value)" class="w-20 border rounded p-1 text-xs font-bold"></td>
+            <td class="p-2 font-bold text-amber-900">$${p.monto.toLocaleString()}</td>
+            <td class="p-2 text-center">
+              <button onclick="eliminarPedidoReparto('${p.id || p.idUnico}', '${p.producto}')" class="bg-red-600 hover:bg-red-700 text-white text-xs px-2.5 py-1 rounded font-bold shadow">✕ Borrar</button>
+            </td>
+          `;
+          tbody.appendChild(trPed);
+        }
+      });
+
+      const pedidosHojaRutaObj = dbRepartos[fechaHojaRutaActiva] || {};
+      let pedidosHojaRuta = [];
+      if (Array.isArray(pedidosHojaRutaObj)) {
+        pedidosHojaRuta = pedidosHojaRutaObj.filter(p => p !== null && p !== undefined);
+      } else {
+        pedidosHojaRuta = Object.values(pedidosHojaRutaObj).filter(p => p !== null && p !== undefined);
+      }
+      
+      // 🚫 FILTRO: Excluir pedidos de catering/mostrador de la hoja de ruta
+      pedidosHojaRuta = pedidosHojaRuta.filter(p => p && p.origen !== 'catering-mostrador');
+
+      if (esEspigaRestringido) {
+        pedidosHojaRuta = pedidosHojaRuta.filter(p => {
+          if (!p) return false;
+          const nombreCli = (p.clienteNombre || '').toLowerCase();
+          return nombreCli.includes('espiga') && !p.origenAuto;
+        });
+      }
+
+      pedidosHojaRuta.sort((a, b) => {
+        let comparacionCliente = (a.clienteNombre || "").toLowerCase().localeCompare((b.clienteNombre || "").toLowerCase());
+        if (comparacionCliente !== 0) return comparacionCliente;
+        return (a.producto || "").toLowerCase().localeCompare((b.producto || "").toLowerCase());
+      });
+
+      let totalMonto = 0, totalEfectivo = 0, totalCtaCte = 0;
+
+      pedidosHojaRuta.forEach((p) => {
+        totalMonto += p.monto;
+        if (p.pagado && p.medioPago === 'Efectivo') totalEfectivo += p.monto;
+        else if (!p.pagado) totalCtaCte += p.monto;
+        
+        const iconoAuto = p.origenAuto ? '🤖 ' : '';
+
+        if (tbodyHojaRuta) {
+          const trHr = document.createElement('tr'); 
+          trHr.className = "border-b hover:bg-gray-50 text-xs md:text-sm";
+          
+          let colEstadoPago = '';
+          let colAccionesHr = '';
+
+          if (isCerrado) {
+            colEstadoPago = p.pagado ? `<span class="bg-green-100 text-green-800 px-2 py-0.5 rounded text-[11px] font-bold">Cobrado (${p.medioPago})</span>` : `<span class="bg-red-100 text-red-800 px-2 py-0.5 rounded text-[11px] font-bold">En Cta. Cte.</span>`;
+            colAccionesHr = `<span class="text-xs text-gray-400">Cerrado</span>`;
+          } else {
+            colEstadoPago = !p.pagado ? `
+              <select onchange="marcarPedidoCobrado('${p.id || p.idUnico}', this.value)" class="border rounded text-xs p-1 bg-white font-medium">
+                <option value="">-- Pago --</option>
+                <option value="Efectivo">Efectivo</option>
+                <option value="Transferencia">Transferencia</option>
+                <option value="Mercado Pago">Mercado Pago</option>
+              </select>
+            ` : `
+              <div class="flex items-center gap-1">
+                <span class="bg-green-100 text-green-800 px-2 py-0.5 rounded text-[11px] font-bold">Cobrado (${p.medioPago})</span>
+                <button onclick="deshacerCobroPedido('${p.id || p.idUnico}')" class="text-[10px] text-amber-700 underline font-bold">Cambiar</button>
+              </div>
+            `;
+            colAccionesHr = `<button onclick="eliminarPedidoHojaRuta('${fechaHojaRutaActiva}', '${p.id || p.idUnico}')" class="bg-red-600 hover:bg-red-700 text-white text-xs px-2.5 py-1 rounded font-bold shadow">✕ Borrar</button>`;
+          }
+
+          trHr.innerHTML = `
+            <td class="p-2 font-semibold text-gray-800">${p.clienteNombre}</td>
+            <td class="p-2">${iconoAuto}${p.producto}</td>
+            <td class="p-2">${p.origen === 'despacho' ? `<span class="bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded text-[10px] font-bold">Despacho</span>` : `<span class="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded text-[10px] font-bold">Cuadra</span>`}</td>
+            <td class="p-2">${p.unidades} un.</td>
+            <td class="p-2 font-bold text-amber-900">$${p.monto.toLocaleString()}</td>
+            <td class="p-2">${colEstadoPago}</td>
+            <td class="p-2 text-center">${colAccionesHr}</td>
+          `;
+          tbodyHojaRuta.appendChild(trHr);
+        }
+      });
+
+      const elTotMonto = document.getElementById('tot-rep-monto');
+      const elTotEfec = document.getElementById('tot-rep-efectivo');
+      const elTotCta = document.getElementById('tot-rep-ctacte');
+
+      if (elTotMonto) elTotMonto.textContent = `$${totalMonto.toLocaleString()}`;
+      if (elTotEfec) elTotEfec.textContent = `$${totalEfectivo.toLocaleString()}`;
+      if (elTotCta) elTotCta.textContent = `$${totalCtaCte.toLocaleString()}`;
+
+      let totalTransf = 0;
+      pedidosHojaRuta.forEach(p => { if (p.pagado && p.medioPago !== 'Efectivo') totalTransf += p.monto; });
+      const elEf = document.getElementById('caja-rep-efectivo'); 
+      const elTr = document.getElementById('caja-rep-transf');
+      if (elEf) elEf.textContent = `$${totalEfectivo.toLocaleString()}`;
+      if (elTr) elTr.textContent = `$${totalTransf.toLocaleString()}`;
     }
-  });
-
-  const elTotMonto = document.getElementById('tot-rep-monto');
-  const elTotEfec = document.getElementById('tot-rep-efectivo');
-  const elTotCta = document.getElementById('tot-rep-ctacte');
-
-  if (elTotMonto) elTotMonto.textContent = `$${totalMonto.toLocaleString()}`;
-  if (elTotEfec) elTotEfec.textContent = `$${totalEfectivo.toLocaleString()}`;
-  if (elTotCta) elTotCta.textContent = `$${totalCtaCte.toLocaleString()}`;
-
-  let totalTransf = 0;
-  pedidosHojaRuta.forEach(p => { if (p.pagado && p.medioPago !== 'Efectivo') totalTransf += p.monto; });
-  const elEf = document.getElementById('caja-rep-efectivo'); 
-  const elTr = document.getElementById('caja-rep-transf');
-  if (elEf) elEf.textContent = `$${totalEfectivo.toLocaleString()}`;
-  if (elTr) elTr.textContent = `$${totalTransf.toLocaleString()}`;
-}
 function quitarAjusteCuadra(idOIndex) {
     const fechaHojaRutaActiva = document.getElementById('hr-fecha-selector').value || fechaActual;
     
@@ -3209,90 +3309,131 @@ function marcarPedidoCobrado(pedidoId, medioPago) {
       }
     }
 
-    function imprimirCuadra() {
-  const fechaFormateada = obtenerFechaConDia(fechaCuadraActiva);
-  let rawData = dbRepartos[fechaCuadraActiva];
-  const pedidosHoy = Array.isArray(rawData) ? rawData : (rawData ? Object.values(rawData) : []);
-  const consolidados = {};
+   function imprimirCuadra() {
+      const fechaFormateada = obtenerFechaConDia(fechaCuadraActiva);
+      let rawData = dbRepartos[fechaCuadraActiva];
+      const pedidosHoy = Array.isArray(rawData) ? rawData : (rawData ? Object.values(rawData) : []);
+      
+      // 1. Totales a Producir (Excluyendo despacho y catering)
+      const consolidados = {};
+      pedidosHoy.forEach(p => {
+        if (!p || p.origen === 'despacho' || p.origen === 'catering-mostrador') return;
+        consolidados[p.producto] = (consolidados[p.producto] || 0) + p.unidades;
+      });
 
-  pedidosHoy.forEach(p => {
-    if (p.origen === 'despacho') return;
-    consolidados[p.producto] = (consolidados[p.producto] || 0) + p.unidades;
-  });
+      let produccionHtml = '';
+      const lista = Object.entries(consolidados).sort((a, b) => a[0].localeCompare(b[0]));
+      let totalUnidadesPrint = 0;
 
-  let produccionHtml = '';
-  const lista = Object.entries(consolidados).sort((a, b) => a[0].localeCompare(b[0]));
-  
-  let totalUnidadesPrint = 0;
-
-  if (lista.length === 0) {
-    produccionHtml = '<tr><td colspan="2" style="padding: 12px; text-align: center; color: #6b7280; font-style: italic; border-bottom: 1px solid #e5e7eb;">Sin pedidos de cuadra cargados.</td></tr>';
-  } else {
-    lista.forEach(([prodNombre, cantUnidades]) => {
-      totalUnidadesPrint += cantUnidades;
-      produccionHtml += `
-        <tr style="border-bottom: 1px solid #e5e7eb;">
-          <td style="padding: 10px 14px; font-size: 13px; font-weight: 600; color: #1f2937; text-align: left;">${prodNombre}</td>
-          <td style="padding: 10px 14px; text-align: center; font-size: 14px; font-weight: 800; color: #78350f; background-color: #fef3c7; width: 140px;">${cantUnidades}</td>
-        </tr>
-      `;
-    });
-    
-    produccionHtml += `
-        <tr style="border-bottom: 1px solid #e5e7eb; background-color: #fde68a;">
-          <td style="padding: 10px 14px; font-size: 13px; font-weight: 800; color: #78350f; text-align: left;">TOTAL PRODUCTOS</td>
-          <td style="padding: 10px 14px; text-align: center; font-size: 15px; font-weight: 900; color: #78350f; width: 140px;">${totalUnidadesPrint}</td>
-        </tr>
-      `;
-  }
-
-  let notasHtml = '';
-  let notasArr = (dbNotasMostrador[fechaCuadraActiva] || []).map((nota) => nota);
-  notasArr.sort((a, b) => a.localeCompare(b));
-  
-  notasArr.forEach((nota) => {
-    notasHtml += `<li style="margin-bottom: 6px; font-size: 12px; color: #374151; font-weight: 500;">${nota}</li>`;
-  });
-  if (notasArr.length === 0) {
-    notasHtml = '<p style="color: #9ca3af; font-style: italic; margin: 0; font-size: 12px;">Sin notas ni pedidos especiales registrados.</p>';
-  }
-
-  const areaImp = document.getElementById('area-impresion');
-  areaImp.innerHTML = `
-    <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; color: #111827;">
-      <div style="border-bottom: 3px solid #78350f; padding-bottom: 12px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-end;">
-        <div>
-          <h1 style="font-size: 20px; font-weight: 800; margin: 0; color: #78350f; text-transform: uppercase;">La Casa del Pan & La Espiga de Oro</h1>
-          <p style="font-size: 13px; margin: 4px 0 0 0; color: #4b5563; font-weight: 600;">Planilla de Producción Consolidada (Cuadra)</p>
-        </div>
-        <div style="text-align: right; background-color: #fef3c7; border: 1px solid #fde68a; padding: 8px 14px; border-radius: 6px;">
-          <span style="font-size: 10px; color: #92400e; font-weight: 700; display: block; text-transform: uppercase;">Fecha de Producción</span>
-          <span style="font-size: 12px; font-weight: 800; color: #78350f;">${fechaFormateada}</span>
-        </div>
-      </div>
-
-      <div style="margin-bottom: 28px;">
-        <h2 style="font-size: 13px; font-weight: 700; color: #374151; margin: 0 0 10px 0; text-transform: uppercase;">1. Totales a Producir</h2>
-        <table style="width: 100%; border-collapse: collapse; border: 1px solid #d1d5db;">
-          <thead>
-            <tr style="background-color: #78350f; color: #ffffff;">
-              <th style="padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase;">Producto / Panificado</th>
-              <th style="padding: 10px 14px; text-align: center; font-size: 11px; font-weight: 700; text-transform: uppercase; width: 140px;">Cantidad Total</th>
+      if (lista.length === 0) {
+        produccionHtml = '<tr><td colspan="2" style="padding: 12px; text-align: center; color: #6b7280; font-style: italic; border-bottom: 1px solid #e5e7eb;">Sin pedidos de cuadra cargados.</td></tr>';
+      } else {
+        lista.forEach(([prodNombre, cantUnidades]) => {
+          totalUnidadesPrint += cantUnidades;
+          produccionHtml += `
+            <tr style="border-bottom: 1px solid #e5e7eb;">
+              <td style="padding: 10px 14px; font-size: 13px; font-weight: 600; color: #1f2937; text-align: left;">${prodNombre}</td>
+              <td style="padding: 10px 14px; text-align: center; font-size: 14px; font-weight: 800; color: #78350f; background-color: #fef3c7; width: 140px;">${cantUnidades}</td>
             </tr>
-          </thead>
-          <tbody>${produccionHtml}</tbody>
-        </table>
-      </div>
+          `;
+        });
+        
+        produccionHtml += `
+            <tr style="border-bottom: 1px solid #e5e7eb; background-color: #fde68a;">
+              <td style="padding: 10px 14px; font-size: 13px; font-weight: 800; color: #78350f; text-align: left;">TOTAL PRODUCTOS</td>
+              <td style="padding: 10px 14px; text-align: center; font-size: 15px; font-weight: 900; color: #78350f; width: 140px;">${totalUnidadesPrint}</td>
+            </tr>
+          `;
+      }
 
-      <div style="border: 1px solid #d1d5db; border-radius: 6px; padding: 18px; background-color: #fafafa;">
-        <h2 style="font-size: 13px; font-weight: 700; color: #374151; margin: 0 0 12px 0; text-transform: uppercase;">2. Pedidos Especiales y Mostrador</h2>
-        <ul style="padding-left: 20px; margin: 0;">${notasHtml}</ul>
-      </div>
-    </div>
-  `;
+      // 2. Pedidos Mostrador (Notas)
+      let notasHtml = '';
+      let notasArr = (dbNotasMostrador[fechaCuadraActiva] || []).map((nota) => nota);
+      notasArr.sort((a, b) => a.localeCompare(b));
+      
+      notasArr.forEach((nota) => {
+        notasHtml += `<li style="margin-bottom: 6px; font-size: 12px; color: #374151; font-weight: 500;">${nota}</li>`;
+      });
+      if (notasArr.length === 0) {
+        notasHtml = '<p style="color: #9ca3af; font-style: italic; margin: 0; font-size: 12px;">Sin notas ni pedidos especiales registrados.</p>';
+      }
 
-  window.print();
-}
+      // 3. Pedidos Catering / Anticipados
+      let cateringHtml = '';
+      const cateringItems = pedidosHoy.filter(p => p && p.origen === 'catering-mostrador');
+      cateringItems.sort((a, b) => (a.clienteNombre || '').localeCompare(b.clienteNombre || ''));
+
+      if (cateringItems.length === 0) {
+        cateringHtml = '<p style="color: #9ca3af; font-style: italic; margin: 0; font-size: 12px;">Sin pedidos de catering programados para esta fecha.</p>';
+      } else {
+        let cateringRows = '';
+        cateringItems.forEach(item => {
+          const letraSuc = item.sucursal === 'espiga' ? 'E' : 'A';
+          cateringRows += `
+            <tr style="border-bottom: 1px solid #e5e7eb;">
+              <td style="padding: 8px 10px; font-size: 12px; font-weight: 600; color: #1f2937;">${item.clienteNombre}</td>
+              <td style="padding: 8px 10px; font-size: 12px; color: #374151;">${item.producto}</td>
+              <td style="padding: 8px 10px; text-align: center; font-size: 12px; font-weight: 800; color: #1e3a8a; width: 90px;">${item.unidades} un.</td>
+              <td style="padding: 8px 10px; text-align: center; font-size: 12px; color: #4b5563; width: 110px;">${item.fechaRetiro || '-'} (${letraSuc})</td>
+            </tr>
+          `;
+        });
+        cateringHtml = `
+          <table style="width: 100%; border-collapse: collapse; border: 1px solid #d1d5db; background-color: #ffffff;">
+            <thead>
+              <tr style="background-color: #1e3a8a; color: #ffffff;">
+                <th style="padding: 8px 10px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase;">Cliente / Teléfono</th>
+                <th style="padding: 8px 10px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase;">Producto</th>
+                <th style="padding: 8px 10px; text-align: center; font-size: 11px; font-weight: 700; text-transform: uppercase; width: 90px;">Cantidad</th>
+                <th style="padding: 8px 10px; text-align: center; font-size: 11px; font-weight: 700; text-transform: uppercase; width: 110px;">F. Retiro</th>
+              </tr>
+            </thead>
+            <tbody>${cateringRows}</tbody>
+          </table>
+        `;
+      }
+
+      const areaImp = document.getElementById('area-impresion');
+      areaImp.innerHTML = `
+        <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; color: #111827;">
+          <div style="border-bottom: 3px solid #78350f; padding-bottom: 12px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-end;">
+            <div>
+              <h1 style="font-size: 20px; font-weight: 800; margin: 0; color: #78350f; text-transform: uppercase;">La Casa del Pan & La Espiga de Oro</h1>
+              <p style="font-size: 13px; margin: 4px 0 0 0; color: #4b5563; font-weight: 600;">Planilla de Producción Consolidada (Cuadra)</p>
+            </div>
+            <div style="text-align: right; background-color: #fef3c7; border: 1px solid #fde68a; padding: 8px 14px; border-radius: 6px;">
+              <span style="font-size: 10px; color: #92400e; font-weight: 700; display: block; text-transform: uppercase;">Fecha de Producción</span>
+              <span style="font-size: 12px; font-weight: 800; color: #78350f;">${fechaFormateada}</span>
+            </div>
+          </div>
+
+          <div style="margin-bottom: 24px;">
+            <h2 style="font-size: 13px; font-weight: 700; color: #374151; margin: 0 0 10px 0; text-transform: uppercase;">1. Totales a Producir (Panificados)</h2>
+            <table style="width: 100%; border-collapse: collapse; border: 1px solid #d1d5db;">
+              <thead>
+                <tr style="background-color: #78350f; color: #ffffff;">
+                  <th style="padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase;">Producto / Panificado</th>
+                  <th style="padding: 10px 14px; text-align: center; font-size: 11px; font-weight: 700; text-transform: uppercase; width: 140px;">Cantidad Total</th>
+                </tr>
+              </thead>
+              <tbody>${produccionHtml}</tbody>
+            </table>
+          </div>
+
+          <div style="border: 1px solid #d1d5db; border-radius: 6px; padding: 16px; background-color: #fafafa; margin-bottom: 24px;">
+            <h2 style="font-size: 13px; font-weight: 700; color: #374151; margin: 0 0 10px 0; text-transform: uppercase;">2. Pedidos Mostrador</h2>
+            <ul style="padding-left: 20px; margin: 0;">${notasHtml}</ul>
+          </div>
+
+          <div style="margin-bottom: 24px;">
+            <h2 style="font-size: 13px; font-weight: 700; color: #374151; margin: 0 0 10px 0; text-transform: uppercase;">3. Pedidos Catering / Anticipados</h2>
+            ${cateringHtml}
+          </div>
+        </div>
+      `;
+
+      window.print();
+    }
 
 function imprimirReparto() {
   const fechaHojaRutaActiva = document.getElementById('hr-fecha-selector').value || fechaActual;
@@ -3509,11 +3650,11 @@ function imprimirListadoProductos() {
       const pedidosDiaObj = dbRepartos[fechaCuadraActiva] || {};
       const pedidosDiaArr = Array.isArray(pedidosDiaObj) ? pedidosDiaObj : Object.values(pedidosDiaObj);
 
-      const consolidados = {};
+    const consolidados = {};
       pedidosDiaArr.forEach(p => {
         if (!p) return;
-        // Solo excluimos si es explícitamente un ítem de despacho/reventa
-        if (p.origen === 'despacho') return;
+        // Excluimos despacho y catering-mostrador para que solo queden panificados
+        if (p.origen === 'despacho' || p.origen === 'catering-mostrador') return;
         consolidados[p.producto] = (consolidados[p.producto] || 0) + (p.unidades || 0);
       });
 
@@ -5717,8 +5858,258 @@ function restaurarFechaSeleccionada() {
         }
       }
     }
+// 1. Inicializar fechas por defecto al cargar la app
+function inicializarFechasCatering() {
+  const hoyStr = new Date().toISOString().split('T')[0];
+  const inputCarga = document.getElementById('cat-fecha-carga');
+  const inputRetiro = document.getElementById('cat-fecha-retiro');
+  
+  if (inputCarga && !inputCarga.value) inputCarga.value = hoyStr;
+  
+  if (inputRetiro && !inputRetiro.value) {
+    const futuro = new Date();
+    futuro.setDate(futuro.getDate() + 2); // Por defecto 2 días despues para cumplir las 48hs
+    inputRetiro.value = futuro.toISOString().split('T')[0];
+  }
+  actualizarCalculoProduccionCatering();
+}
 
-    function reabrirCajaRepartoAdmin() {
+// 2. Calcular automáticamente la fecha en que entra a producción (1 día antes del retiro)
+function calcularFechaProduccionStr(fechaRetiroStr) {
+  if (!fechaRetiroStr) return '';
+  const [anio, mes, dia] = fechaRetiroStr.split('-').map(Number);
+  const fechaRetiro = new Date(anio, mes - 1, dia);
+  fechaRetiro.setDate(fechaRetiro.getDate() - 1); // Producción el día anterior
+  return fechaRetiro.toISOString().split('T')[0];
+}
+
+function actualizarCalculoProduccionCatering() {
+  const fechaRetiro = document.getElementById('cat-fecha-retiro').value;
+  const labelInfo = document.getElementById('label-info-produccion-auto');
+  if (!labelInfo) return;
+
+  if (!fechaRetiro) {
+    labelInfo.textContent = "⚙️ Seleccione fecha de retiro.";
+    return;
+  }
+
+  const fechaProd = calcularFechaProduccionStr(fechaRetiro);
+  labelInfo.textContent = `⚙️ Producción en Cuadra programada automáticamente para: ${fechaProd} (Día previo al retiro)`;
+}
+
+// 3. Validar regla de 48 horas basada en la fecha de carga vs fecha de retiro
+function validarAnticipacionCatering(fechaCargaStr, fechaRetiroStr, nombreProducto) {
+  if (!nombreProducto.toLowerCase().includes('catering') && !nombreProducto.toLowerCase().includes('choripanes')) {
+    return { valido: true };
+  }
+
+  const [aC, mC, dC] = fechaCargaStr.split('-').map(Number);
+  const [aR, mR, dR] = fechaRetiroStr.split('-').map(Number);
+  const fCarga = new Date(aC, mC - 1, dC);
+  const fRetiro = new Date(aR, mR - 1, dR);
+
+  const diffTiempo = fRetiro - fCarga;
+  const diffDias = Math.round(diffTiempo / (1000 * 60 * 60 * 24));
+
+  if (diffDias < 2) {
+    return {
+      valido: false,
+      mensaje: `⚠️ El producto "${nombreProducto}" requiere al menos 48 horas de anticipación entre la fecha de carga y la fecha de retiro por los tiempos de descanso de masa.`
+    };
+  }
+  return { valido: true };
+}
+
+// 4. Guardar o actualizar pedido de catering (almacenado en la fecha de producción de la cuadra)
+function guardarPedidoCateringEspecial() {
+      const editId = document.getElementById('catering-edit-id').value;
+      const nombre = document.getElementById('cat-nombre').value.trim();
+      const telefono = document.getElementById('cat-telefono').value.trim();
+      const producto = document.getElementById('cat-producto').value;
+      const cantidad = parseFloat(document.getElementById('cat-cantidad').value);
+      const fechaCarga = document.getElementById('cat-fecha-carga').value;
+      const fechaRetiro = document.getElementById('cat-fecha-retiro').value;
+
+      if (!nombre || isNaN(cantidad) || cantidad <= 0 || !fechaCarga || !fechaRetiro) {
+        alert("⚠️ Por favor complete el nombre, cantidad válida, fecha de carga y fecha de retiro.");
+        return;
+      }
+
+      // Validar regla de 48 horas
+      const val = validarAnticipacionCatering(fechaCarga, fechaRetiro, producto);
+      if (!val.valido) {
+        alert(val.mensaje);
+        return;
+      }
+
+      const fechaProduccionCuadra = calcularFechaProduccionStr(fechaRetiro);
+
+      // Estructura del pedido especial con sucursal integrada
+      const pedidoData = {
+        id: editId ? editId : generarID('CAT'),
+        clienteNombre: `${nombre} (Tel: ${telefono || 'Sin tel'})`,
+        producto: producto,
+        unidades: cantidad,
+        unidPorPaq: 1,
+        precioUnitario: 0,
+        monto: 0,
+        origen: 'catering-mostrador',
+        sucursal: obtenerSucursalActiva(), // <--- Guarda si es 'alem' o 'espiga'
+        fechaCarga: fechaCarga,
+        fechaRetiro: fechaRetiro,
+        fechaProduccion: fechaProduccionCuadra,
+        pagado: false,
+        medioPago: "Pendiente"
+      };
+
+      if (editId) {
+        eliminarPedidoRepartoGlobal(editId);
+      }
+
+      guardarRepartoConSincronizacion(fechaProduccionCuadra, pedidoData);
+
+      limpiarFormularioCatering();
+      renderizarTablaCateringCuadra();
+      renderizarCuadra();
+      alert("¡Pedido de catering guardado con éxito!");
+    }
+// Función auxiliar para buscar y eliminar un pedido por su ID en cualquier fecha de la base de datos de repartos
+function eliminarPedidoRepartoGlobal(idBuscado) {
+      if (!dbRepartos) return;
+      
+      Object.keys(dbRepartos).forEach(fecha => {
+        let nodoDia = dbRepartos[fecha];
+        if (nodoDia && typeof nodoDia === 'object') {
+          let modificado = false;
+          
+          if (Array.isArray(nodoDia)) {
+            const antes = nodoDia.length;
+            dbRepartos[fecha] = nodoDia.filter(p => p && p.id !== idBuscado);
+            if (dbRepartos[fecha].length !== antes) modificado = true;
+          } else {
+            Object.keys(nodoDia).forEach(keyId => {
+              let p = nodoDia[keyId];
+              if (p && (p.id === idBuscado || keyId === idBuscado)) {
+                delete nodoDia[keyId];
+                modificado = true;
+              }
+            });
+          }
+          
+          // Si encontramos y borramos el ítem en esta fecha, actualizamos almacenamiento y forzamos la nube
+          if (modificado) {
+            localStorage.setItem('db_repartos', JSON.stringify(dbRepartos));
+            if (rtdb) {
+              // Sobrescribimos el objeto del día completo en Firebase para que la nube no vuelva a re-iniciar el registro borrado
+              rtdb.ref(`db_repartos/${fecha}`).set(dbRepartos[fecha]).catch(err => console.warn(err));
+            }
+          }
+        }
+      });
+    }
+// 5. Renderizar la tabla con todos los pedidos a futuro y sus botones de Editar / Eliminar
+function renderizarTablaCateringCuadra() {
+      const tbody = document.getElementById('tabla-pedidos-catering-cuadra');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      let listaCatering = [];
+      Object.entries(dbRepartos || {}).forEach(([fechaCuadra, pDia]) => {
+        const pArr = Array.isArray(pDia) ? pDia : Object.values(pDia || {});
+        pArr.forEach(p => {
+          if (p && (p.origen === 'catering-mostrador' || (p.producto && (p.producto.toLowerCase().includes('catering') || p.producto.toLowerCase().includes('choripanes'))))) {
+            listaCatering.push({
+              ...p,
+              fechaProduccionReal: fechaCuadra
+            });
+          }
+        });
+      });
+
+      listaCatering.sort((a, b) => new Date(a.fechaRetiro || a.fechaProduccionReal) - new Date(b.fechaRetiro || b.fechaProduccionReal));
+
+      listaCatering.forEach(item => {
+        // Determinar letra de sucursal (E para Espiga, A para Alem por defecto)
+        const letraSuc = item.sucursal === 'espiga' ? 'E' : 'A';
+        const badgeSuc = item.sucursal === 'espiga' 
+          ? '<span class="text-orange-800 font-extrabold ml-1">(E)</span>' 
+          : '<span class="text-amber-900 font-extrabold ml-1">(A)</span>';
+
+        const tr = document.createElement('tr');
+        tr.className = "border-b hover:bg-blue-50/50";
+        tr.innerHTML = `
+          <td class="p-2 font-bold text-gray-800">${item.clienteNombre}</td>
+          <td class="p-2 text-blue-900 font-semibold">${item.producto}</td>
+          <td class="p-2 text-center font-bold">${item.unidades} un.</td>
+          <td class="p-2 text-center text-gray-600">${item.fechaCarga || '-'}</td>
+          <td class="p-2 text-center font-bold text-amber-900">${item.fechaRetiro || '-'} ${badgeSuc}</td>
+          <td class="p-2 text-center font-semibold text-blue-800">${item.fechaProduccionReal}</td>
+          <td class="p-2 text-center space-x-1">
+            <button onclick="cargarParaEditarCatering('${item.id}')" class="bg-amber-600 hover:bg-amber-700 text-white text-[10px] px-2 py-1 rounded font-bold shadow">✏️ Editar</button>
+            <button onclick="eliminarPedidoCatering('${item.id}')" class="bg-red-600 hover:bg-red-700 text-white text-[10px] px-2 py-1 rounded font-bold shadow">✕ Borrar</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      if (listaCatering.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="p-3 text-center text-gray-400 italic">No hay pedidos de catering programados.</td></tr>';
+      }
+    }
+// 6. Cargar datos en el formulario para Editar
+function cargarParaEditarCatering(idBuscado) {
+  let pedidoEncontrado = null;
+  Object.values(dbRepartos || {}).forEach(pDia => {
+    const pArr = Array.isArray(pDia) ? pDia : Object.values(pDia || {});
+    pArr.forEach(p => {
+      if (p && p.id === idBuscado) pedidoEncontrado = p;
+    });
+  });
+
+  if (!pedidoEncontrado) return;
+
+  // Separar nombre y teléfono del string guardado "Nombre (Tel: 12345)"
+  let nombreLimpio = pedidoEncontrado.clienteNombre;
+  let telLimpio = "";
+  if (nombreLimpio.includes("(Tel:")) {
+    const partes = nombreLimpio.split("(Tel:");
+    nombreLimpio = partes[0].trim();
+    telLimpio = partes[1].replace(")", "").trim();
+  }
+
+  document.getElementById('catering-edit-id').value = pedidoEncontrado.id;
+  document.getElementById('cat-nombre').value = nombreLimpio;
+  document.getElementById('cat-telefono').value = telLimpio;
+  document.getElementById('cat-producto').value = pedidoEncontrado.producto;
+  document.getElementById('cat-cantidad').value = pedidoEncontrado.unidades;
+  if (pedidoEncontrado.fechaCarga) document.getElementById('cat-fecha-carga').value = pedidoEncontrado.fechaCarga;
+  if (pedidoEncontrado.fechaRetiro) document.getElementById('cat-fecha-retiro').value = pedidoEncontrado.fechaRetiro;
+
+  actualizarCalculoProduccionCatering();
+  document.getElementById('btn-cancelar-edicion-cat').classList.remove('hidden');
+  window.scrollTo({ top: document.getElementById('cat-nombre').offsetTop - 100, behavior: 'smooth' });
+}
+
+// 7. Eliminar pedido de catering
+function eliminarPedidoCatering(idBuscado) {
+  if (confirm("¿Está seguro de eliminar este pedido de catering?")) {
+    eliminarPedidoRepartoGlobal(idBuscado);
+    renderizarTablaCateringCuadra();
+    renderizarCuadra();
+  }
+}
+
+// 8. Limpiar formulario
+function limpiarFormularioCatering() {
+  document.getElementById('catering-edit-id').value = '';
+  document.getElementById('cat-nombre').value = '';
+  document.getElementById('cat-telefono').value = '';
+  document.getElementById('cat-cantidad').value = '';
+  document.getElementById('btn-cancelar-edicion-cat').classList.add('hidden');
+  inicializarFechasCatering();
+}
+
+ function reabrirCajaRepartoAdmin() {
       const usr = dbUsuarios[usuarioActivoId];
       if (!usr || usr.rol !== 'admin') { alert("⚠️ Acción exclusiva para el Administrador General."); return; }
 
@@ -5731,8 +6122,7 @@ function restaurarFechaSeleccionada() {
         }
       }
     }
-
-    document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", () => {
       document.querySelectorAll(".input-moneda").forEach(input => {
         input.setAttribute("inputmode", "numeric");
         input.setAttribute("pattern", "[0-9]*");
