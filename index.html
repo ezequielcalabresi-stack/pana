@@ -1411,15 +1411,15 @@ let lockRefActivo = null;
     function generarID(prefijo) {
   return prefijo + '_' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
 }
-
     function obtenerFechaHoyLocal() {
       const fecha = new Date();
       fecha.setMinutes(fecha.getMinutes() - fecha.getTimezoneOffset());
       return fecha.toISOString().split('T')[0];
     }
 
-    let fechaActual = obtenerFechaHoyLocal();
-    let fechaCuadraActiva = fechaActual;
+   let fechaActual = obtenerFechaHoyLocal();
+// ✅ Hacemos que nazca directamente con la regla de las 15:00 hs
+    let fechaCuadraActiva = obtenerFechaDestinoPorHora();
 
     const PERMISOS_ROLES = {
       admin: { nombre: "Administrador / Dueño", pestanas: ['reparto', 'hoja-ruta', 'cuadra', 'clientes', 'proveedores', 'stock', 'caja', 'precios', 'usuarios'] },
@@ -1784,8 +1784,7 @@ function agregarNotaMostrador() {
     let movClienteEditContext = null;
     let movProvEditContext = null;
     let insumoEditContext = null;
-
-    function inicializarAplicacion() {
+function inicializarAplicacion() {
       fechaActual = obtenerFechaHoyLocal();
       const inputFechaOp = document.getElementById('fecha-operativa');
       if (inputFechaOp) inputFechaOp.value = fechaActual;
@@ -1802,6 +1801,11 @@ function agregarNotaMostrador() {
       renderizarTablaCateringCuadra();
       
       inicializarFechaCuadra();
+
+      // Forzamos a que Cuadra use también la regla de las 15:00 hs
+      fechaCuadraActiva = fechaDestinoInicial;
+      const inputCuadra = document.getElementById('cuadra-fecha-selector');
+      if (inputCuadra) inputCuadra.value = fechaDestinoInicial;
 
       const inputMesRep = document.getElementById('reporte-mes-select');
       if (inputMesRep) inputMesRep.value = fechaActual.substring(0, 7);
@@ -1848,8 +1852,13 @@ function obtenerFechaDestinoPorHora() {
       if (ahora.getHours() >= 15) {
         ahora.setDate(ahora.getDate() + 1);
       }
-      ahora.setMinutes(ahora.getMinutes() - ahora.getTimezoneOffset());
-      return ahora.toISOString().split('T')[0];
+      
+      // Extraemos directamente los valores locales sin usar toISOString() para evitar errores de zona horaria
+      const anio = ahora.getFullYear();
+      const mes = String(ahora.getMonth() + 1).padStart(2, '0');
+      const dia = String(ahora.getDate()).padStart(2, '0');
+      
+      return `${anio}-${mes}-${dia}`;
     }
 function actualizarPedidoEnNube(fecha, pedido) {
   if (!pedido || !pedido.id) return;
@@ -1898,27 +1907,18 @@ function calcularTotalFacturaItem(el) {
   // Función soporte para el cálculo por ítem en factura de proveedor
 }
 function inicializarFechaCuadra() {
-      const ahora = new Date();
-      const hora = ahora.getHours();
-      let d = new Date();
-      
-      // Corte operativo a las 07:00 AM: si es mayor o igual, apunta al día siguiente
-      if (hora >= 7) {
-        d.setDate(d.getDate() + 1);
-      }
-      
-      d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-      fechaCuadraActiva = d.toISOString().split('T')[0];
+  // Reutilizamos la misma lógica de las 15:00 hs de pedidos y hoja de ruta
+  fechaCuadraActiva = obtenerFechaDestinoPorHora();
 
-      if (!dbNotasMostrador[fechaCuadraActiva]) {
-        dbNotasMostrador[fechaCuadraActiva] = [];
-      }
+  if (!dbNotasMostrador[fechaCuadraActiva]) {
+    dbNotasMostrador[fechaCuadraActiva] = [];
+  }
 
-      const inputCuadra = document.getElementById('cuadra-fecha-selector');
-      if (inputCuadra) {
-        inputCuadra.value = fechaCuadraActiva;
-      }
-    }
+  const inputCuadra = document.getElementById('cuadra-fecha-selector');
+  if (inputCuadra) {
+    inputCuadra.value = fechaCuadraActiva;
+  }
+}
     function cambiarFechaCuadra() {
       const input = document.getElementById('cuadra-fecha-selector');
       if (input && input.value) {
@@ -1952,15 +1952,16 @@ function inicializarFechaCuadra() {
       }
     }
 
-    function cambiarFechaOperativa() {
+   function cambiarFechaOperativa() {
       const input = document.getElementById('fecha-operativa');
       if (input && input.value) {
         fechaActual = input.value;
         actualizarEtiquetasFecha();
 
-        fechaCuadraActiva = fechaActual;
+        // ✅ Usamos la regla de las 15:00 hs en lugar de pisarla con fechaActual
+        fechaCuadraActiva = obtenerFechaDestinoPorHora();
         const inputCuadra = document.getElementById('cuadra-fecha-selector');
-        if (inputCuadra) inputCuadra.value = fechaActual;
+        if (inputCuadra) inputCuadra.value = fechaCuadraActiva;
 
         procesarPedidosRecurrentesAutomaticos();
         renderizarPlanillaReparto();
@@ -1969,7 +1970,6 @@ function inicializarFechaCuadra() {
         renderizarTablaEgresosHoy();
       }
     }
-
     function cargarSelectorClientesRecurrentes() {
       const sel = document.getElementById('rec-cliente');
       if (!sel) return;
@@ -2580,13 +2580,29 @@ function aplicarRestriccionesEspigaUI() {
 
   // 1. Buscar automáticamente el ID del cliente "Espiga de Oro" en la base de datos
   let espigaClienteId = "";
-  Object.values(dbClientes).forEach(c => {
-    if (c && c.nombre && c.nombre.toLowerCase().includes('espiga de oro')) {
+  Object.values(dbClientes || {}).forEach(c => {
+    if (c && c.nombre && c.nombre.toLowerCase().includes('espiga')) {
       espigaClienteId = c.id;
     }
   });
 
-  // 2. Preseleccionar y bloquear el cliente en los selectores de carga de Reparto (Panificados y Despacho)
+  // 🟢 SOLUCIÓN: Si es usuario de Espiga y el cliente no existe, lo creamos automáticamente
+  if (esEspigaRestringido && !espigaClienteId) {
+    const nuevoId = generarID('CLI');
+    dbClientes[nuevoId] = {
+      id: nuevoId,
+      nombre: "La Espiga de Oro",
+      cuit: "",
+      direccion: "Sucursal Espiga",
+      telefono: "",
+      email: ""
+    };
+    guardarDB('db_clientes', dbClientes);
+    espigaClienteId = nuevoId;
+    cargarSelectorClientesReparto(); // Refresca los selectores en pantalla
+  }
+
+  // 2. Preseleccionar y bloquear el cliente en los selectores de carga de Reparto
   const selClientePan = document.getElementById('rep-cliente');
   const selClienteDesp = document.getElementById('rep-despacho-cliente');
 
@@ -2600,29 +2616,21 @@ function aplicarRestriccionesEspigaUI() {
   }
 
   // 3. Ocultar la tabla de visualización de pedidos del día y automatización para usuarios de Espiga
-  // Buscamos los contenedores correspondientes en la pestaña Reparto
-  const tablasRepartoContainer = document.querySelector('#sec-reparto .bg-white p-4 rounded-xl shadow border:has(#tabla-reparto)') || document.getElementById('tabla-reparto')?.closest('.bg-white');
+  const tablasRepartoContainer = document.getElementById('tabla-reparto')?.closest('.bg-white');
   const panelAutomatizacion = document.getElementById('panel-automatizacion');
-const panelAjusteStock = document.getElementById('panel-ajuste-stock-cuadra');
-if (panelAjusteStock) panelAjusteStock.style.display = esEspigaRestringido ? 'none' : '';
+  const panelAjusteStock = document.getElementById('panel-ajuste-stock-cuadra');
+  if (panelAjusteStock) panelAjusteStock.style.display = esEspigaRestringido ? 'none' : '';
 
   if (esEspigaRestringido) {
-    if (tablasRepartoContainer) {
-      tablasRepartoContainer.style.display = 'none'; // Oculta la lista de pedidos realizados y automatizados
-    }
-    if (panelAutomatizacion) {
-      panelAutomatizacion.style.display = 'none'; // Oculta reglas recurrentes
-    }
+    if (tablasRepartoContainer) tablasRepartoContainer.style.display = 'none';
+    if (panelAutomatizacion) panelAutomatizacion.style.display = 'none';
   } else {
-    if (tablasRepartoContainer) {
-      tablasRepartoContainer.style.display = '';
-    }
-    if (panelAutomatizacion) {
-      panelAutomatizacion.style.display = '';
-    }
+    if (tablasRepartoContainer) tablasRepartoContainer.style.display = '';
+    if (panelAutomatizacion) panelAutomatizacion.style.display = '';
   }
-} 
-   function renderizarMenuNavegacion() {
+}   
+
+function renderizarMenuNavegacion() {
       const usr = dbUsuarios[usuarioActivoId];
       if (!usr) return;
       let permisos = usr.pestanas || PERMISOS_ROLES[usr.rol]?.pestanas || [];
