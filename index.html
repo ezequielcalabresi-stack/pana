@@ -4299,7 +4299,7 @@ function limpiarFiltroFechasCtaCte() {
       verHistorialCliente(clienteSeleccionadoId);
     }
 
-  function enviarResumenWhatsAppCliente() {
+ function enviarResumenWhatsAppCliente() {
       if (!clienteSeleccionadoId) return;
       const cli = dbClientes[clienteSeleccionadoId];
       if (!cli) return;
@@ -4336,30 +4336,25 @@ function limpiarFiltroFechasCtaCte() {
 
       movs.sort((a, b) => new Date(a.fecha || 0) - new Date(b.fecha || 0));
 
-      let acumuladoGeneral = 0;
       let movsFiltrados = [];
-      let saldoFinalPeriodo = 0;
+      let saldoPeriodoFiltrado = 0;
 
-      // Primero calculamos el acumulado histórico paso a paso igual que la tabla
+      // Recorremos y filtramos primero
       movs.forEach(m => {
-        const valorMonto = m.monto || 0;
-        const impacto = m.tipo === '+' ? valorMonto : -valorMonto;
-        acumuladoGeneral += impacto;
-
-        // Si pasa el filtro de fecha, lo guardamos para el detalle y actualizamos el saldo del período
         const pasaDesde = !filtroDesde || m.fecha >= filtroDesde;
         const pasaHasta = !filtroHasta || m.fecha <= filtroHasta;
 
         if (pasaDesde && pasaHasta) {
           movsFiltrados.push(m);
-          saldoFinalPeriodo = acumuladoGeneral; // Toma el saldo acumulado exacto de la última fila visible
+          const valorMonto = m.monto || 0;
+          // Si es '+' suma, si es '-' resta al saldo del período filtrado
+          if (m.tipo === '+') {
+            saldoPeriodoFiltrado += valorMonto;
+          } else {
+            saldoPeriodoFiltrado -= valorMonto;
+          }
         }
       });
-
-      // Si no hay filtro de fechas aplicado, el saldo final es el acumulado total general
-      if (!filtroDesde && !filtroHasta) {
-        saldoFinalPeriodo = acumuladoGeneral;
-      }
 
       let periodoTexto = "";
       if (filtroDesde && filtroHasta) {
@@ -4379,7 +4374,7 @@ function limpiarFiltroFechasCtaCte() {
         movsFiltrados.forEach(m => { 
           mensaje += `• ${m.fecha}: ${m.concepto} -> ${m.tipo}${(m.monto || 0).toLocaleString()}\n`; 
         });
-        mensaje += `\n*SALDO TOTAL A PAGAR: $${saldoFinalPeriodo.toLocaleString()}*\n\n`;
+        mensaje += `\n*SALDO TOTAL A PAGAR: $${saldoPeriodoFiltrado.toLocaleString()}*\n\n`;
         mensaje += `Muchas gracias por tu compra. La Casa del Pan.`;
       }
 
