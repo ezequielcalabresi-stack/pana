@@ -121,7 +121,7 @@
         <div class="grid grid-cols-1 md:grid-cols-5 gap-2 text-sm">
           <select id="rep-cliente" class="border p-2 rounded w-full text-sm font-medium text-gray-800 md:col-span-1"><option value="">-- Cliente --</option></select>
           <select id="rep-producto" onchange="actualizarPrecioSugeridoPanificado()" class="border p-2 rounded w-full text-sm font-bold text-amber-900 md:col-span-2"></select>
-          <input type="number" id="rep-cantidad" placeholder="Cant. (Unid)" step="0.01" min="0.01" oninput="actualizarPrecioSugeridoPanificado()" class="border p-2 rounded w-full text-sm md:col-span-1">
+          <input type="number" id="rep-cantidad" placeholder="Cant. (Unid)" min="1" oninput="actualizarPrecioSugeridoPanificado()" class="border p-2 rounded w-full text-sm md:col-span-1">
           <div class="flex items-center border rounded px-2 bg-amber-50 border-amber-300 md:col-span-1">
             <span class="text-sm font-bold text-amber-900 mr-1">$</span>
             <input type="number" id="rep-precio-unitario" placeholder="P. Unit." step="0.01" class="w-full bg-transparent text-sm font-bold text-amber-950 focus:outline-none">
@@ -932,7 +932,7 @@
     </div>
   </div>
 
-  <!-- MODAL FICHA DE CLIENTE / CUENTA CORRIENTE -->
+<!-- MODAL FICHA DE CLIENTE / CUENTA CORRIENTE -->
   <div id="modal-historial-cliente" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden p-2">
     <div class="bg-white p-5 rounded-xl shadow-2xl max-w-4xl w-full space-y-4 max-h-[95vh] overflow-y-auto">
       <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 border-b pb-2">
@@ -949,12 +949,17 @@
 
       <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 space-y-2">
         <h3 class="text-xs font-bold text-gray-700">✏️ Editar Datos del Cliente</h3>
-        <div class="grid grid-cols-1 md:grid-cols-5 gap-2">
+        <div class="grid grid-cols-1 md:grid-cols-6 gap-2">
           <input type="text" id="edit-cli-nombre" placeholder="Nombre" class="border p-1.5 rounded text-xs bg-white">
           <input type="text" id="edit-cli-cuit" placeholder="CUIT / DNI" class="border p-1.5 rounded text-xs bg-white">
           <input type="text" id="edit-cli-direccion" placeholder="Dirección" class="border p-1.5 rounded text-xs bg-white">
           <input type="text" id="edit-cli-telefono" placeholder="Teléfono" class="border p-1.5 rounded text-xs bg-white">
           <input type="email" id="edit-cli-email" placeholder="Email" class="border p-1.5 rounded text-xs bg-white">
+          <select id="edit-cli-sucursal" class="border p-1.5 rounded text-xs bg-white font-bold">
+            <option value="todas">Ambas Sucursales</option>
+            <option value="alem">La Casa del Pan (Alem)</option>
+            <option value="espiga">La Espiga de Oro</option>
+          </select>
         </div>
         <div class="flex justify-end gap-2 pt-1">
           <button type="button" onclick="guardarEdicionCliente()" class="bg-amber-700 text-white font-bold px-3 py-1.5 rounded text-xs hover:bg-amber-800">Guardar Cambios</button>
@@ -1005,7 +1010,6 @@
       </div>
     </div>
   </div>
-
   <!-- MODAL FICHA DE PROVEEDOR / FACTURAS Y PAGOS -->
   <div id="modal-historial-proveedor" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden p-2">
     <div class="bg-white p-5 rounded-xl shadow-2xl max-w-4xl w-full space-y-4 max-h-[95vh] overflow-y-auto">
@@ -1230,7 +1234,7 @@
     </div>
   </div>
 
-  <!-- MODAL ALTA CLIENTE -->
+<!-- MODAL ALTA CLIENTE -->
   <div id="modal-alta-cliente" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
     <div class="bg-white p-5 rounded-xl shadow-xl max-w-md w-full space-y-3">
       <h3 class="text-base font-bold text-amber-900 border-b pb-2">➕ Alta de Nuevo Cliente</h3>
@@ -1240,6 +1244,14 @@
         <input type="text" id="cli-direccion" placeholder="Dirección" class="border p-2 rounded w-full text-sm">
         <input type="text" id="cli-telefono" placeholder="Teléfono / WhatsApp" class="border p-2 rounded w-full text-sm">
         <input type="email" id="cli-email" placeholder="Correo electrónico (Opcional)" class="border p-2 rounded w-full text-sm">
+        <div>
+          <label class="text-xs font-semibold text-gray-600 block mb-1">Sucursal Asignada</label>
+          <select id="cli-sucursal" class="border p-2 rounded w-full text-sm bg-amber-50 border-amber-300 font-bold">
+            <option value="todas">Ambas (Uso Compartido)</option>
+            <option value="alem">La Casa del Pan (Alem)</option>
+            <option value="espiga">La Espiga de Oro</option>
+          </select>
+        </div>
       </div>
       <div class="flex justify-end gap-2 pt-2">
         <button type="button" onclick="cerrarModalAltaCliente()" class="bg-gray-300 text-gray-800 text-xs px-4 py-2 rounded font-bold">Cancelar</button>
@@ -1248,24 +1260,27 @@
     </div>
   </div>
 
-  <!-- MODAL ALTA PROVEEDOR -->
-  <div id="modal-alta-proveedor" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-    <div class="bg-white p-5 rounded-xl shadow-xl max-w-md w-full space-y-3">
-      <h3 class="text-base font-bold text-amber-900 border-b pb-2">➕ Alta de Nuevo Proveedor</h3>
-      <div class="space-y-2">
-        <input type="text" id="prov-nombre" placeholder="Razón Social / Nombre" class="border p-2 rounded w-full text-sm">
-        <input type="text" id="prov-cuit" placeholder="CUIT" class="border p-2 rounded w-full text-sm">
-        <input type="text" id="prov-telefono" placeholder="Teléfono" class="border p-2 rounded w-full text-sm">
-        <input type="text" id="prov-rubro" placeholder="Rubro (Ej: Harinas, Fiambres...)" class="border p-2 rounded w-full text-sm">
-      </div>
-      <div class="flex justify-end gap-2 pt-2">
-        <button type="button" onclick="cerrarModalAltaProveedor()" class="bg-gray-300 text-gray-800 text-xs px-4 py-2 rounded font-bold">Cancelar</button>
-        <button type="button" onclick="guardarProveedor()" class="bg-amber-700 text-white font-bold px-4 py-2 rounded text-sm hover:bg-amber-800">Registrar Proveedor</button>
-      </div>
-    </div>
-  </div>
+<script>
+    const ETIQUETAS_SUCURSAL = {
+      todas: "General (Ambas Sucursales)",
+      alem: "La Casa del Pan (Alem)",
+      espiga: "La Espiga de Oro"
+    };
 
-  <script>
+    var dbUsuarios = {};
+    var dbPanificados = {};
+    var dbProductos = {};
+    var dbInsumos = {};
+    var dbRepartos = {};
+    var dbRecurrentes = {};
+    var dbNotasMostrador = {};
+    var dbHistorialClientes = {};
+    var dbHistorialProveedores = {};
+    var dbCajasDiarias = {};
+    var dbEgresosCaja = {};
+    var dbBackupsDiarios = {};
+    var dbRepartosCerrados = {};
+
     let dbProveedores = {};
     let dbClientes = {};
     let clienteSeleccionadoId = null;
@@ -1323,29 +1338,33 @@
         statusDiv.className = "text-[10px] bg-blue-200 text-blue-900 px-2 py-0.5 rounded-full font-bold shadow-sm whitespace-nowrap";
       }
     }
-let lockRefActivo = null;
+    
+    let dispositivoId = localStorage.getItem('dispositivo_usuario_id');
+    if (!dispositivoId) {
+      dispositivoId = generarID('DEV');
+      localStorage.setItem('dispositivo_usuario_id', dispositivoId);
+    }
+    var usuarioActivoId = localStorage.getItem(`usuario_activo_${dispositivoId}`) || 'USR-1';
+
+    let lockRefActivo = null;
 
     // 1. Intentar adquirir el semáforo de bloqueo para la fecha actual
     function adquirirBloqueoFecha(fecha) {
       if (!rtdb) return;
       
-      // Si ya teníamos un bloqueo activo en otra fecha, lo liberamos primero
       if (lockRefActivo) {
         lockRefActivo.remove();
       }
 
       lockRefActivo = rtdb.ref(`locks/${fecha}`);
       
-      // Consultamos quién tiene el semáforo
       lockRefActivo.once('value', (snapshot) => {
         const datosLock = snapshot.val();
         const ahora = Date.now();
 
-        // Si hay un lock activo de OTRO dispositivo con menos de 2 minutos de antigüedad
         if (datosLock && datosLock.dispositivo !== dispositivoId && (ahora - datosLock.timestamp < 120000)) {
           bloquearInterfazEscritura(datosLock.usuarioNombre || "Otro usuario");
         } else {
-          // Tomamos posesión del semáforo
           lockRefActivo.set({
             dispositivo: dispositivoId,
             usuarioNombre: dbUsuarios[usuarioActivoId]?.nombre || "Operario",
@@ -1353,14 +1372,12 @@ let lockRefActivo = null;
             estado: "escribiendo"
           });
 
-          // MAGIA DE FIREBASE: Si este usuario se desconecta/cierra el navegador, el lock se borra solo
           lockRefActivo.onDisconnect().remove();
           
           liberarInterfazEscritura();
         }
       });
 
-      // Escuchamos en tiempo real si alguien más entra a pisar o si se libera
       lockRefActivo.on('value', (snapshot) => {
         const val = snapshot.val();
         if (val && val.dispositivo !== dispositivoId) {
@@ -1385,7 +1402,6 @@ let lockRefActivo = null;
         semaforo.innerHTML = `🔴 Ocupado por: ${nombreUsuario} (Solo Lectura)`;
       }
 
-      // Deshabilitamos de forma preventiva los botones de carga principales de reparto
       document.querySelectorAll('#sec-reparto input, #sec-reparto select, #sec-reparto button').forEach(el => {
         if (!el.id.includes('fecha-destino') && !el.id.includes('select-panaderia')) {
           el.disabled = true;
@@ -1408,6 +1424,41 @@ let lockRefActivo = null;
       });
     }
 
+    function eliminarNotaMostrador(idOIndex) {
+      const fechaClave = document.getElementById('cuadra-fecha-selector')?.value || fechaCuadraActiva || fechaActual;
+      
+      if (dbNotasMostrador[fechaClave]) {
+        if (!Array.isArray(dbNotasMostrador[fechaClave])) {
+          if (dbNotasMostrador[fechaClave][idOIndex]) {
+            delete dbNotasMostrador[fechaClave][idOIndex];
+            
+            localStorage.setItem('db_notas_mostrador', JSON.stringify(dbNotasMostrador));
+            if (rtdb) {
+              rtdb.ref(`db_notas_mostrador/${fechaClave}/${idOIndex}`).remove().catch(e => console.warn(e));
+            }
+          } else {
+            let keys = Object.keys(dbNotasMostrador[fechaClave]);
+            let keyAEliminar = keys[idOIndex];
+            if (keyAEliminar) {
+              delete dbNotasMostrador[fechaClave][keyAEliminar];
+              localStorage.setItem('db_notas_mostrador', JSON.stringify(dbNotasMostrador));
+              if (rtdb) {
+                rtdb.ref(`db_notas_mostrador/${fechaClave}/${keyAEliminar}`).remove().catch(e => console.warn(e));
+              }
+            }
+          }
+        } else {
+          dbNotasMostrador[fechaClave].splice(idOIndex, 1);
+          localStorage.setItem('db_notas_mostrador', JSON.stringify(dbNotasMostrador));
+          if (rtdb) {
+            rtdb.ref('db_notas_mostrador/' + fechaClave).set(dbNotasMostrador[fechaClave]).catch(e => console.warn(e));
+          }
+        }
+        
+        renderizarCuadra();
+      }
+    }
+  
     function generarID(prefijo) {
   return prefijo + '_' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
 }
@@ -1557,71 +1608,44 @@ function cargarDBRepartosSegura() {
         renderizarCuadra();
       }
     }
-
-    function eliminarNotaMostrador(idx) {
-      const fechaClave = document.getElementById('cuadra-fecha-selector').value || fechaCuadraActiva;
+   function eliminarNotaMostrador(idOIndex) {
+      const fechaClave = document.getElementById('cuadra-fecha-selector')?.value || fechaCuadraActiva || fechaActual;
+      
       if (dbNotasMostrador[fechaClave]) {
-        dbNotasMostrador[fechaClave].splice(idx, 1);
-        localStorage.setItem('db_notas_mostrador', JSON.stringify(dbNotasMostrador));
-        if (rtdb) {
-          rtdb.ref('db_notas_mostrador/' + fechaClave).set(dbNotasMostrador[fechaClave]).catch(e => console.warn(e));
+        // 1. Si está almacenado como un objeto estructurado por ID único
+        if (!Array.isArray(dbNotasMostrador[fechaClave])) {
+          if (dbNotasMostrador[fechaClave][idOIndex]) {
+            delete dbNotasMostrador[fechaClave][idOIndex];
+            
+            localStorage.setItem('db_notas_mostrador', JSON.stringify(dbNotasMostrador));
+            if (rtdb) {
+              rtdb.ref(`db_notas_mostrador/${fechaClave}/${idOIndex}`).remove().catch(e => console.warn(e));
+            }
+          } else {
+            // Fallback por si acaso llegó un índice numérico por compatibilidad
+            let keys = Object.keys(dbNotasMostrador[fechaClave]);
+            let keyAEliminar = keys[idOIndex];
+            if (keyAEliminar) {
+              delete dbNotasMostrador[fechaClave][keyAEliminar];
+              localStorage.setItem('db_notas_mostrador', JSON.stringify(dbNotasMostrador));
+              if (rtdb) {
+                rtdb.ref(`db_notas_mostrador/${fechaClave}/${keyAEliminar}`).remove().catch(e => console.warn(e));
+              }
+            }
+          }
+        } 
+        // 2. Fallback de seguridad por si el nodo de la fecha todavía es un Array tradicional
+        else {
+          dbNotasMostrador[fechaClave].splice(idOIndex, 1);
+          localStorage.setItem('db_notas_mostrador', JSON.stringify(dbNotasMostrador));
+          if (rtdb) {
+            rtdb.ref('db_notas_mostrador/' + fechaClave).set(dbNotasMostrador[fechaClave]).catch(e => console.warn(e));
+          }
         }
+        
         renderizarCuadra();
       }
     }
-
-    const ETIQUETAS_SUCURSAL = {
-      todas: "General (Ambas Sucursales)",
-      alem: "La Casa del Pan (Alem)",
-      espiga: "La Espiga de Oro"
-    };
-
-    window.LISTA_USUARIOS_BASE = {
-  "USR-1": { id: "USR-1", nombre: "Administrador General", rol: "admin", sucursal: "todas", pin: "3003", pestanas: ['reparto', 'hoja-ruta', 'cuadra', 'clientes', 'proveedores', 'stock', 'caja', 'precios', 'usuarios'] },
-  "USR-4": { id: "USR-4", nombre: "Chofer Reparto", rol: "repartidor", sucursal: "todas", pin: "1234", pestanas: ['reparto', 'hoja-ruta', 'cuadra', 'clientes'] },
-  "USR-5": { id: "USR-5", nombre: "Maestro Panadero", rol: "produccion", sucursal: "todas", pin: "1234", pestanas: ['cuadra', 'stock'] },
-  "USR-mt3piwha-j9oan": { id: "USR-mt3piwha-j9oan", nombre: "Yamila", rol: "mostrador", sucursal: "todas", pin: "1234", pestanas: ['reparto', 'hoja-ruta', 'cuadra', 'clientes', 'proveedores', 'stock', 'caja', 'precios'] },
-  "USR-mt3vmua9-xhey0": { id: "USR-mt3vmua9-xhey0", nombre: "Espiga", rol: "mostrador", sucursal: "espiga", pin: "1234", pestanas: ['reparto', 'hoja-ruta', 'cuadra', 'caja'] },
-  "USR-mtajmuor-dlmsi": { id: "USR-mtajmuor-dlmsi", nombre: "Uchii", rol: "mostrador", sucursal: "espiga", pin: "1234", pestanas: ['reparto', 'hoja-ruta', 'cuadra', 'caja'] }
-};
-    window.LISTA_PANIFICADOS_REPARTO_BASE = {
-      "Pebete": { unidPorPaq: 24, menor: 550, mayor: 500 },
-      "Hamburguesas x 5 (c/u)": { unidPorPaq: 5, menor: 600, mayor: 500 },
-      "Hamburguesas x 4 (c/u)": { unidPorPaq: 12, menor: 600, mayor: 500 },
-      "Hamburguesas x 3 (c/u)": { unidPorPaq: 6, menor: 850, mayor: 750 },
-      "Pebete Largo": { unidPorPaq: 20, menor: 650, mayor: 550 },
-      "Super - Pebete": { unidPorPaq: 20, menor: 650, mayor: 550 },
-      "Media Luna grande": { unidPorPaq: 12, menor: 1500, mayor: 1500 }
-    };
-
-    window.LISTA_PRODUCTOS_BASE = {
-      "Pan (Kgs)": { mostrador: 2800, reparto: 2200, unOcuarto: 0 },
-      "Facturas (Docena)": { mostrador: 12000, reparto: 9300, unOcuarto: 1000 },
-      "Pasteles (Docena)": { mostrador: 14000, reparto: 10800, unOcuarto: 1200 },
-      "Pan Rallado (bolsa x 1 Kgs)": { mostrador: 2800, reparto: 1800, unOcuarto: 1400 }
-    };
-
-    var dbUsuarios = {};
-    var dbPanificados = {};
-    var dbProductos = {};
-    var dbInsumos = {};
-    var dbRepartos = {};
-    var dbRecurrentes = {};
-    var dbNotasMostrador = {};
-    var dbHistorialClientes = {};
-    var dbHistorialProveedores = {};
-    var dbCajasDiarias = {};
-    var dbEgresosCaja = {};
-    var dbBackupsDiarios = {};
-    var dbRepartosCerrados = {};
-    
-   let dispositivoId = localStorage.getItem('dispositivo_usuario_id');
-    if (!dispositivoId) {
-      dispositivoId = generarID('DEV');
-      localStorage.setItem('dispositivo_usuario_id', dispositivoId);
-    }
-    var usuarioActivoId = localStorage.getItem(`usuario_activo_${dispositivoId}`) || 'USR-1';
-
 function cargarDB(key, fallback) {
   const data = localStorage.getItem(key);
   let valorLocal = data ? JSON.parse(data) : fallback;
@@ -1682,8 +1706,10 @@ function agregarNotaMostrador() {
     return;
   }
 
-  // Identificamos de qué panadería/sucursal viene para marcarla visualmente
-  const sufijoSucursal = obtenerSufijoSucursalActual(); // Devuelve " (A)" o " (E)"
+  // Detectar la sucursal activa de forma segura según el rol/usuario o el selector
+  const sucursalActiva = obtenerSucursalActiva(); // 'alem' o 'espiga'
+  const sufijoSucursal = sucursalActiva === 'espiga' ? ' (E)' : ' (A)';
+
   if (!textoNota.endsWith('(A)') && !textoNota.endsWith('(E)')) {
     textoNota += sufijoSucursal;
   }
@@ -1691,25 +1717,42 @@ function agregarNotaMostrador() {
   const fechaClave = document.getElementById('cuadra-fecha-selector')?.value || fechaCuadraActiva || fechaActual;
 
   if (!dbNotasMostrador[fechaClave]) {
-    dbNotasMostrador[fechaClave] = [];
+    dbNotasMostrador[fechaClave] = {};
   }
 
-  // Agregamos la nota al array de esa fecha
-  dbNotasMostrador[fechaClave].push(textoNota);
+  // Si por datos anteriores quedó como Array, lo convertimos a Objeto de manera segura
+  if (Array.isArray(dbNotasMostrador[fechaClave])) {
+    let objConvertido = {};
+    dbNotasMostrador[fechaClave].forEach((notaTexto, index) => {
+      let idUnico = generarID('NOT');
+      objConvertido[idUnico] = { id: idUnico, texto: notaTexto, sucursal: sucursalActiva };
+    });
+    dbNotasMostrador[fechaClave] = objConvertido;
+  }
 
-  // Guardamos localmente y sincronizamos con Firebase de forma segura
+  // Creamos un ID único inalterable para la nueva nota
+  const idNotaUnico = generarID('NOT');
+  const nuevaNotaObj = {
+    id: idNotaUnico,
+    texto: textoNota,
+    sucursal: sucursalActiva,
+    timestamp: Date.now()
+  };
+
+  // Guardado atómico en memoria local
+  dbNotasMostrador[fechaClave][idNotaUnico] = nuevaNotaObj;
   localStorage.setItem('db_notas_mostrador', JSON.stringify(dbNotasMostrador));
+
+  // Sincronización atómica directa a Firebase (sube solo el nodo hijo sin tocar los demás)
   if (rtdb) {
-    rtdb.ref('db_notas_mostrador/' + fechaClave).set(dbNotasMostrador[fechaClave]).catch(err => {
+    rtdb.ref(`db_notas_mostrador/${fechaClave}/${idNotaUnico}`).set(nuevaNotaObj).catch(err => {
       console.warn("Aviso de sincronización en red:", err);
     });
   }
 
-  // Limpiamos el input y actualizamos la vista de la Cuadra
   inputNota.value = '';
   renderizarCuadra();
 }
-
  function aplicarDatosEnMemoriaLocal(key, val) {
       if (key === 'db_repartos') { 
         dbRepartos = val || {}; 
@@ -1757,14 +1800,7 @@ function agregarNotaMostrador() {
       if (key === 'db_repartos_cerrados') { dbRepartosCerrados = val || {}; renderizarPlanillaReparto(); }
       if (key === 'db_historial_proveedores') { dbHistorialProveedores = val || {}; if (proveedorSeleccionadoId) renderizarTablaHistorialProveedor(); }
     }
-    function guardarRepartoPorFecha(fecha) {
-       if (rtdb) {
-          const subNodo = dbRepartos[fecha] || {};
-          rtdb.ref('db_repartos/' + fecha).set(subNodo).catch(err => console.warn(err));
-       }
-       localStorage.setItem('db_repartos', JSON.stringify(dbRepartos));
-    }
-
+    
     dbUsuarios = cargarDB('db_usuarios', window.LISTA_USUARIOS_BASE);
     dbPanificados = cargarDB('db_panificados', window.LISTA_PANIFICADOS_REPARTO_BASE);
     dbProductos = cargarDB('db_productos', window.LISTA_PRODUCTOS_BASE);
@@ -1798,8 +1834,7 @@ function inicializarAplicacion() {
 
       // Inicializar fechas y validaciones de catering correctamente
       inicializarFechasCatering();
-      renderizarTablaCateringCuadra();
-      
+            
       inicializarFechaCuadra();
 
       // Forzamos a que Cuadra use también la regla de las 15:00 hs
@@ -1974,12 +2009,14 @@ function inicializarFechaCuadra() {
       const sel = document.getElementById('rec-cliente');
       if (!sel) return;
       sel.innerHTML = '<option value="">-- Cliente --</option>';
-      Object.values(dbClientes).sort((a, b) => a.nombre.localeCompare(b.nombre)).forEach(c => {
-        const opt = document.createElement('option');
-        opt.value = c.id; opt.textContent = c.nombre; sel.appendChild(opt);
-      });
+      Object.values(dbClientes)
+        .filter(filtrarClientePorSucursalUsuario)
+        .sort((a, b) => a.nombre.localeCompare(b.nombre))
+        .forEach(c => {
+          const opt = document.createElement('option');
+          opt.value = c.id; opt.textContent = c.nombre; sel.appendChild(opt);
+        });
     }
-
     function cargarSelectorProductosRecurrentes() {
       const sel = document.getElementById('rec-producto');
       if (!sel) return;
@@ -2484,29 +2521,27 @@ function obtenerSucursalActiva() {
 }
   function filtrarProductosPorSucursalActiva() {
   const sucursalActiva = obtenerSucursalActiva(); // Detecta 'alem' o 'espiga' automáticamente
-  const selectProductos = document.getElementById('rep-despacho-producto') || document.getElementById('rep-producto');
+  const selectProductos = document.getElementById('rep-despacho-producto');
   
   if (!selectProductos) return;
   
-  // Limpiamos el selector actual
+  // Limpiamos y dejamos la opción por defecto
   selectProductos.innerHTML = '<option value="">-- Seleccione Producto --</option>';
   
-  // Filtramos la base de datos de productos de manera estricta
+  // Filtramos la base de datos de productos según la sucursal activa
   const productosFiltrados = Object.values(dbProductos || {}).filter(p => {
     const sucProd = (p.sucursal || p.panaderia || p.origen || '').toLowerCase();
-    // Si el producto no tiene sucursal asignada o es genérico, se muestra; de lo contrario debe coincidir exacto
     if (!sucProd || sucProd === 'todas') return true;
     return sucProd === sucursalActiva.toLowerCase();
   });
   
   productosFiltrados.forEach(prod => {
     const opt = document.createElement('option');
-    opt.value = prod.nombre;
-    opt.textContent = prod.nombre;
+    opt.value = prod.nombre || prod.id;
+    opt.textContent = prod.nombre || prod.id;
     selectProductos.appendChild(opt);
   });
 }
-
   function cambiarPinUsuarioActivo() {
       const usr = dbUsuarios[usuarioActivoId];
       if (!usr) return;
@@ -2576,60 +2611,50 @@ function obtenerSucursalActiva() {
 }
 function aplicarRestriccionesEspigaUI() {
   const usr = dbUsuarios[usuarioActivoId];
-  const esEspigaRestringido = (usr && usr.sucursal === 'espiga' && usr.rol !== 'admin');
+  const esAdmin = (usr && usr.rol === 'admin');
+  const esEspigaRestringido = (usr && usr.sucursal === 'espiga' && !esAdmin);
 
-  // 1. Buscar automáticamente el ID del cliente "Espiga de Oro" en la base de datos
-  let espigaClienteId = "";
-  Object.values(dbClientes || {}).forEach(c => {
-    if (c && c.nombre && c.nombre.toLowerCase().includes('espiga')) {
-      espigaClienteId = c.id;
-    }
-  });
-
-  // 🟢 SOLUCIÓN: Si es usuario de Espiga y el cliente no existe, lo creamos automáticamente
-  if (esEspigaRestringido && !espigaClienteId) {
-    const nuevoId = generarID('CLI');
-    dbClientes[nuevoId] = {
-      id: nuevoId,
-      nombre: "La Espiga de Oro",
-      cuit: "",
-      direccion: "Sucursal Espiga",
-      telefono: "",
-      email: ""
-    };
-    guardarDB('db_clientes', dbClientes);
-    espigaClienteId = nuevoId;
-    cargarSelectorClientesReparto(); // Refresca los selectores en pantalla
-  }
-
-  // 2. Preseleccionar y bloquear el cliente en los selectores de carga de Reparto
   const selClientePan = document.getElementById('rep-cliente');
   const selClienteDesp = document.getElementById('rep-despacho-cliente');
 
-  if (selClientePan && espigaClienteId) {
-    selClientePan.value = espigaClienteId;
-    selClientePan.disabled = esEspigaRestringido;
-  }
-  if (selClienteDesp && espigaClienteId) {
-    selClienteDesp.value = espigaClienteId;
-    selClienteDesp.disabled = esEspigaRestringido;
+  if (esEspigaRestringido) {
+    // Buscamos el ID del cliente de Espiga comprobando todas las formas posibles en la base de datos
+    let espigaClienteId = "";
+    Object.values(dbClientes || {}).forEach(c => {
+      if (c && c.nombre && c.nombre.toLowerCase().includes('espiga')) {
+        espigaClienteId = c.id;
+      }
+    });
+
+    if (selClientePan && espigaClienteId) {
+      selClientePan.value = espigaClienteId;
+      selClientePan.disabled = true; // Bloqueado por seguridad para la sucursal
+    }
+    if (selClienteDesp && espigaClienteId) {
+      selClienteDesp.value = espigaClienteId;
+      selClienteDesp.disabled = true;
+    }
+  } else {
+    // Si no es un usuario restringido de Espiga (es Admin o General), liberamos totalmente los selectores
+    if (selClientePan) {
+      selClientePan.disabled = false;
+      selClientePan.style.backgroundColor = '';
+    }
+    if (selClienteDesp) {
+      selClienteDesp.disabled = false;
+      selClienteDesp.style.backgroundColor = '';
+    }
   }
 
-  // 3. Ocultar la tabla de visualización de pedidos del día y automatización para usuarios de Espiga
+  // Control opcional de visibilidad de paneles secundarios
   const tablasRepartoContainer = document.getElementById('tabla-reparto')?.closest('.bg-white');
   const panelAutomatizacion = document.getElementById('panel-automatizacion');
   const panelAjusteStock = document.getElementById('panel-ajuste-stock-cuadra');
+  
   if (panelAjusteStock) panelAjusteStock.style.display = esEspigaRestringido ? 'none' : '';
-
-  if (esEspigaRestringido) {
-    if (tablasRepartoContainer) tablasRepartoContainer.style.display = 'none';
-    if (panelAutomatizacion) panelAutomatizacion.style.display = 'none';
-  } else {
-    if (tablasRepartoContainer) tablasRepartoContainer.style.display = '';
-    if (panelAutomatizacion) panelAutomatizacion.style.display = '';
-  }
-}   
-
+  if (tablasRepartoContainer) tablasRepartoContainer.style.display = esEspigaRestringido ? 'none' : '';
+  if (panelAutomatizacion) panelAutomatizacion.style.display = esEspigaRestringido ? 'none' : '';
+}
 function renderizarMenuNavegacion() {
       const usr = dbUsuarios[usuarioActivoId];
       if (!usr) return;
@@ -2676,20 +2701,44 @@ function renderizarMenuNavegacion() {
       }
     }
 
-    function cargarSelectorClientesReparto() {
-      const selMain = document.getElementById('rep-cliente');
-      const selDesp = document.getElementById('rep-despacho-cliente');
-      if (!selMain) return;
-      selMain.innerHTML = '<option value="">-- Cliente --</option>';
-      if (selDesp) selDesp.innerHTML = '<option value="">-- Mismo Cliente --</option>';
-
-      Object.values(dbClientes).sort((a, b) => a.nombre.localeCompare(b.nombre)).forEach(c => {
-        const opt1 = document.createElement('option');
-        opt1.value = c.id; opt1.textContent = c.nombre; selMain.appendChild(opt1);
-        if (selDesp) { const opt2 = document.createElement('option'); opt2.value = c.id; opt2.textContent = c.nombre; selDesp.appendChild(opt2); }
-      });
+  function filtrarClientePorSucursalUsuario(c) {
+      const usr = dbUsuarios[usuarioActivoId];
+      if (!usr || usr.rol === 'admin' || usr.sucursal === 'todas') return true;
+      if (!c.sucursal || c.sucursal === 'todas') return true;
+      return c.sucursal === usr.sucursal;
     }
 
+  function cargarSelectorClientesReparto() {
+  const selects = ['rep-cliente', 'rep-despacho-cliente'];
+  
+  selects.forEach(id => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    
+    const valorActual = sel.value;
+    
+    // Definir la opción por defecto según el selector
+    sel.innerHTML = id === 'rep-despacho-cliente' 
+      ? '<option value="">-- Mismo Cliente --</option>' 
+      : '<option value="">-- Seleccione Cliente --</option>';
+      
+    // Obtener y ordenar los clientes de la base de datos
+    const clientesArr = Object.values(dbClientes || {});
+    clientesArr.sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''));
+    
+    // Rellenar el selector con cada cliente disponible
+    clientesArr.forEach(cli => {
+      if (!cli || !cli.id) return;
+      const opt = document.createElement('option');
+      opt.value = cli.id;
+      opt.textContent = cli.nombre || cli.id;
+      sel.appendChild(opt);
+    });
+    
+    // Restaurar valor previo si existía
+    if (valorActual) sel.value = valorActual;
+  });
+}
     function cargarSelectorPanificadosReparto() {
       const sel = document.getElementById('rep-producto');
       if (!sel) return;
@@ -2866,138 +2915,56 @@ function aplicarAumentoPorcentaje() {
     }
 
 function agregarPedidoPanificado() {
-  const fechaDestino = document.getElementById('rep-fecha-destino').value || fechaActual;
-  
-  if (dbRepartosCerrados[fechaDestino]) {
-    alert(`⚠️ El reparto del día ${fechaDestino} ya se encuentra cerrado.`);
-    return;
-  }
-
-  const cliId = document.getElementById('rep-cliente').value;
-  const prodId = document.getElementById('rep-producto').value;
-  const cantidadInput = document.getElementById('rep-cantidad');
-  const cant = parseFloat(cantidadInput.value);
-
-  if (!cliId || !prodId || isNaN(cant) || cant <= 0) {
-    alert("Por favor seleccione un cliente, un producto y una cantidad válida.");
-    return;
-  }
-
-  const cliente = dbClientes[cliId];
-  const producto = dbPanificados[prodId];
-  if (!cliente || !producto) return;
-
-  // Tomamos el precio unitario del input (por si el usuario lo editó a mano) o calculamos el sugerido
-  const inputPrecioVal = parseFloat(document.getElementById('rep-precio-unitario').value);
-  const precioUnit = !isNaN(inputPrecioVal) && inputPrecioVal > 0 
-    ? inputPrecioVal 
-    : (cant > (producto.unidPorPaq || 1) ? producto.mayor : producto.menor);
-
-  const sufijoOrigen = obtenerSufijoSucursalActual();
-  const nuevoPedido = {
-    id: generarID('REP'),
-    clienteId: cliId,
-    clienteNombre: cliente.nombre + sufijoOrigen,
-    producto: prodId, // 👈 Corregido: prodId es la clave exacta del panificado
-    unidades: cant,
-    unidPorPaq: producto.unidPorPaq || 1,
-    precioUnitario: precioUnit,
-    monto: cant * precioUnit,
-    origen: 'principal',
-    pagado: false,
-    medioPago: "Pendiente"
-  };
-
-  guardarRepartoConSincronizacion(fechaDestino, nuevoPedido);
-
-  // 🧹 Limpieza quirúrgica: vacía la cantidad pero mantiene seleccionado el cliente
-  cantidadInput.value = '';
-  const inputPrecio = document.getElementById('rep-precio-unitario');
-  if (inputPrecio) inputPrecio.value = '';
-
-  renderizarPlanillaReparto();
-  renderizarCuadra();
-}
-function agregarPedidoReparto(nuevoPedido) {
-      const fechaHojaRutaActiva = document.getElementById('hr-fecha-selector').value || fechaActual;
+      const fechaDestino = document.getElementById('rep-fecha-destino').value || fechaActual;
       
-      // Aseguramos que el nodo de la fecha exista y sea un objeto (evitando arrays)
-      if (!dbRepartos[fechaHojaRutaActiva]) {
-          dbRepartos[fechaHojaRutaActiva] = {};
-      } else if (Array.isArray(dbRepartos[fechaHojaRutaActiva])) {
-          let objetoConvertido = {};
-          dbRepartos[fechaHojaRutaActiva].forEach(p => {
-              if (p && (p.id || p.producto)) {
-                  objetoConvertido[p.id || generarID('REP')] = p;
-              }
-          });
-          dbRepartos[fechaHojaRutaActiva] = objetoConvertido;
+      if (dbRepartosCerrados[fechaDestino]) {
+        alert(`⚠️ El reparto del día ${fechaDestino} ya se encuentra cerrado.`);
+        return;
       }
 
-      // Generar un ID único inalterable si no lo tiene
-      const idUnico = nuevoPedido.id || generarID('REP');
-      nuevoPedido.id = idUnico;
-      nuevoPedido.dispositivoOrigen = dispositivoId;
+      const cliId = document.getElementById('rep-cliente').value;
+      const prodId = document.getElementById('rep-producto').value;
+      const cantidadInput = document.getElementById('rep-cantidad');
+      const cant = parseFloat(cantidadInput.value);
 
-      // GUARDADO SEGURO POR CLAVE (ID) EN EL OBJETO DE ESA FECHA
-      dbRepartos[fechaHojaRutaActiva][idUnico] = nuevoPedido;
-
-      // Persistencia local y sincronización con Firebase
-      localStorage.setItem('db_repartos', JSON.stringify(dbRepartos));
-      if (rtdb) {
-        rtdb.ref(`db_repartos/${fechaHojaRutaActiva}/${idUnico}`).set(nuevoPedido).catch(err => {
-          console.warn("Aviso de sincronización en red:", err);
-        });
+      if (!cliId || !prodId || isNaN(cant) || cant <= 0) {
+        alert("Por favor seleccione un cliente, un producto y una cantidad válida.");
+        return;
       }
-      
+
+      const cliente = dbClientes[cliId];
+      const producto = dbPanificados[prodId];
+      if (!cliente || !producto) return;
+
+      const inputPrecioVal = parseFloat(document.getElementById('rep-precio-unitario').value);
+      const precioUnit = !isNaN(inputPrecioVal) && inputPrecioVal > 0 
+        ? inputPrecioVal 
+        : (cant > (producto.unidPorPaq || 1) ? producto.mayor : producto.menor);
+
+      const sufijoOrigen = obtenerSufijoSucursalActual();
+      const nuevoPedido = {
+        id: generarID('REP'),
+        clienteId: cliId,
+        clienteNombre: cliente.nombre + sufijoOrigen,
+        producto: prodId,
+        unidades: cant,
+        unidPorPaq: producto.unidPorPaq || 1,
+        precioUnitario: precioUnit,
+        monto: cant * precioUnit,
+        origen: 'principal',
+        pagado: false,
+        medioPago: "Pendiente"
+      };
+
+      guardarRepartoConSincronizacion(fechaDestino, nuevoPedido);
+
+      cantidadInput.value = '';
+      const inputPrecio = document.getElementById('rep-precio-unitario');
+      if (inputPrecio) inputPrecio.value = '';
+
       renderizarPlanillaReparto();
       renderizarCuadra();
-      renderizarReportesMensuales();
     }
-const fechaSeleccionada = "2026-06-06";
-const miIdDispositivo = "Dispositivo_Raul_Celular"; // O un ID único generado por sesión
-
-// 1. Verificar y adquirir el bloqueo al abrir la fecha
-function intentarBloquearFecha(fecha) {
-      if (!rtdb) return;
-      const lockRef = rtdb.ref(`locks/${fecha}`);
-      
-      lockRef.once('value', (snapshot) => {
-          const datosLock = snapshot.val();
-          
-          if (datosLock && datosLock.usuario !== dispositivoId) {
-              mostrarAdvertenciaBloqueo(datosLock.usuario);
-          } else {
-              lockRef.set({
-                  usuario: dispositivoId,
-                  timestamp: Date.now(),
-                  estado: "ocupado"
-              });
-          }
-      });
-    }
-// 2. Mostrar la leyenda restrictiva en la interfaz
-function mostrarAdvertenciaBloqueo(usuarioOcupante) {
-      let semaforo = document.getElementById("semaforo-badge");
-      if (!semaforo) {
-        // Si no existe el badge visualmente, lo creamos en el header para que te avise
-        const headerDiv = document.querySelector('header > div:last-child');
-        if (headerDiv) {
-          semaforo = document.createElement('div');
-          semaforo.id = "semaforo-badge";
-          headerDiv.prepend(semaforo);
-        }
-      }
-      if (semaforo) {
-        semaforo.className = "text-[10px] bg-red-600 text-white px-2 py-0.5 rounded-full font-bold shadow-sm whitespace-nowrap";
-        semaforo.innerHTML = `⚠️ Editando otro usuario`;
-      }
-    }
-// 3. Liberar el bloqueo al salir o cambiar de fecha (Desonexión o cambio de vista)
-function liberarBloqueoFecha(fecha) {
-    const lockRef = db.ref(`locks/${fecha}`);
-    lockRef.remove();
-}
 function cargarPedidoPrincipal() {
   const fechaDestino = document.getElementById('rep-fecha-destino').value || fechaActual;
   
@@ -3316,37 +3283,6 @@ function renderizarPlanillaReparto() {
       if (elEf) elEf.textContent = `$${totalEfectivo.toLocaleString()}`;
       if (elTr) elTr.textContent = `$${totalTransf.toLocaleString()}`;
     }
-function quitarAjusteCuadra(idOIndex) {
-    const fechaHojaRutaActiva = document.getElementById('hr-fecha-selector').value || fechaActual;
-    
-    // Si manejas los remanentes como un Array para esa fecha:
-    if (Array.isArray(dbStockRemanenteCuadra[fechaHojaRutaActiva])) {
-        // Si pasaste un ID o un índice, lo filtramos de forma segura
-        dbStockRemanenteCuadra[fechaHojaRutaActiva] = dbStockRemanenteCuadra[fechaHojaRutaActiva].filter((item, idx) => {
-            return item.id !== idOIndex && idx !== idOIndex;
-        });
-    } 
-    // Si lo manejas como Objeto por ID:
-    else if (dbStockRemanenteCuadra[fechaHojaRutaActiva]) {
-        if (dbStockRemanenteCuadra[fechaHojaRutaActiva][idOIndex]) {
-            delete dbStockRemanenteCuadra[fechaHojaRutaActiva][idOIndex];
-        } else {
-            // Fallback por si acaso el parámetro era un índice numérico en un objeto
-            let keys = Object.keys(dbStockRemanenteCuadra[fechaHojaRutaActiva]);
-            if (keys[idOIndex]) {
-                delete dbStockRemanenteCuadra[fechaHojaRutaActiva][keys[idOIndex]];
-            }
-        }
-    }
-
-    // Guardar cambios en la base de datos local y en la nube (Firebase)
-    guardarDB(`stockRemanente_${fechaHojaRutaActiva}`, dbStockRemanenteCuadra[fechaHojaRutaActiva]);
-    
-    // Volver a renderizar la tabla visualmente
-    if (typeof renderizarTablaStockRemanente === 'function') {
-        renderizarTablaStockRemanente();
-    }
-}
   function deshacerCobroPedido(pedidoId) {
   const fechaHojaRutaActiva = document.getElementById('hr-fecha-selector').value || fechaActual;
   if (dbRepartosCerrados[fechaHojaRutaActiva]) return;
@@ -3367,22 +3303,6 @@ function quitarAjusteCuadra(idOIndex) {
 
   renderizarPlanillaReparto(); 
   renderizarReportesMensuales(); 
-}
-// Función robusta para transformar cualquier estructura de repartos a un Array seguro
-function obtenerPedidosComoArray(fechaSeleccionada) {
-    const data = dbRepartos[fechaSeleccionada];
-    if (!data) return [];
-    
-    // Si ya es un array, lo retornamos
-    if (Array.isArray(data)) return data;
-    
-    // Si es un objeto (por IDs o sincronización), lo convertimos a array preservando su ID interno
-    return Object.keys(data).map(id => {
-        return {
-            idUnico: id,
-            ...data[id]
-        };
-    });
 }
 function marcarPedidoCobrado(pedidoId, medioPago) {
   const fechaHojaRutaActiva = document.getElementById('hr-fecha-selector').value || fechaActual;
@@ -3453,20 +3373,23 @@ function marcarPedidoCobrado(pedidoId, medioPago) {
 
       // 2. Pedidos Mostrador (Notas con ordenamiento inteligente por sucursal)
       let notasHtml = '';
-      let notasArr = (dbNotasMostrador[fechaCuadraActiva] || []).map((nota) => nota);
+      const notasNodo = dbNotasMostrador[fechaCuadraActiva] || {};
+      let notasArr = Array.isArray(notasNodo) 
+        ? notasNodo.map((txt) => ({ texto: txt }))
+        : Object.values(notasNodo).map(n => ({ texto: n.texto }));
       
       notasArr.sort((a, b) => {
-        const aEsAlem = a.endsWith(' (A)');
-        const bEsAlem = b.endsWith(' (A)');
+        const aEsAlem = (a.texto || '').endsWith(' (A)');
+        const bEsAlem = (b.texto || '').endsWith(' (A)');
         
         if (aEsAlem && !bEsAlem) return -1; // Alem (A) primero
         if (!aEsAlem && bEsAlem) return 1;  // Espiga (E) después
         
-        return a.localeCompare(b); // Alfabético dentro de la misma sucursal
+        return (a.texto || '').localeCompare(b.texto || ''); // Alfabético dentro de la misma sucursal
       });
       
-      notasArr.forEach((nota) => {
-        let textoLimpio = nota;
+      notasArr.forEach((item) => {
+        let textoLimpio = item.texto || '';
         let badgeSucursalPrint = '';
 
         if (textoLimpio.endsWith(' (A)')) {
@@ -3758,7 +3681,7 @@ function imprimirListadoProductos() {
         ventanaImpresion.close();
       }, 300);
     }
-   function renderizarCuadra() {
+function renderizarCuadra() {
       const fechaFormateada = obtenerFechaConDia(fechaCuadraActiva);
       const lblCua = document.getElementById('label-fecha-cuadra'); 
       if (lblCua) lblCua.innerText = `Fecha de Producción: ${fechaFormateada}`;
@@ -3775,10 +3698,9 @@ function imprimirListadoProductos() {
       const pedidosDiaObj = dbRepartos[fechaCuadraActiva] || {};
       const pedidosDiaArr = Array.isArray(pedidosDiaObj) ? pedidosDiaObj : Object.values(pedidosDiaObj);
 
-    const consolidados = {};
+      const consolidados = {};
       pedidosDiaArr.forEach(p => {
         if (!p) return;
-        // Excluimos despacho y catering-mostrador para que solo queden panificados
         if (p.origen === 'despacho' || p.origen === 'catering-mostrador') return;
         consolidados[p.producto] = (consolidados[p.producto] || 0) + (p.unidades || 0);
       });
@@ -3831,21 +3753,24 @@ function imprimirListadoProductos() {
       const listaNotas = document.getElementById('lista-notas-mostrador');
       if (listaNotas) {
         listaNotas.innerHTML = '';
-      let notasArr = (dbNotasMostrador[fechaCuadraActiva] || []).map((nota, idx) => ({ texto: nota, originalIndex: idx }));
+        
+        const notasNodo = dbNotasMostrador[fechaCuadraActiva] || {};
+        let notasArr = Array.isArray(notasNodo) 
+          ? notasNodo.map((txt, idx) => ({ id: idx, texto: txt }))
+          : Object.values(notasNodo).map(n => ({ id: n.id, texto: n.texto }));
 
-// 👉 Ordenar primero por sucursal ((A) primero, luego (E)) y alfabéticamente dentro de cada grupo
-notasArr.sort((a, b) => {
-  const aEsAlem = a.texto.endsWith(' (A)');
-  const bEsAlem = b.texto.endsWith(' (A)');
-  
-  if (aEsAlem && !bEsAlem) return -1; // (A) va antes que (E)
-  if (!aEsAlem && bEsAlem) return 1;  // (E) va después de (A)
-  
-  return a.texto.localeCompare(b.texto); // Si son de la misma sucursal, ordena alfabéticamente
-});
+        notasArr.sort((a, b) => {
+          const aEsAlem = (a.texto || '').endsWith(' (A)');
+          const bEsAlem = (b.texto || '').endsWith(' (A)');
+          
+          if (aEsAlem && !bEsAlem) return -1;
+          if (!aEsAlem && bEsAlem) return 1;
+          
+          return (a.texto || '').localeCompare(b.texto || '');
+        });
         
         notasArr.forEach((item) => {
-          let textoLimpio = item.texto;
+          let textoLimpio = item.texto || '';
           let badgeSucursal = '';
 
           if (textoLimpio.endsWith(' (A)')) {
@@ -3858,7 +3783,7 @@ notasArr.sort((a, b) => {
 
           const li = document.createElement('li'); 
           li.className = "flex justify-between items-center bg-gray-50 p-2 rounded border mb-1";
-          li.innerHTML = `<div><span class="font-medium text-gray-800">${textoLimpio}</span>${badgeSucursal}</div><button onclick="eliminarNotaMostrador(${item.originalIndex})" class="text-xs text-red-600 font-bold hover:underline">Eliminar</button>`;
+          li.innerHTML = `<div><span class="font-medium text-gray-800">${textoLimpio}</span>${badgeSucursal}</div><button onclick="eliminarNotaMostrador('${item.id}')" class="text-xs text-red-600 font-bold hover:underline">Eliminar</button>`;
           listaNotas.appendChild(li);
         });
 
@@ -3872,7 +3797,7 @@ notasArr.sort((a, b) => {
         cargarSelectorRemanentesCuadra();
       }
     }
-    function guardarCliente() {
+   function guardarCliente() {
       const nombreInput = document.getElementById('cli-nombre');
       const nombre = nombreInput.value.trim(); 
       if (!nombre) { alert("Ingrese el nombre o razón social del cliente."); return; }
@@ -3881,13 +3806,20 @@ notasArr.sort((a, b) => {
       const yaExiste = Object.values(dbClientes).some(c => c.nombre.trim().toLowerCase() === nombreLower);
       if (yaExiste) { alert(`⚠️ Ya existe un cliente registrado con el nombre "${nombre}".`); nombreInput.focus(); return; }
 
+      const usr = dbUsuarios[usuarioActivoId];
+      let sucursalCliente = document.getElementById('cli-sucursal')?.value || 'todas';
+      if (usr && usr.sucursal !== 'todas' && usr.rol !== 'admin') {
+        sucursalCliente = usr.sucursal;
+      }
+
       const id = generarID('CLI');
       dbClientes[id] = { 
         id, nombre, 
         cuit: document.getElementById('cli-cuit').value.trim(), 
         direccion: document.getElementById('cli-direccion').value.trim(), 
         telefono: document.getElementById('cli-telefono').value.trim(),
-        email: document.getElementById('cli-email')?.value.trim() || '' 
+        email: document.getElementById('cli-email')?.value.trim() || '',
+        sucursal: sucursalCliente
       };
       
       guardarDB('db_clientes', dbClientes);
@@ -3896,6 +3828,7 @@ notasArr.sort((a, b) => {
       if(document.getElementById('cli-direccion')) document.getElementById('cli-direccion').value = '';
       if(document.getElementById('cli-telefono')) document.getElementById('cli-telefono').value = '';
       if(document.getElementById('cli-email')) document.getElementById('cli-email').value = '';
+      if(document.getElementById('cli-sucursal')) document.getElementById('cli-sucursal').value = 'todas';
       
       cerrarModalAltaCliente();
       cargarSelectorClientesReparto(); 
@@ -3903,7 +3836,6 @@ notasArr.sort((a, b) => {
       renderizarTablaClientes();
       cargarBuscadorClientes();
     }
-
 function calcularSaldoCliente(cliId) {
   let saldo = 0;
   
@@ -3936,7 +3868,7 @@ function calcularSaldoCliente(cliId) {
   
   return saldo;
 }
- function renderizarTablaHistorialCliente() {
+function renderizarTablaHistorialCliente() {
   if (!clienteSeleccionadoId) return;
   const tbody = document.getElementById('tabla-historial-cliente'); 
   if (!tbody) return; 
@@ -3968,16 +3900,31 @@ function calcularSaldoCliente(cliId) {
 
   movs.sort((a, b) => new Date(a.fecha || 0) - new Date(b.fecha || 0));
 
+  // OBTENER VALORES DE LOS FILTROS DE FECHA
+  const filtroDesde = document.getElementById('filtro-cta-desde')?.value || '';
+  const filtroHasta = document.getElementById('filtro-cta-hasta')?.value || '';
+
   let acumulado = 0;
+  let movimientosMostrados = 0;
+
   movs.forEach(m => {
-    acumulado += ((m.debito || 0) - (m.credito || 0));
+    // Calculamos el acumulado general de la cuenta corriente
+    const montoDebito = m.debito || 0;
+    const montoCredito = m.credito || 0;
+    acumulado += (montoDebito - montoCredito);
+
+    // Aplicar filtros de fecha para la visualización en la tabla
+    if (filtroDesde && m.fecha < filtroDesde) return;
+    if (filtroHasta && m.fecha > filtroHasta) return;
+
+    movimientosMostrados++;
     const tr = document.createElement('tr'); 
     tr.className = "border-b text-xs md:text-sm hover:bg-gray-50";
     
     const tdFecha = m.fecha || 'S/F';
     const tdConcepto = m.origen === 'reparto' ? `Pedido (Consolidado Cierre): ${m.producto}` : (m.tipoReal === 'debito' ? `Cargo manual: ${m.medio}` : `Pago: ${m.medio}`);
-    const tdDebito = (m.origen === 'reparto' || (m.origen === 'pago' && m.tipoReal === 'debito')) ? `$${(m.debito || 0).toLocaleString()}` : '-';
-    const tdCredito = (m.origen === 'pago' && m.tipoReal === 'credito') ? `$${(m.credito || 0).toLocaleString()}` : '-';
+    const tdDebito = (m.origen === 'reparto' || (m.origen === 'pago' && m.tipoReal === 'debito')) ? `$${montoDebito.toLocaleString()}` : '-';
+    const tdCredito = (m.origen === 'pago' && m.tipoReal === 'credito') ? `$${montoCredito.toLocaleString()}` : '-';
 
     let botonesAccion = '';
     if (m.origen === 'reparto') {
@@ -4000,27 +3947,25 @@ function calcularSaldoCliente(cliId) {
     tbody.appendChild(tr);
   });
 
-  const trBorrar = document.createElement('tr');
-  trBorrar.innerHTML = `
-    <td colspan="6" class="p-3 text-right bg-gray-50 border-t">
-      <button type="button" onclick="eliminarClienteActual()" class="bg-red-600 text-white text-xs px-3 py-1.5 rounded font-bold hover:bg-red-700">🗑️ Borrar este Cliente</button>
-    </td>
-  `;
-  tbody.appendChild(trBorrar);
+  if (movimientosMostrados === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-gray-400 italic">No hay movimientos en el período seleccionado.</td></tr>';
+  }
 }
-    function cargarBuscadorClientes() {
+  function cargarBuscadorClientes() {
       const sel = document.getElementById('select-buscador-cliente');
       if (!sel) return;
       sel.innerHTML = '<option value="">-- Buscar / Elegir Cliente --</option>';
-      Object.values(dbClientes).sort((a, b) => a.nombre.localeCompare(b.nombre)).forEach(c => {
-        const saldo = calcularSaldoCliente(c.id);
-        const opt = document.createElement('option');
-        opt.value = c.id;
-        opt.textContent = `${c.nombre} (Saldo: $${saldo.toLocaleString()})`;
-        sel.appendChild(opt);
-      });
+      Object.values(dbClientes)
+        .filter(filtrarClientePorSucursalUsuario)
+        .sort((a, b) => a.nombre.localeCompare(b.nombre))
+        .forEach(c => {
+          const saldo = calcularSaldoCliente(c.id);
+          const opt = document.createElement('option');
+          opt.value = c.id;
+          opt.textContent = `${c.nombre} (Saldo: $${saldo.toLocaleString()})`;
+          sel.appendChild(opt);
+        });
     }
-
     function seleccionarClienteDesdeBuscador(cliId) {
       if (!cliId) return;
       verHistorialCliente(cliId);
@@ -4033,14 +3978,14 @@ function calcularSaldoCliente(cliId) {
       }
     }
 
-    function renderizarTablaClientes() {
+  function renderizarTablaClientes() {
       const tbody = document.getElementById('tabla-resumen-clientes-deuda'); 
       if (!tbody) return; 
       tbody.innerHTML = '';
       if (!dbClientes) dbClientes = {};
       
       let cliArr = Array.isArray(dbClientes) ? dbClientes : Object.values(dbClientes);
-      cliArr = cliArr.filter(c => c && (c.id || c.nombre)).sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''));
+      cliArr = cliArr.filter(c => c && (c.id || c.nombre) && filtrarClientePorSucursalUsuario(c)).sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''));
 
       cliArr.forEach(cli => {
         const cliId = cli.id || cli.nombre;
@@ -4061,11 +4006,10 @@ function calcularSaldoCliente(cliId) {
       });
 
       if (cliArr.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" class="p-3 text-center text-gray-400 italic">No hay clientes registrados en el sistema.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="4" class="p-3 text-center text-gray-400 italic">No hay clientes registrados para esta sucursal.</td></tr>';
       }
       cargarBuscadorClientes();
     }
-
     function seleccionarProveedorDesdeBuscador(provId) {
       if (!provId) return;
       verHistorialProveedor(provId);
@@ -4106,30 +4050,98 @@ function calcularSaldoCliente(cliId) {
       if (selBuscador) selBuscador.value = "";
     }
 
-    function verHistorialCliente(cliId) {
-      if (!cliId) return;
-      clienteSeleccionadoId = cliId; 
-      let clienteActual = dbClientes[cliId] || Object.values(dbClientes).find(c => c && c.id === cliId);
-      if (!clienteActual) return;
+  function verHistorialCliente(cliId) {
+    if (!cliId) return;
+    clienteSeleccionadoId = cliId; 
+    let clienteActual = dbClientes[cliId] || Object.values(dbClientes).find(c => c && c.id === cliId);
+    if (!clienteActual) return;
 
-      if(document.getElementById('edit-cli-nombre')) document.getElementById('edit-cli-nombre').value = clienteActual.nombre || '';
-      if(document.getElementById('edit-cli-cuit')) document.getElementById('edit-cli-cuit').value = clienteActual.cuit || '';
-      if(document.getElementById('edit-cli-direccion')) document.getElementById('edit-cli-direccion').value = clienteActual.direccion || '';
-      if(document.getElementById('edit-cli-telefono')) document.getElementById('edit-cli-telefono').value = clienteActual.telefono || '';
-      if(document.getElementById('edit-cli-email')) document.getElementById('edit-cli-email').value = clienteActual.email || '';
+    if(document.getElementById('edit-cli-nombre')) document.getElementById('edit-cli-nombre').value = clienteActual.nombre || '';
+    if(document.getElementById('edit-cli-cuit')) document.getElementById('edit-cli-cuit').value = clienteActual.cuit || '';
+    if(document.getElementById('edit-cli-direccion')) document.getElementById('edit-cli-direccion').value = clienteActual.direccion || '';
+    if(document.getElementById('edit-cli-telefono')) document.getElementById('edit-cli-telefono').value = clienteActual.telefono || '';
+    if(document.getElementById('edit-cli-email')) document.getElementById('edit-cli-email').value = clienteActual.email || '';
+    if(document.getElementById('edit-cli-sucursal')) document.getElementById('edit-cli-sucursal').value = clienteActual.sucursal || 'todas';
 
-      const nombreEl = document.getElementById('historial-nombre-cliente');
-      const contactoEl = document.getElementById('historial-contacto-cliente');
-      if (nombreEl) nombreEl.textContent = clienteActual.nombre || '';
+    const nombreEl = document.getElementById('historial-nombre-cliente');
+    const contactoEl = document.getElementById('historial-contacto-cliente');
+    
+    // 1. REUBICACIÓN DEL BOTÓN DE BORRAR AL LADO DEL NOMBRE:
+    // En lugar de estar abajo de todo, lo ponemos integrado al título de forma limpia y segura.
+    if (nombreEl) {
+        nombreEl.innerHTML = `
+            <div class="flex items-center justify-between flex-wrap gap-2">
+                <span class="text-xl font-bold text-gray-800">${clienteActual.nombre || ''}</span>
+                <button type="button" onclick="borrarCliente('${cliId.replace(/'/g, "\\'")}')" class="bg-red-50 hover:bg-red-600 text-red-600 hover:text-white border border-red-200 text-xs px-2.5 py-1 rounded font-bold transition flex items-center gap-1 shadow-sm" title="Borrar este Cliente">
+                    🗑️ Borrar Cliente
+                </button>
+            </div>
+        `;
+    }
       
-      let saldoActual = calcularSaldoCliente(cliId);
-      if (contactoEl) contactoEl.textContent = `Tel: ${clienteActual.telefono || 'S/D'} | Dir: ${clienteActual.direccion || 'S/D'} | Saldo: $${saldoActual.toLocaleString()}`;
+    let saldoActual = calcularSaldoCliente(cliId);
+    if (contactoEl) contactoEl.textContent = `Tel: ${clienteActual.telefono || 'S/D'} | Dir: ${clienteActual.direccion || 'S/D'} | Sucursal: ${ETIQUETAS_SUCURSAL[clienteActual.sucursal || 'todas']} | Saldo Actual: $${saldoActual.toLocaleString()}`;
       
-      const modal = document.getElementById('modal-historial-cliente');
-      if (modal) { modal.classList.remove('hidden'); modal.style.display = 'flex'; }
-      renderizarTablaHistorialCliente();
+    // 2. AGREGAR SELECTORES DE FECHA PARA EL FILTRADO DE MOVIMIENTOS Y WHATSAPP
+    // Buscamos o creamos un contenedor para los filtros de fecha justo arriba de la tabla de historial
+    let contenedorFiltros = document.getElementById('filtro-fechas-cta-container');
+    if (!contenedorFiltros) {
+        contenedorFiltros = document.createElement('div');
+        contenedorFiltros.id = 'filtro-fechas-cta-container';
+        contenedorFiltros.className = 'flex flex-wrap gap-3 items-center my-3 p-2.5 bg-gray-50 rounded-lg border text-xs';
+        contenedorFiltros.innerHTML = `
+            <span class="font-bold text-gray-700">📅 Filtrar Período WhatsApp / Vista:</span>
+            <div class="flex items-center gap-1">
+                <label class="text-gray-500">Desde:</label>
+                <input type="date" id="filtro-cta-desde" class="border rounded px-2 py-1 text-xs" onchange="renderizarTablaHistorialCliente()">
+            </div>
+            <div class="flex items-center gap-1">
+                <label class="text-gray-500">Hasta:</label>
+                <input type="date" id="filtro-cta-hasta" class="border rounded px-2 py-1 text-xs" onchange="renderizarTablaHistorialCliente()">
+            </div>
+            <button type="button" onclick="limpiarFiltroFechasCtaCte()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-2 py-1 rounded">Limpiar</button>
+        `;
+        // Insertamos el filtro antes de la tabla de historial (ajustá el selector si tu tabla tiene otro id contenedor)
+        const tablaHistorialEl = document.getElementById('tabla-historial-cliente') || contactoEl?.parentElement;
+        if (tablaHistorialEl) {
+            tablaHistorialEl.parentNode.insertBefore(contenedorFiltros, tablaHistorialEl);
+        }
     }
 
+    const modal = document.getElementById('modal-historial-cliente');
+    if (modal) { modal.classList.remove('hidden'); modal.style.display = 'flex'; }
+    
+    renderizarTablaHistorialCliente();
+}
+
+function limpiarFiltroFechasCtaCte() {
+    const desde = document.getElementById('filtro-cta-desde');
+    const hasta = document.getElementById('filtro-cta-hasta');
+    if (desde) desde.value = '';
+    if (hasta) hasta.value = '';
+    renderizarTablaHistorialCliente();
+}
+
+    function guardarEdicionCliente() {
+      if (!clienteSeleccionadoId || !dbClientes[clienteSeleccionadoId]) return;
+      const cli = dbClientes[clienteSeleccionadoId];
+      const nuevoNombre = document.getElementById('edit-cli-nombre').value.trim();
+      if (!nuevoNombre) { alert("El nombre del cliente no puede estar vacío."); return; }
+
+      cli.nombre = nuevoNombre;
+      cli.cuit = document.getElementById('edit-cli-cuit').value.trim();
+      cli.direccion = document.getElementById('edit-cli-direccion').value.trim();
+      cli.telefono = document.getElementById('edit-cli-telefono').value.trim();
+      cli.email = document.getElementById('edit-cli-email').value.trim();
+      cli.sucursal = document.getElementById('edit-cli-sucursal')?.value || cli.sucursal || 'todas';
+
+      guardarDB('db_clientes', dbClientes);
+      renderizarTablaClientes();
+      cargarSelectorClientesReparto();
+      cargarSelectorClientesRecurrentes();
+      verHistorialCliente(clienteSeleccionadoId);
+      alert("¡Datos del cliente actualizados con éxito!");
+    }
     function verHistorialProveedor(provId) {
       if (!provId) return;
       proveedorSeleccionadoId = provId; 
@@ -4157,27 +4169,7 @@ function calcularSaldoCliente(cliId) {
       try { renderizarTablaHistorialProveedor(); } catch (e) { console.warn(e); }
     }
 
-    function guardarEdicionCliente() {
-      if (!clienteSeleccionadoId || !dbClientes[clienteSeleccionadoId]) return;
-      const cli = dbClientes[clienteSeleccionadoId];
-      const nuevoNombre = document.getElementById('edit-cli-nombre').value.trim();
-      if (!nuevoNombre) { alert("El nombre del cliente no puede estar vacío."); return; }
-
-      cli.nombre = nuevoNombre;
-      cli.cuit = document.getElementById('edit-cli-cuit').value.trim();
-      cli.direccion = document.getElementById('edit-cli-direccion').value.trim();
-      cli.telefono = document.getElementById('edit-cli-telefono').value.trim();
-      cli.email = document.getElementById('edit-cli-email').value.trim();
-
-      guardarDB('db_clientes', dbClientes);
-      renderizarTablaClientes();
-      cargarSelectorClientesReparto();
-      cargarSelectorClientesRecurrentes();
-      verHistorialCliente(clienteSeleccionadoId);
-      alert("¡Datos del cliente actualizados con éxito!");
-    }
-
-    function abrirModalEditarMovCliente(id, origen, fechaOriginal) {
+       function abrirModalEditarMovCliente(id, origen, fechaOriginal) {
       movClienteEditContext = { id, origen, fechaOriginal };
       let m = null;
       if (origen === 'reparto') {
@@ -4912,25 +4904,7 @@ function calcularSaldoCliente(cliId) {
         alert("No se pudieron procesar las líneas. Verifique el formato.");
       }
     }
-
-    function registrarMovimientoManualStock() {
-      const insId = document.getElementById('mov-stock-insumo').value;
-      const tipo = document.getElementById('mov-stock-tipo').value;
-      const cant = parseFloat(document.getElementById('mov-stock-cantidad').value);
-
-      if (!insId || isNaN(cant) || cant <= 0) { alert("Seleccione un insumo y una cantidad válida."); return; }
-      const ins = dbInsumos[insId];
-      if (!ins) return;
-
-      if (tipo === 'salida') { ins.stock -= cant; } else { ins.stock += cant; }
-
-      guardarDB('db_insumos', dbInsumos);
-      document.getElementById('mov-stock-cantidad').value = '';
-      renderizarStockInsumos();
-      cargarSelectorInsumosMovimiento();
-      alert(`¡Movimiento registrado con éxito! Nuevo stock de ${ins.nombre}: ${ins.stock} ${ins.unidad}`);
-    }
-
+    
     function eliminarInsumoStock(id) {
       const ins = dbInsumos[id];
       const nombreIns = ins ? ins.nombre : 'este insumo';
@@ -4943,44 +4917,156 @@ function calcularSaldoCliente(cliId) {
         alert("Insumo eliminado correctamente.");
       }
     }
-function renderizarStockInsumos() {
-    const sucursalActiva = obtenerSucursalActiva();
-    const tbody = document.getElementById('tabla-stock-insumos');
-    if (!tbody) return;
-    tbody.innerHTML = '';
+// --- NUEVA ESTRUCTURA DE MOVIMIENTOS Y HISTORIAL DE STOCK ---
+var dbMovimientosStock = cargarDB('db_movimientos_stock', {});
 
-    const listaInsumos = Array.isArray(dbInsumos) ? dbInsumos : Object.values(dbInsumos || {});
+// Función mejorada para registrar movimientos de stock con trazabilidad de fecha y tipo
+function registrarMovimientoStockConTrazabilidad(insumoId, cantidad, tipo, sucursalOrigen) {
+  if (!dbInsumos[insumoId]) return;
+  const ins = dbInsumos[insumoId];
+  const fechaHoy = obtenerFechaHoyLocal();
 
-    listaInsumos.forEach(insumo => {
-      if (!insumo) return;
-      // Filtra para mostrar los de uso general ('todas') o los específicos de la sucursal activa
-      if (!insumo.sucursal || insumo.sucursal === 'todas' || insumo.sucursal === sucursalActiva) {
-        const estadoAlerta = insumo.stock <= insumo.minimo 
-          ? '<span class="bg-red-100 text-red-800 px-2 py-0.5 rounded text-[10px] font-bold">⚠️ Stock Bajo</span>' 
-          : '<span class="bg-green-100 text-green-800 px-2 py-0.5 rounded text-[10px] font-bold">🟢 Óptimo</span>';
-        
-        const tr = document.createElement('tr');
-        tr.className = "border-b hover:bg-gray-50";
-        tr.innerHTML = `
-          <td class="p-2 font-bold">${insumo.nombre}</td>
-          <td class="p-2 text-xs font-semibold text-amber-900">${ETIQUETAS_SUCURSAL[insumo.sucursal || 'todas'] || insumo.sucursal}</td>
-          <td class="p-2 font-bold">${insumo.stock} ${insumo.unidad}</td>
-          <td class="p-2">${insumo.minimo} ${insumo.unidad}</td>
-          <td class="p-2 text-center">${estadoAlerta}</td>
-          <td class="p-2 text-center flex justify-center gap-1">
-            <button onclick="abrirModalEditarInsumo('${insumo.id}')" class="bg-blue-600 text-white text-xs px-2 py-1 rounded font-bold shadow">✏️ Editar</button>
-            <button onclick="eliminarInsumoStock('${insumo.id}')" class="bg-red-600 text-white text-xs px-2 py-1 rounded font-bold shadow">✕</button>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      }
-    });
-
-    if (tbody.innerHTML === '') {
-      tbody.innerHTML = '<tr><td colspan="6" class="p-3 text-center text-gray-400 italic">No hay insumos registrados para esta sucursal.</td></tr>';
-    }
+  if (!dbMovimientosStock[insumoId]) {
+    dbMovimientosStock[insumoId] = [];
   }
-   function cargarCajasHoyUI() {
+
+  // Registrar el movimiento en el historial del insumo
+  dbMovimientosStock[insumoId].push({
+    id: generarID('MOV'),
+    fecha: fechaHoy,
+    tipo: tipo, // 'entrada' (compra) o 'salida' (consumo)
+    cantidad: parseFloat(cantidad) || 0,
+    sucursal: sucursalOrigen || ins.sucursal || 'todas'
+  });
+
+  guardarDB('db_movimientos_stock', dbMovimientosStock);
+}
+
+// Sobrescribimos el registro manual de stock para que use la trazabilidad
+function registrarMovimientoManualStock() {
+  const insId = document.getElementById('mov-stock-insumo').value;
+  const tipo = document.getElementById('mov-stock-tipo').value; // 'entrada' o 'salida'
+  const cant = parseFloat(document.getElementById('mov-stock-cantidad').value);
+
+  if (!insId || isNaN(cant) || cant <= 0) { 
+    alert("Seleccione un insumo y una cantidad válida."); 
+    return; 
+  }
+  const ins = dbInsumos[insId];
+  if (!ins) return;
+
+  if (tipo === 'salida') { 
+    ins.stock -= cant; 
+  } else { 
+    ins.stock += cant; 
+  }
+
+  // Registrar con trazabilidad (Verde para entrada, Rojo para salida)
+  registrarMovimientoStockConTrazabilidad(insId, cant, tipo === 'salida' ? 'salida' : 'entrada', ins.sucursal);
+
+  guardarDB('db_insumos', dbInsumos);
+  document.getElementById('mov-stock-cantidad').value = '';
+  renderizarStockInsumos();
+  cargarSelectorInsumosMovimiento();
+  alert(`¡Movimiento registrado con éxito! Stock actual de ${ins.nombre}: ${ins.stock} ${ins.unidad}`);
+}
+
+// --- RENDERIZADO DEL MONITOR DE STOCK MEJORADO ---
+function renderizarStockInsumos() {
+  const sucursalActiva = obtenerSucursalActiva();
+  const usr = dbUsuarios[usuarioActivoId];
+  const esAdmin = (usr && usr.rol === 'admin');
+  
+  const tbody = document.getElementById('tabla-stock-insumos');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  // Actualizamos el encabezado de la tabla
+  const tablaHead = tbody.closest('table').querySelector('thead tr');
+  if (tablaHead) {
+    tablaHead.innerHTML = `
+      <th class="p-2">Insumo</th>
+      ${esAdmin ? '<th class="p-2">Sucursal</th>' : ''}
+      <th class="p-2">Último Movimiento</th>
+      <th class="p-2 text-right">Ingresos (Compras)</th>
+      <th class="p-2 text-right">Salidas (Consumo)</th>
+      <th class="p-2 text-right">Stock Actual</th>
+      <th class="p-2 text-center">Acción</th>
+    `;
+  }
+
+  // Fallback de seguridad por si dbInsumos no está inicializado
+  if (!dbInsumos) {
+    dbInsumos = cargarDB('db_insumos', {});
+  }
+
+  const listaInsumos = Array.isArray(dbInsumos) ? dbInsumos : Object.values(dbInsumos || {});
+
+  if (listaInsumos.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" class="p-3 text-center text-gray-400 italic">No hay insumos registrados en el sistema.</td></tr>';
+    return;
+  }
+
+  listaInsumos.forEach(insumo => {
+    if (!insumo || !insumo.id) return;
+
+    // Si no es admin y la sucursal no coincide (y no es 'todas'), filtramos
+    if (!esAdmin && insumo.sucursal && insumo.sucursal !== 'todas' && insumo.sucursal !== sucursalActiva) {
+      return;
+    }
+
+    let totalIngresos = 0;
+    let totalSalidas = 0;
+    let ultimaFecha = '-';
+    let ultimoTipo = 'entrada';
+
+    // Verificamos si existen movimientos en la nueva estructura
+    const movs = (typeof dbMovimientosStock !== 'undefined' && dbMovimientosStock[insumo.id]) ? dbMovimientosStock[insumo.id] : [];
+    
+    if (movs.length > 0) {
+      movs.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+      ultimaFecha = movs[0].fecha;
+      ultimoTipo = movs[0].tipo;
+
+      movs.forEach(m => {
+        if (m.tipo === 'entrada') totalIngresos += (m.cantidad || 0);
+        if (m.tipo === 'salida') totalSalidas += (m.cantidad || 0);
+      });
+    }
+
+    // Estilo dinámico para la fecha (Verde para compras, Rojo para consumo)
+    let estiloFechaBadge = "bg-gray-100 text-gray-800";
+    if (ultimaFecha !== '-') {
+      estiloFechaBadge = (ultimoTipo === 'entrada') 
+        ? "bg-green-100 text-green-800 font-bold border border-green-300" 
+        : "bg-red-100 text-red-800 font-bold border border-red-300";
+    }
+
+    const tr = document.createElement('tr');
+    tr.className = "border-b hover:bg-gray-50 text-xs md:text-sm";
+    
+    let columnaSucursalHtml = esAdmin ? `<td class="p-2 text-xs font-semibold text-amber-900">${ETIQUETAS_SUCURSAL[insumo.sucursal || 'todas'] || insumo.sucursal}</td>` : '';
+
+    tr.innerHTML = `
+      <td class="p-2 font-bold text-gray-800">${insumo.nombre}</td>
+      ${columnaSucursalHtml}
+      <td class="p-2"><span class="px-2 py-0.5 rounded text-xs ${estiloFechaBadge}">${ultimaFecha}</span></td>
+      <td class="p-2 text-right font-semibold text-green-700">+${totalIngresos} ${insumo.unidad || ''}</td>
+      <td class="p-2 text-right font-semibold text-red-600">-${totalSalidas} ${insumo.unidad || ''}</td>
+      <td class="p-2 text-right font-extrabold text-amber-950">${insumo.stock} ${insumo.unidad || ''}</td>
+      <td class="p-2 text-center flex justify-center gap-1">
+        <button onclick="abrirModalEditarInsumo('${insumo.id}')" class="bg-blue-600 text-white text-xs px-2 py-1 rounded font-bold shadow hover:bg-blue-700">✏️ Editar</button>
+        <button onclick="eliminarInsumoStock('${insumo.id}')" class="bg-red-600 text-white text-xs px-2 py-1 rounded font-bold shadow hover:bg-red-700">✕</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  if (tbody.innerHTML === '') {
+    tbody.innerHTML = '<tr><td colspan="7" class="p-3 text-center text-gray-400 italic">No hay insumos visibles para la sucursal actual.</td></tr>';
+  }
+}
+ function cargarCajasHoyUI() {
       const usr = dbUsuarios[usuarioActivoId];
       const esAdmin = (usr && usr.rol === 'admin');
       const boxRep = document.getElementById('box-caja-reparto');
