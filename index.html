@@ -1661,6 +1661,12 @@ function cargarDB(key, fallback) {
     try {
       rtdb.ref(key).on('value', (snapshot) => {
         const valRemoto = snapshot.val();
+        try {
+          const fresco = localStorage.getItem(key);
+          if (fresco) valorLocal = JSON.parse(fresco);
+        } catch (e) {
+          console.warn("No se pudo releer el guardado local de", key, e);
+        }
         if (valRemoto !== null && valRemoto !== undefined) {
           if (key === 'db_usuarios' && typeof valRemoto === 'object') {
             // Fusión segura de usuarios para no pisar ningún ID de mostrador o reparto
@@ -3351,22 +3357,22 @@ function marcarPedidoCobrado(pedidoId, medioPago) {
       let totalUnidadesPrint = 0;
 
       if (lista.length === 0) {
-        produccionHtml = '<tr><td colspan="2" style="padding: 12px; text-align: center; color: #6b7280; font-style: italic; border-bottom: 1px solid #e5e7eb;">Sin pedidos de cuadra cargados.</td></tr>';
+        produccionHtml = '<tr><td colspan="2" style="padding: 12px; text-align: center; color: #6b7280; font-style: italic; border: 1.5px solid #1f2937;">Sin pedidos de cuadra cargados.</td></tr>';
       } else {
         lista.forEach(([prodNombre, cantUnidades]) => {
           totalUnidadesPrint += cantUnidades;
           produccionHtml += `
-            <tr style="border-bottom: 1px solid #e5e7eb;">
-              <td style="padding: 10px 14px; font-size: 13px; font-weight: 600; color: #1f2937; text-align: left;">${prodNombre}</td>
-              <td style="padding: 10px 14px; text-align: center; font-size: 14px; font-weight: 800; color: #78350f; background-color: #fef3c7; width: 140px;">${cantUnidades}</td>
+            <tr>
+              <td style="padding: 10px 14px; font-size: 13px; font-weight: 600; color: #1f2937; text-align: left; border: 1.5px solid #1f2937;">${prodNombre}</td>
+              <td style="padding: 10px 14px; text-align: center; font-size: 14px; font-weight: 800; color: #78350f; background-color: #fef3c7; width: 140px; border: 1.5px solid #1f2937;">${cantUnidades}</td>
             </tr>
           `;
         });
         
         produccionHtml += `
-            <tr style="border-bottom: 1px solid #e5e7eb; background-color: #fde68a;">
-              <td style="padding: 10px 14px; font-size: 13px; font-weight: 800; color: #78350f; text-align: left;">TOTAL PRODUCTOS</td>
-              <td style="padding: 10px 14px; text-align: center; font-size: 15px; font-weight: 900; color: #78350f; width: 140px;">${totalUnidadesPrint}</td>
+            <tr style="background-color: #fde68a;">
+              <td style="padding: 10px 14px; font-size: 13px; font-weight: 800; color: #78350f; text-align: left; border: 1.5px solid #1f2937;">TOTAL PRODUCTOS</td>
+              <td style="padding: 10px 14px; text-align: center; font-size: 15px; font-weight: 900; color: #78350f; width: 140px; border: 1.5px solid #1f2937;">${totalUnidadesPrint}</td>
             </tr>
           `;
       }
@@ -3419,22 +3425,22 @@ function marcarPedidoCobrado(pedidoId, medioPago) {
         cateringItems.forEach(item => {
           const letraSuc = item.sucursal === 'espiga' ? 'E' : 'A';
           cateringRows += `
-            <tr style="border-bottom: 1px solid #e5e7eb;">
-              <td style="padding: 8px 10px; font-size: 12px; font-weight: 600; color: #1f2937;">${item.clienteNombre}</td>
-              <td style="padding: 8px 10px; font-size: 12px; color: #374151;">${item.producto}</td>
-              <td style="padding: 8px 10px; text-align: center; font-size: 12px; font-weight: 800; color: #1e3a8a; width: 90px;">${item.unidades} un.</td>
-              <td style="padding: 8px 10px; text-align: center; font-size: 12px; color: #4b5563; width: 110px;">${item.fechaRetiro || '-'} (${letraSuc})</td>
+            <tr>
+              <td style="padding: 8px 10px; font-size: 12px; font-weight: 600; color: #1f2937; border: 1.5px solid #1f2937;">${item.clienteNombre}</td>
+              <td style="padding: 8px 10px; font-size: 12px; color: #374151; border: 1.5px solid #1f2937;">${item.producto}</td>
+              <td style="padding: 8px 10px; text-align: center; font-size: 12px; font-weight: 800; color: #1e3a8a; width: 90px; border: 1.5px solid #1f2937;">${item.unidades} un.</td>
+              <td style="padding: 8px 10px; text-align: center; font-size: 12px; color: #4b5563; width: 110px; border: 1.5px solid #1f2937;">${item.fechaRetiro || '-'} (${letraSuc})</td>
             </tr>
           `;
         });
         cateringHtml = `
-          <table style="width: 100%; border-collapse: collapse; border: 1px solid #d1d5db; background-color: #ffffff;">
+          <table style="width: 100%; border-collapse: collapse; border: 2px solid #111827; background-color: #ffffff;">
             <thead>
               <tr style="background-color: #1e3a8a; color: #ffffff;">
-                <th style="padding: 8px 10px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase;">Cliente / Teléfono</th>
-                <th style="padding: 8px 10px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase;">Producto</th>
-                <th style="padding: 8px 10px; text-align: center; font-size: 11px; font-weight: 700; text-transform: uppercase; width: 90px;">Cantidad</th>
-                <th style="padding: 8px 10px; text-align: center; font-size: 11px; font-weight: 700; text-transform: uppercase; width: 110px;">F. Retiro</th>
+                <th style="padding: 8px 10px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; border: 1.5px solid #111827;">Cliente / Teléfono</th>
+                <th style="padding: 8px 10px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; border: 1.5px solid #111827;">Producto</th>
+                <th style="padding: 8px 10px; text-align: center; font-size: 11px; font-weight: 700; text-transform: uppercase; width: 90px; border: 1.5px solid #111827;">Cantidad</th>
+                <th style="padding: 8px 10px; text-align: center; font-size: 11px; font-weight: 700; text-transform: uppercase; width: 110px; border: 1.5px solid #111827;">F. Retiro</th>
               </tr>
             </thead>
             <tbody>${cateringRows}</tbody>
@@ -3444,13 +3450,18 @@ function marcarPedidoCobrado(pedidoId, medioPago) {
 
       const areaImp = document.getElementById('area-impresion');
       areaImp.innerHTML = `
+        <style>
+          #area-impresion table { border-collapse: collapse !important; border: 2px solid #111827 !important; }
+          #area-impresion th, #area-impresion td { border: 1.5px solid #1f2937 !important; }
+          #area-impresion .caja-print { border: 2px solid #111827 !important; }
+        </style>
         <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; color: #111827;">
           <div style="border-bottom: 3px solid #78350f; padding-bottom: 12px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-end;">
             <div>
               <h1 style="font-size: 20px; font-weight: 800; margin: 0; color: #78350f; text-transform: uppercase;">La Casa del Pan & La Espiga de Oro</h1>
               <p style="font-size: 13px; margin: 4px 0 0 0; color: #4b5563; font-weight: 600;">Planilla de Producción Consolidada (Cuadra)</p>
             </div>
-            <div style="text-align: right; background-color: #fef3c7; border: 1px solid #fde68a; padding: 8px 14px; border-radius: 6px;">
+            <div class="caja-print" style="text-align: right; background-color: #fef3c7; border: 2px solid #78350f; padding: 8px 14px; border-radius: 6px;">
               <span style="font-size: 10px; color: #92400e; font-weight: 700; display: block; text-transform: uppercase;">Fecha de Producción</span>
               <span style="font-size: 12px; font-weight: 800; color: #78350f;">${fechaFormateada}</span>
             </div>
@@ -3458,18 +3469,18 @@ function marcarPedidoCobrado(pedidoId, medioPago) {
 
           <div style="margin-bottom: 24px;">
             <h2 style="font-size: 13px; font-weight: 700; color: #374151; margin: 0 0 10px 0; text-transform: uppercase;">1. Totales a Producir (Panificados)</h2>
-            <table style="width: 100%; border-collapse: collapse; border: 1px solid #d1d5db;">
+            <table style="width: 100%; border-collapse: collapse; border: 2px solid #111827;">
               <thead>
                 <tr style="background-color: #78350f; color: #ffffff;">
-                  <th style="padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase;">Producto / Panificado</th>
-                  <th style="padding: 10px 14px; text-align: center; font-size: 11px; font-weight: 700; text-transform: uppercase; width: 140px;">Cantidad Total</th>
+                  <th style="padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; border: 1.5px solid #111827;">Producto / Panificado</th>
+                  <th style="padding: 10px 14px; text-align: center; font-size: 11px; font-weight: 700; text-transform: uppercase; width: 140px; border: 1.5px solid #111827;">Cantidad Total</th>
                 </tr>
               </thead>
               <tbody>${produccionHtml}</tbody>
             </table>
           </div>
 
-          <div style="border: 1px solid #d1d5db; border-radius: 6px; padding: 16px; background-color: #fafafa; margin-bottom: 24px;">
+          <div class="caja-print" style="border: 2px solid #111827; border-radius: 6px; padding: 16px; background-color: #fafafa; margin-bottom: 24px;">
             <h2 style="font-size: 13px; font-weight: 700; color: #374151; margin: 0 0 10px 0; text-transform: uppercase;">2. Pedidos Mostrador</h2>
             <ul style="padding-left: 20px; margin: 0;">${notasHtml}</ul>
           </div>
@@ -3836,37 +3847,145 @@ function renderizarCuadra() {
       renderizarTablaClientes();
       cargarBuscadorClientes();
     }
-function calcularSaldoCliente(cliId) {
-  let saldo = 0;
-  
-  // Recorremos todos los repartos cerrados
-  Object.entries(dbRepartos).forEach(([fecha, pDia]) => { 
-    const estaCerrado = dbRepartosCerrados[fecha] === true;
-    if (estaCerrado && pDia) {
-      // Normalizamos a array sin importar si está guardado como objeto o array
-      const pDiaArr = Array.isArray(pDia) ? pDia : Object.values(pDia);
-      
-      pDiaArr.forEach(p => { 
-        if (p && p.clienteId === cliId && !p.pagado) {
-          saldo += (p.monto || 0); 
-        }
-      });
-    }
+function conceptoMovimientoCliente(m) {
+  if (m.origen === 'reparto') return `Pedido: ${m.producto} (${m.unidades} un.)`;
+  return m.tipoReal === 'debito' ? `Cargo manual: ${m.medio}` : `Pago (${m.medio})`;
+}
+
+function fechaCortaCuenta(fecha) {
+  const p = String(fecha || '').split('-');
+  if (p.length !== 3) return 'S/F';
+  return `${p[2]}/${p[1]}/${p[0].slice(-2)}`;
+}
+
+function pesosCuenta(n) {
+  return (Number(n) || 0).toLocaleString('es-AR');
+}
+
+function conceptoCortoCliente(m) {
+  if (m.origen === 'reparto') {
+    const prod = m.producto || 'Pedido';
+    return m.unidades ? `${prod} x${m.unidades}` : prod;
+  }
+  if (m.tipoReal === 'debito') return `Cargo ${m.medio || ''}`.trim();
+  return `Pago ${m.medio || ''}`.trim();
+}
+
+function armarCuadroWhatsAppCuenta(filas, opts) {
+  const W = 30;
+  const borde = (izq, der) => izq + '─'.repeat(W + 2) + der;
+  const linea = (texto) => {
+    let t = String(texto ?? '');
+    if (t.length > W) t = t.slice(0, W - 1) + '…';
+    return '│ ' + t.padEnd(W, ' ') + ' │';
+  };
+  const partes = [borde('┌', '┐'), linea('Cuenta corriente')];
+  if (opts.periodo) partes.push(linea(opts.periodo));
+  partes.push(borde('├', '┤'));
+
+  if (opts.mostrarAnterior) {
+    partes.push(linea('Saldo anterior'));
+    partes.push(linea(pesosCuenta(opts.saldoAnterior).padStart(W, ' ')));
+    partes.push(borde('├', '┤'));
+  }
+
+  if (!filas.length) {
+    partes.push(linea('Sin movimientos en el período'));
+  }
+
+  filas.forEach((f, i) => {
+    partes.push(linea(`${f.fecha}  ${f.concepto}`));
+    const importe = `${f.signo}$${f.montoTxt}`;
+    const saldo = `Saldo $${f.saldoTxt}`;
+    const espacio = W - importe.length - saldo.length;
+    const filaImportes = espacio >= 1
+      ? importe + ' '.repeat(espacio) + saldo
+      : `${importe} ${saldo}`.slice(0, W);
+    partes.push(linea(filaImportes));
+    if (i < filas.length - 1) partes.push(borde('├', '┤'));
   });
 
-  // Sumamos/restamos los cargos y pagos manuales de la cuenta corriente
+  partes.push(borde('├', '┤'));
+  partes.push(linea('SALDO A PAGAR'));
+  partes.push(linea(('$' + pesosCuenta(opts.saldoAlCierre)).padStart(W, ' ')));
+  partes.push(borde('└', '┘'));
+  return partes.join('\n');
+}
+
+function obtenerMovimientosCuentaCliente(cliId) {
+  const movs = [];
+  if (dbRepartos) {
+    Object.entries(dbRepartos).forEach(([fecha, pDia]) => {
+      if (!pDia || dbRepartosCerrados[fecha] !== true) return;
+      const pDiaArr = Array.isArray(pDia) ? pDia : Object.values(pDia);
+      pDiaArr.forEach(p => {
+        if (p && p.clienteId === cliId && !p.pagado) {
+          movs.push({
+            id: p.id,
+            origen: 'reparto',
+            fechaOriginal: fecha,
+            fecha,
+            producto: p.producto,
+            unidades: p.unidades,
+            medio: '',
+            tipoReal: 'debito',
+            debito: parseFloat(p.monto) || 0,
+            credito: 0,
+            editable: false
+          });
+        }
+      });
+    });
+  }
+
   const histCli = dbHistorialClientes[cliId] || {};
   const histCliArr = Array.isArray(histCli) ? histCli : Object.values(histCli);
-  
-  histCliArr.forEach(m => { 
-    if (m) {
-      const montoMov = parseFloat(m.monto) || 0;
-      if (m.tipo === 'debito') saldo += montoMov; 
-      if (m.tipo === 'credito') saldo -= montoMov; 
-    }
+  histCliArr.forEach(p => {
+    if (!p) return;
+    const montoMov = parseFloat(p.monto) || 0;
+    movs.push({
+      id: p.id,
+      origen: 'pago',
+      tipoReal: p.tipo,
+      fechaOriginal: p.fecha,
+      fecha: p.fecha,
+      medio: p.medio,
+      producto: '',
+      unidades: 0,
+      debito: p.tipo === 'debito' ? montoMov : 0,
+      credito: p.tipo === 'credito' ? montoMov : 0,
+      editable: true
+    });
   });
-  
-  return saldo;
+
+  movs.sort((a, b) => String(a.fecha || '').localeCompare(String(b.fecha || '')) || String(a.id || '').localeCompare(String(b.id || '')));
+  let saldo = 0;
+  movs.forEach(m => {
+    saldo += (m.debito || 0) - (m.credito || 0);
+    m.saldo = saldo;
+  });
+  return movs;
+}
+
+function partirMovimientosPorPeriodo(movs, desde, hasta) {
+  const anteriores = [];
+  const delPeriodo = [];
+  const posteriores = [];
+  movs.forEach(m => {
+    if (desde && String(m.fecha || '') < desde) anteriores.push(m);
+    else if (hasta && String(m.fecha || '') > hasta) posteriores.push(m);
+    else delPeriodo.push(m);
+  });
+  const saldoAnterior = anteriores.length ? anteriores[anteriores.length - 1].saldo : 0;
+  const saldoAlCierre = delPeriodo.length ? delPeriodo[delPeriodo.length - 1].saldo : saldoAnterior;
+  const saldoActual = movs.length ? movs[movs.length - 1].saldo : 0;
+  return { anteriores, delPeriodo, posteriores, saldoAnterior, saldoAlCierre, saldoActual };
+}
+
+function calcularSaldoCliente(cliId) {
+  const movs = obtenerMovimientosCuentaCliente(cliId);
+  if (!movs.length) return 0;
+  return movs[movs.length - 1].saldo || 0;
 }
 function renderizarTablaHistorialCliente() {
   if (!clienteSeleccionadoId) return;
@@ -3874,48 +3993,27 @@ function renderizarTablaHistorialCliente() {
   if (!tbody) return; 
   tbody.innerHTML = '';
   
-  const movs = [];
-  if (dbRepartos) {
-    Object.entries(dbRepartos).forEach(([fecha, pDia]) => { 
-      if (!pDia) return;
-      const pDiaArr = Array.isArray(pDia) ? pDia : Object.values(pDia);
-      pDiaArr.forEach(p => { 
-        if (p && p.clienteId === clienteSeleccionadoId) {
-          const estaCerrado = dbRepartosCerrados[fecha] === true;
-          if (estaCerrado && !p.pagado) {
-            movs.push({ id: p.id, origen: 'reparto', fechaOriginal: fecha, fecha, producto: p.producto, unidades: p.unidades, debito: p.monto, credito: 0, editable: false }); 
-          }
-        } 
-      }); 
-    });
-  }
-
-  const histCli = dbHistorialClientes[clienteSeleccionadoId] || {};
-  const histCliArr = Array.isArray(histCli) ? histCli : Object.values(histCli);
-  histCliArr.forEach(p => {
-    if (p) {
-      movs.push({ id: p.id, origen: 'pago', tipoReal: p.tipo, fechaOriginal: p.fecha, fecha: p.fecha, medio: p.medio, debito: p.tipo === 'debito' ? p.monto : 0, credito: p.tipo === 'credito' ? p.monto : 0, editable: true });
-    }
-  });
-
-  movs.sort((a, b) => new Date(a.fecha || 0) - new Date(b.fecha || 0));
-
-  // OBTENER VALORES DE LOS FILTROS DE FECHA
+  const movs = obtenerMovimientosCuentaCliente(clienteSeleccionadoId);
   const filtroDesde = document.getElementById('filtro-cta-desde')?.value || '';
   const filtroHasta = document.getElementById('filtro-cta-hasta')?.value || '';
+  const periodo = partirMovimientosPorPeriodo(movs, filtroDesde, filtroHasta);
 
-  let acumulado = 0;
   let movimientosMostrados = 0;
 
-  movs.forEach(m => {
-    // Calculamos el acumulado general de la cuenta corriente
+  if ((filtroDesde || filtroHasta) && periodo.anteriores.length) {
+    const trAnt = document.createElement('tr');
+    trAnt.className = "border-b text-xs md:text-sm bg-amber-50";
+    trAnt.innerHTML = `
+      <td class="p-2 font-semibold text-gray-700" colspan="4">Saldo anterior al período</td>
+      <td class="p-2 text-right font-bold text-red-700">$${periodo.saldoAnterior.toLocaleString()}</td>
+      <td class="p-2"></td>
+    `;
+    tbody.appendChild(trAnt);
+  }
+
+  periodo.delPeriodo.forEach(m => {
     const montoDebito = m.debito || 0;
     const montoCredito = m.credito || 0;
-    acumulado += (montoDebito - montoCredito);
-
-    // Aplicar filtros de fecha para la visualización en la tabla
-    if (filtroDesde && m.fecha < filtroDesde) return;
-    if (filtroHasta && m.fecha > filtroHasta) return;
 
     movimientosMostrados++;
     const tr = document.createElement('tr'); 
@@ -3941,14 +4039,18 @@ function renderizarTablaHistorialCliente() {
       <td class="p-2">${tdConcepto}</td>
       <td class="p-2 text-right text-red-600">${tdDebito}</td>
       <td class="p-2 text-right text-green-700">${tdCredito}</td>
-      <td class="p-2 text-right font-bold text-red-600">$${acumulado.toLocaleString()}</td>
+      <td class="p-2 text-right font-bold text-red-600">$${(m.saldo || 0).toLocaleString()}</td>
       <td class="p-2 text-center flex justify-center items-center gap-1">${botonesAccion}</td>
     `;
     tbody.appendChild(tr);
   });
 
-  if (movimientosMostrados === 0) {
+  if (movimientosMostrados === 0 && !periodo.anteriores.length) {
     tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-gray-400 italic">No hay movimientos en el período seleccionado.</td></tr>';
+  } else if (movimientosMostrados === 0) {
+    const trVacio = document.createElement('tr');
+    trVacio.innerHTML = '<td colspan="6" class="p-3 text-center text-gray-400 italic">No hay movimientos nuevos en el período. El saldo anterior sigue vigente.</td>';
+    tbody.appendChild(trVacio);
   }
 }
   function cargarBuscadorClientes() {
@@ -4304,79 +4406,45 @@ function limpiarFiltroFechasCtaCte() {
       const cli = dbClientes[clienteSeleccionadoId];
       if (!cli) return;
 
-      // OBTENER VALORES DE LOS FILTROS DE FECHA
       const filtroDesde = document.getElementById('filtro-cta-desde')?.value || '';
       const filtroHasta = document.getElementById('filtro-cta-hasta')?.value || '';
-
-      const movs = [];
-      if (dbRepartos) {
-        Object.entries(dbRepartos).forEach(([fecha, pDia]) => {
-          if (!pDia) return;
-          Object.values(pDia).forEach(p => {
-            if (p && p.clienteId === clienteSeleccionadoId && !p.pagado) {
-              movs.push({ fecha, concepto: `${p.producto} (${p.unidades} un.)`, monto: p.monto, tipo: '+' });
-            }
-          });
-        });
-      }
-
-      if (dbHistorialClientes && dbHistorialClientes[clienteSeleccionadoId]) {
-        Object.values(dbHistorialClientes[clienteSeleccionadoId]).forEach(p => {
-          if (p) {
-            const esDebito = p.tipo === 'debito';
-            movs.push({ 
-              fecha: p.fecha, 
-              concepto: esDebito ? `Cargo manual: ${p.medio}` : `Pago (${p.medio})`, 
-              monto: p.monto, 
-              tipo: esDebito ? '+' : '-' 
-            });
-          }
-        });
-      }
-
-      movs.sort((a, b) => new Date(a.fecha || 0) - new Date(b.fecha || 0));
-
-      let movsFiltrados = [];
-      let saldoPeriodoFiltrado = 0;
-
-      // Recorremos y filtramos primero
-      movs.forEach(m => {
-        const pasaDesde = !filtroDesde || m.fecha >= filtroDesde;
-        const pasaHasta = !filtroHasta || m.fecha <= filtroHasta;
-
-        if (pasaDesde && pasaHasta) {
-          movsFiltrados.push(m);
-          const valorMonto = m.monto || 0;
-          // Si es '+' suma, si es '-' resta al saldo del período filtrado
-          if (m.tipo === '+') {
-            saldoPeriodoFiltrado += valorMonto;
-          } else {
-            saldoPeriodoFiltrado -= valorMonto;
-          }
-        }
-      });
+      const movs = obtenerMovimientosCuentaCliente(clienteSeleccionadoId);
+      const periodo = partirMovimientosPorPeriodo(movs, filtroDesde, filtroHasta);
 
       let periodoTexto = "";
       if (filtroDesde && filtroHasta) {
-        periodoTexto = ` (del ${filtroDesde} al ${filtroHasta})`;
+        periodoTexto = `${fechaCortaCuenta(filtroDesde)} al ${fechaCortaCuenta(filtroHasta)}`;
       } else if (filtroDesde) {
-        periodoTexto = ` (desde el ${filtroDesde})`;
+        periodoTexto = `Desde ${fechaCortaCuenta(filtroDesde)}`;
       } else if (filtroHasta) {
-        periodoTexto = ` (hasta el ${filtroHasta})`;
+        periodoTexto = `Hasta ${fechaCortaCuenta(filtroHasta)}`;
       }
 
-      let mensaje = `Hola *${cli.nombre}*, te enviamos el resumen de tu Cuenta Corriente${periodoTexto}:\n\n`;
+      const filasCuadro = periodo.delPeriodo.map(m => {
+        const esDebito = (m.debito || 0) > 0;
+        const monto = esDebito ? m.debito : m.credito;
+        return {
+          fecha: fechaCortaCuenta(m.fecha),
+          concepto: conceptoCortoCliente(m),
+          signo: esDebito ? '+' : '-',
+          montoTxt: pesosCuenta(monto),
+          saldoTxt: pesosCuenta(m.saldo)
+        };
+      });
 
-      if (movsFiltrados.length === 0) {
-        mensaje += `No se registran movimientos en el período seleccionado.\n`;
-      } else {
-        mensaje += `*Detalle de movimientos del período:*\n`;
-        movsFiltrados.forEach(m => { 
-          mensaje += `• ${m.fecha}: ${m.concepto} -> ${m.tipo}${(m.monto || 0).toLocaleString()}\n`; 
-        });
-        mensaje += `\n*SALDO TOTAL A PAGAR: $${saldoPeriodoFiltrado.toLocaleString()}*\n\n`;
-        mensaje += `Muchas gracias por tu compra. La Casa del Pan.`;
+      const cuadro = armarCuadroWhatsAppCuenta(filasCuadro, {
+        periodo: periodoTexto,
+        mostrarAnterior: Boolean(filtroDesde || filtroHasta),
+        saldoAnterior: periodo.saldoAnterior,
+        saldoAlCierre: periodo.saldoAlCierre
+      });
+
+      let mensaje = `Hola *${cli.nombre}*, te enviamos el resumen de tu Cuenta Corriente:\n\n`;
+      mensaje += '```\n' + cuadro + '\n```\n';
+      if (periodo.posteriores.length) {
+        mensaje += `\nSaldo actual de la cuenta: *$${pesosCuenta(periodo.saldoActual)}*\n`;
       }
+      mensaje += `\nMuchas gracias por tu compra. La Casa del Pan.`;
 
       let tel = (cli.telefono || '').replace(/\D/g, '');
       const url = tel ? `https://api.whatsapp.com/send?phone=${tel}&text=${encodeURIComponent(mensaje)}` : `https://api.whatsapp.com/send?text=${encodeURIComponent(mensaje)}`;
@@ -4388,28 +4456,21 @@ function limpiarFiltroFechasCtaCte() {
       const cli = dbClientes[clienteSeleccionadoId];
       if (!cli) return;
 
-      const saldo = calcularSaldoCliente(clienteSeleccionadoId);
+      const movs = obtenerMovimientosCuentaCliente(clienteSeleccionadoId);
+      const saldo = movs.length ? movs[movs.length - 1].saldo : 0;
       const asunto = `Resumen de Cuenta Corriente - ${cli.nombre}`;
       let cuerpo = `Hola ${cli.nombre},\n\nAdjuntamos el detalle de tu Cuenta Corriente:\n\n`;
-
-      const movs = [];
-      Object.entries(dbRepartos).forEach(([fecha, pDia]) => {
-        Object.values(pDia).forEach(p => {
-          if (p.clienteId === clienteSeleccionadoId && !p.pagado) {
-            movs.push({ fecha, concepto: `${p.producto} (${p.unidades} un.)`, monto: p.monto, tipo: '+' });
-          }
-        });
-      });
-      Object.values(dbHistorialClientes[clienteSeleccionadoId] || {}).forEach(p => {
-        movs.push({ fecha: p.fecha, concepto: `Pago (${p.medio})`, monto: p.monto, tipo: '-' });
-      });
-      movs.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
 
       if (movs.length === 0) {
         cuerpo += `Actualmente no presentás saldo pendiente. ¡Muchas gracias!\n`;
       } else {
-        cuerpo += `Detalle de movimientos pendientes:\n`;
-        movs.forEach(m => { cuerpo += `- ${m.fecha}: ${m.concepto} -> ${m.tipo}$${m.monto.toLocaleString()}\n`; });
+        cuerpo += `Detalle de movimientos:\n`;
+        movs.forEach(m => {
+          const esDebito = (m.debito || 0) > 0;
+          const monto = esDebito ? m.debito : m.credito;
+          const signo = esDebito ? '+' : '-';
+          cuerpo += `- ${m.fecha || 'S/F'}: ${conceptoMovimientoCliente(m)} -> ${signo}$${(monto || 0).toLocaleString()} | Saldo: $${(m.saldo || 0).toLocaleString()}\n`;
+        });
         cuerpo += `\nSALDO TOTAL A PAGAR: $${saldo.toLocaleString()}\n\n`;
         cuerpo += `Saludos cordiales,\nLa Casa del Pan`;
       }
@@ -4890,8 +4951,8 @@ function limpiarFiltroFechasCtaCte() {
       if (ins) {
         document.getElementById('mod-ins-nombre').value = ins.nombre;
         document.getElementById('mod-ins-sucursal').value = ins.sucursal || 'todas';
-        document.getElementById('mod-ins-stock').value = ins.stock;
-        document.getElementById('mod-ins-minimo').value = ins.minimo;
+        document.getElementById('mod-ins-stock').value = ins.stock ?? 0;
+        document.getElementById('mod-ins-minimo').value = (ins.minimo === 0 || ins.minimo) ? ins.minimo : 0;
         document.getElementById('mod-ins-unidad').value = ins.unidad;
         document.getElementById('modal-editar-insumo').classList.remove('hidden');
       }
@@ -5040,6 +5101,8 @@ function renderizarStockInsumos() {
       <th class="p-2 text-right">Ingresos (Compras)</th>
       <th class="p-2 text-right">Salidas (Consumo)</th>
       <th class="p-2 text-right">Stock Actual</th>
+      <th class="p-2 text-right">Stock Mínimo</th>
+      <th class="p-2 text-center">Estado</th>
       <th class="p-2 text-center">Acción</th>
     `;
   }
@@ -5049,7 +5112,8 @@ function renderizarStockInsumos() {
     dbInsumos = cargarDB('db_insumos', {});
   }
 
-  const listaInsumos = Array.isArray(dbInsumos) ? dbInsumos : Object.values(dbInsumos || {});
+  const listaInsumos = Array.isArray(dbInsumos) ? dbInsumos.slice() : Object.values(dbInsumos || {});
+  listaInsumos.sort((a, b) => (a?.nombre || '').localeCompare((b?.nombre || ''), 'es', { sensitivity: 'base' }));
 
   if (listaInsumos.length === 0) {
     tbody.innerHTML = '<tr><td colspan="7" class="p-3 text-center text-gray-400 italic">No hay insumos registrados en el sistema.</td></tr>';
@@ -5091,8 +5155,18 @@ function renderizarStockInsumos() {
         : "bg-red-100 text-red-800 font-bold border border-red-300";
     }
 
+    const minimoNum = parseFloat(insumo.minimo);
+    const stockNum = parseFloat(insumo.stock);
+    const minimoMostrar = isNaN(minimoNum) ? 0 : minimoNum;
+    const bajoMinimo = minimoMostrar > 0 && !isNaN(stockNum) && stockNum <= minimoMostrar;
+    const estadoHtml = bajoMinimo
+      ? `<span class="px-2 py-0.5 rounded text-xs bg-red-100 text-red-800 font-bold border border-red-300 whitespace-nowrap">Bajo mínimo</span>`
+      : `<span class="px-2 py-0.5 rounded text-xs bg-green-100 text-green-800 font-bold whitespace-nowrap">OK</span>`;
+
     const tr = document.createElement('tr');
-    tr.className = "border-b hover:bg-gray-50 text-xs md:text-sm";
+    tr.className = bajoMinimo
+      ? "border-b bg-red-50 hover:bg-red-100 text-xs md:text-sm"
+      : "border-b hover:bg-gray-50 text-xs md:text-sm";
     
     let columnaSucursalHtml = esAdmin ? `<td class="p-2 text-xs font-semibold text-amber-900">${ETIQUETAS_SUCURSAL[insumo.sucursal || 'todas'] || insumo.sucursal}</td>` : '';
 
@@ -5102,7 +5176,9 @@ function renderizarStockInsumos() {
       <td class="p-2"><span class="px-2 py-0.5 rounded text-xs ${estiloFechaBadge}">${ultimaFecha}</span></td>
       <td class="p-2 text-right font-semibold text-green-700">+${totalIngresos} ${insumo.unidad || ''}</td>
       <td class="p-2 text-right font-semibold text-red-600">-${totalSalidas} ${insumo.unidad || ''}</td>
-      <td class="p-2 text-right font-extrabold text-amber-950">${insumo.stock} ${insumo.unidad || ''}</td>
+      <td class="p-2 text-right font-extrabold ${bajoMinimo ? 'text-red-700' : 'text-amber-950'}">${insumo.stock} ${insumo.unidad || ''}</td>
+      <td class="p-2 text-right font-bold text-gray-700">${minimoMostrar} ${insumo.unidad || ''}</td>
+      <td class="p-2 text-center">${estadoHtml}</td>
       <td class="p-2 text-center flex justify-center gap-1">
         <button onclick="abrirModalEditarInsumo('${insumo.id}')" class="bg-blue-600 text-white text-xs px-2 py-1 rounded font-bold shadow hover:bg-blue-700">✏️ Editar</button>
         <button onclick="eliminarInsumoStock('${insumo.id}')" class="bg-red-600 text-white text-xs px-2 py-1 rounded font-bold shadow hover:bg-red-700">✕</button>
