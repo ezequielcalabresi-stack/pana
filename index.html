@@ -499,6 +499,7 @@
 
     <!-- 6. CAJAS INDEPENDIENTES Y REPORTES -->
     <section id="sec-caja" class="hidden space-y-4">
+      <p id="estado-sync-caja" class="text-[11px] font-semibold text-gray-500">Los montos se suben solos al tipear y se ven en los otros teléfonos.</p>
       <div id="grid-cajas-diarias" class="grid grid-cols-1 md:grid-cols-3 gap-4">
         
         <div id="box-caja-reparto" class="bg-white p-4 rounded-xl shadow border border-amber-300 space-y-3">
@@ -513,9 +514,9 @@
             </div>
             <hr class="border-amber-300">
             <div class="grid grid-cols-1 gap-2 text-sm">
-              <div class="flex justify-between items-center"><label class="text-xs text-gray-600">Efectivo Físico Declarado</label><input type="text" id="rep-caja-efectivo" onchange="guardarDatosCajaDiaria()" class="input-moneda border p-1.5 rounded w-28 font-bold text-sm text-right"></div>
-              <div class="flex justify-between items-center"><label class="text-xs text-gray-600">Transferencias / MP</label><input type="text" id="rep-caja-digital" onchange="guardarDatosCajaDiaria()" class="input-moneda border p-1.5 rounded w-28 font-bold text-blue-700 text-sm text-right"></div>
-              <div class="flex justify-between items-center"><label class="text-xs text-gray-600">Gastos del Reparto</label><input type="text" id="rep-caja-gastos" onchange="guardarDatosCajaDiaria()" class="input-moneda border p-1.5 rounded w-28 font-bold text-red-700 text-sm text-right"></div>
+              <div class="flex justify-between items-center"><label class="text-xs text-gray-600">Efectivo Físico Declarado</label><input type="text" id="rep-caja-efectivo" class="input-moneda border p-1.5 rounded w-28 font-bold text-sm text-right"></div>
+              <div class="flex justify-between items-center"><label class="text-xs text-gray-600">Transferencias / MP</label><input type="text" id="rep-caja-digital" class="input-moneda border p-1.5 rounded w-28 font-bold text-blue-700 text-sm text-right"></div>
+              <div class="flex justify-between items-center"><label class="text-xs text-gray-600">Gastos del Reparto</label><input type="text" id="rep-caja-gastos" class="input-moneda border p-1.5 rounded w-28 font-bold text-red-700 text-sm text-right"></div>
             </div>
             <div id="btn-reparto-accion"></div>
           </div>
@@ -529,8 +530,8 @@
               <span id="st-alem-manana" class="text-[10px] bg-green-200 text-green-800 px-2 py-0.5 rounded font-bold">🟢 Abierto</span>
             </div>
             <div class="grid grid-cols-2 gap-2 text-sm">
-              <div><label class="text-xs text-gray-600 block">Efectivo</label><input type="text" id="alem-m-efectivo" onchange="guardarDatosCajaDiaria()" class="input-moneda border p-1.5 rounded w-full font-bold text-sm"></div>
-              <div><label class="text-xs text-gray-600 block">Digital</label><input type="text" id="alem-m-digital" onchange="guardarDatosCajaDiaria()" class="input-moneda border p-1.5 rounded w-full font-bold text-blue-700 text-sm"></div>
+              <div><label class="text-xs text-gray-600 block">Efectivo</label><input type="text" id="alem-m-efectivo" class="input-moneda border p-1.5 rounded w-full font-bold text-sm"></div>
+              <div><label class="text-xs text-gray-600 block">Digital</label><input type="text" id="alem-m-digital" class="input-moneda border p-1.5 rounded w-full font-bold text-blue-700 text-sm"></div>
             </div>
             <div id="btn-alem-manana"></div>
           </div>
@@ -541,8 +542,8 @@
               <span id="st-alem-tarde" class="text-[10px] bg-green-200 text-green-800 px-2 py-0.5 rounded font-bold">🟢 Abierto</span>
             </div>
             <div class="grid grid-cols-2 gap-2 text-sm">
-              <div><label class="text-xs text-gray-600 block">Efectivo</label><input type="text" id="alem-t-efectivo" onchange="guardarDatosCajaDiaria()" class="input-moneda border p-1.5 rounded w-full font-bold text-sm"></div>
-              <div><label class="text-xs text-gray-600 block">Digital</label><input type="text" id="alem-t-digital" onchange="guardarDatosCajaDiaria()" class="input-moneda border p-1.5 rounded w-full font-bold text-blue-700 text-sm"></div>
+              <div><label class="text-xs text-gray-600 block">Efectivo</label><input type="text" id="alem-t-efectivo" class="input-moneda border p-1.5 rounded w-full font-bold text-sm"></div>
+              <div><label class="text-xs text-gray-600 block">Digital</label><input type="text" id="alem-t-digital" class="input-moneda border p-1.5 rounded w-full font-bold text-blue-700 text-sm"></div>
             </div>
             <div id="btn-alem-tarde"></div>
           </div>
@@ -556,8 +557,8 @@
               <span id="st-espiga-manana" class="text-[10px] bg-green-200 text-green-800 px-2 py-0.5 rounded font-bold">🟢 Abierto</span>
             </div>
             <div class="grid grid-cols-2 gap-2 text-sm">
-              <div><label class="text-xs text-gray-600 block">Efectivo</label><input type="text" id="espiga-m-efectivo" onchange="guardarDatosCajaDiaria()" class="input-moneda border p-1.5 rounded w-full font-bold text-sm"></div>
-              <div><label class="text-xs text-gray-600 block">Digital</label><input type="text" id="espiga-m-digital" onchange="guardarDatosCajaDiaria()" class="input-moneda border p-1.5 rounded w-full font-bold text-blue-700 text-sm"></div>
+              <div><label class="text-xs text-gray-600 block">Efectivo</label><input type="text" id="espiga-m-efectivo" class="input-moneda border p-1.5 rounded w-full font-bold text-sm"></div>
+              <div><label class="text-xs text-gray-600 block">Digital</label><input type="text" id="espiga-m-digital" class="input-moneda border p-1.5 rounded w-full font-bold text-blue-700 text-sm"></div>
             </div>
             <div id="btn-espiga-manana"></div>
           </div>
@@ -568,8 +569,8 @@
               <span id="st-espiga-tarde" class="text-[10px] bg-green-200 text-green-800 px-2 py-0.5 rounded font-bold">🟢 Abierto</span>
             </div>
             <div class="grid grid-cols-2 gap-2 text-sm">
-              <div><label class="text-xs text-gray-600 block">Efectivo</label><input type="text" id="espiga-t-efectivo" onchange="guardarDatosCajaDiaria()" class="input-moneda border p-1.5 rounded w-full font-bold text-sm"></div>
-              <div><label class="text-xs text-gray-600 block">Digital</label><input type="text" id="espiga-t-digital" onchange="guardarDatosCajaDiaria()" class="input-moneda border p-1.5 rounded w-full font-bold text-blue-700 text-sm"></div>
+              <div><label class="text-xs text-gray-600 block">Efectivo</label><input type="text" id="espiga-t-efectivo" class="input-moneda border p-1.5 rounded w-full font-bold text-sm"></div>
+              <div><label class="text-xs text-gray-600 block">Digital</label><input type="text" id="espiga-t-digital" class="input-moneda border p-1.5 rounded w-full font-bold text-blue-700 text-sm"></div>
             </div>
             <div id="btn-espiga-tarde"></div>
           </div>
@@ -1278,6 +1279,9 @@
     var dbHistorialProveedores = {};
     var dbCajasDiarias = {};
     var dbEgresosCaja = {};
+    var cajaPendientes = {};
+    var cajaTimers = {};
+    var egresosPendientes = {};
     var dbBackupsDiarios = {};
     var dbRepartosCerrados = {};
 
@@ -1325,6 +1329,7 @@
         if (snap.val() === true) {
           statusDiv.innerHTML = "🟢 Conectado (Nube)";
           statusDiv.className = "text-[10px] bg-green-200 text-green-900 px-2 py-0.5 rounded-full font-bold shadow-sm whitespace-nowrap";
+          reintentarPendientesCajaYEgresos();
         } else {
           statusDiv.innerHTML = "⚡ Reconectando...";
           statusDiv.className = "text-[10px] bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full font-bold shadow-sm whitespace-nowrap";
@@ -1646,6 +1651,142 @@ function cargarDBRepartosSegura() {
         renderizarCuadra();
       }
     }
+function leerValorPorRuta(obj, ruta) {
+  const partes = String(ruta || '').split('/');
+  let cur = obj;
+  for (let i = 0; i < partes.length; i++) {
+    if (cur == null || typeof cur !== 'object') return undefined;
+    cur = cur[partes[i]];
+  }
+  return cur;
+}
+
+function escribirValorPorRuta(obj, ruta, valor) {
+  const partes = String(ruta || '').split('/');
+  let cur = obj;
+  for (let i = 0; i < partes.length - 1; i++) {
+    if (cur[partes[i]] == null || typeof cur[partes[i]] !== 'object') cur[partes[i]] = {};
+    cur = cur[partes[i]];
+  }
+  cur[partes[partes.length - 1]] = valor;
+}
+
+function esObjetoCaja(v) {
+  return !!v && typeof v === 'object' && !Array.isArray(v);
+}
+
+function fusionarCajasDesdeRemoto(valRemoto) {
+  let local = {};
+  try {
+    local = JSON.parse(localStorage.getItem('db_cajas_diarias') || '{}') || {};
+  } catch (e) {
+    local = {};
+  }
+  return fusionarNivelCaja(local, valRemoto || {}, '');
+}
+
+function fusionarNivelCaja(local, remoto, ruta) {
+  const keys = {};
+  Object.keys(local || {}).forEach(function(k) { keys[k] = true; });
+  Object.keys(remoto || {}).forEach(function(k) { keys[k] = true; });
+  const out = {};
+  Object.keys(keys).forEach(function(k) {
+    if (k.endsWith('Ts')) return;
+    const lv = local ? local[k] : undefined;
+    const rv = remoto ? remoto[k] : undefined;
+    const subRuta = ruta ? (ruta + '/' + k) : k;
+    if (esObjetoCaja(lv) || esObjetoCaja(rv)) {
+      out[k] = fusionarNivelCaja(esObjetoCaja(lv) ? lv : {}, esObjetoCaja(rv) ? rv : {}, subRuta);
+      return;
+    }
+    const lts = local && typeof local[k + 'Ts'] === 'number' ? local[k + 'Ts'] : 0;
+    const rts = remoto && typeof remoto[k + 'Ts'] === 'number' ? remoto[k + 'Ts'] : 0;
+    const localExiste = !!(local && Object.prototype.hasOwnProperty.call(local, k));
+    const remotoExiste = !!(remoto && Object.prototype.hasOwnProperty.call(remoto, k));
+    const elegirLocal = (localExiste && !remotoExiste) || (localExiste && remotoExiste && lts > rts);
+    if (elegirLocal) {
+      out[k] = lv;
+      if (lts) out[k + 'Ts'] = lts;
+      if (lts > rts && (!remotoExiste || lv !== rv)) {
+        cajaPendientes[subRuta] = lv;
+        cajaPendientes[subRuta + 'Ts'] = lts;
+      } else {
+        delete cajaPendientes[subRuta];
+        delete cajaPendientes[subRuta + 'Ts'];
+      }
+    } else if (remotoExiste) {
+      out[k] = rv;
+      if (rts) out[k + 'Ts'] = rts;
+      if (cajaPendientes[subRuta] === rv) delete cajaPendientes[subRuta];
+      if (cajaPendientes[subRuta + 'Ts'] === rts) delete cajaPendientes[subRuta + 'Ts'];
+    }
+  });
+  return out;
+}
+
+function mapaEgresosDesdeRaw(raw) {
+  const map = {};
+  if (!raw) return map;
+  if (Array.isArray(raw)) {
+    raw.forEach((e, i) => {
+      if (!e || typeof e !== 'object') return;
+      const id = e.id || ('EGR_LEG_' + i);
+      map[id] = Object.assign({}, e, { id: id, _fbKey: String(i) });
+    });
+    return map;
+  }
+  Object.keys(raw).forEach(k => {
+    const e = raw[k];
+    if (!e || typeof e !== 'object' || k === '_fbKey') return;
+    const id = e.id || k;
+    map[id] = Object.assign({}, e, { id: id, _fbKey: e._fbKey || k });
+  });
+  return map;
+}
+
+function fusionarEgresosDesdeRemoto(valRemoto) {
+  const fusion = {};
+  Object.keys(valRemoto || {}).forEach(fecha => {
+    fusion[fecha] = mapaEgresosDesdeRaw(valRemoto[fecha]);
+  });
+  Object.keys(egresosPendientes).forEach(ruta => {
+    const barra = ruta.indexOf('/');
+    if (barra < 0) return;
+    const fecha = ruta.slice(0, barra);
+    const id = ruta.slice(barra + 1);
+    const pendiente = egresosPendientes[ruta];
+    if (!fusion[fecha]) fusion[fecha] = {};
+    if (pendiente === null) {
+      if (!fusion[fecha][id]) delete egresosPendientes[ruta];
+      else delete fusion[fecha][id];
+    } else {
+      const remoto = fusion[fecha][id];
+      if (remoto && remoto.monto === pendiente.monto && remoto.concepto === pendiente.concepto && remoto.origen === pendiente.origen) {
+        delete egresosPendientes[ruta];
+      } else {
+        fusion[fecha][id] = pendiente;
+      }
+    }
+  });
+  return fusion;
+}
+
+function egresosDelDia(fecha) {
+  return Object.values(mapaEgresosDesdeRaw((dbEgresosCaja || {})[fecha]));
+}
+
+function reintentarPendientesCajaYEgresos() {
+  if (!rtdb) return;
+  Object.keys(cajaPendientes).forEach(ruta => {
+    rtdb.ref('db_cajas_diarias/' + ruta).set(cajaPendientes[ruta]).catch(err => console.warn('Reintento de caja:', err));
+  });
+  Object.keys(egresosPendientes).forEach(ruta => {
+    const ref = rtdb.ref('db_egresos_caja/' + ruta);
+    if (egresosPendientes[ruta] === null) ref.remove().catch(err => console.warn('Reintento de egreso:', err));
+    else ref.set(egresosPendientes[ruta]).catch(err => console.warn('Reintento de egreso:', err));
+  });
+}
+
 function cargarDB(key, fallback) {
   const data = localStorage.getItem(key);
   let valorLocal = data ? JSON.parse(data) : fallback;
@@ -1660,6 +1801,7 @@ function cargarDB(key, fallback) {
   if (rtdb) {
     try {
       rtdb.ref(key).on('value', (snapshot) => {
+        try {
         const valRemoto = snapshot.val();
         try {
           const fresco = localStorage.getItem(key);
@@ -1668,7 +1810,11 @@ function cargarDB(key, fallback) {
           console.warn("No se pudo releer el guardado local de", key, e);
         }
         if (valRemoto !== null && valRemoto !== undefined) {
-          if (key === 'db_usuarios' && typeof valRemoto === 'object') {
+          if (key === 'db_cajas_diarias' && typeof valRemoto === 'object') {
+            valorLocal = fusionarCajasDesdeRemoto(valRemoto);
+          } else if (key === 'db_egresos_caja' && typeof valRemoto === 'object') {
+            valorLocal = fusionarEgresosDesdeRemoto(valRemoto);
+          } else if (key === 'db_usuarios' && typeof valRemoto === 'object') {
             // Fusión segura de usuarios para no pisar ningún ID de mostrador o reparto
             valorLocal = { ...fallback, ...valRemoto, ...valorLocal };
           } else if (typeof valRemoto === 'object' && !Array.isArray(valRemoto) && typeof valorLocal === 'object' && !Array.isArray(valorLocal)) {
@@ -1694,6 +1840,11 @@ function cargarDB(key, fallback) {
             rtdb.ref(key).set(valorLocal).catch(err => console.warn("Error al auto-completar nube:", err));
           }
         }
+        } catch (errSync) {
+          console.error('Error al sincronizar', key, errSync);
+        }
+      }, (errPermiso) => {
+        console.warn('No se pudo leer', key, errPermiso);
       });
     } catch (e) {
       console.warn("Modo offline activo para:", key);
@@ -5232,9 +5383,10 @@ function renderizarStockInsumos() {
           const stLbl = document.getElementById(`st-${suc}-${turno}`);
           const btnAccion = document.getElementById(`btn-${suc}-${turno}`);
 
-          // BLOQUEO STRICTO: Si está cerrado, NINGÚN usuario puede editar directamente los inputs de la caja
-          if (inEf) { inEf.value = (info.efectivo || 0).toLocaleString('es-AR'); inEf.disabled = info.cerrado; }
-          if (inDg) { inDg.value = (info.digital || 0).toLocaleString('es-AR'); inDg.disabled = info.cerrado; }
+          // BLOQUEO STRICTO: Si está cerrado, NINGÚN usuario puede editar directamente los inputs de la caja.
+          // No pisar el campo que se está escribiendo, para que el remoto no borre el tipeo.
+          aplicarValorInputCaja(inEf, info.efectivo, info.cerrado);
+          aplicarValorInputCaja(inDg, info.digital, info.cerrado);
           
           if (stLbl) {
             stLbl.textContent = info.cerrado ? `🔒 Cerrado (${info.usuario || ''})` : '🟢 Abierto';
@@ -5264,9 +5416,9 @@ function renderizarStockInsumos() {
       const btnRepAccion = document.getElementById('btn-reparto-accion');
       
       // BLOQUEO STRICTO DE CAJA REPARTO
-      if (repEf) { repEf.value = (cRep.efectivo || 0).toLocaleString('es-AR'); repEf.disabled = cRep.cerrado; }
-      if (repDg) { repDg.value = (cRep.digital || 0).toLocaleString('es-AR'); repDg.disabled = cRep.cerrado; }
-      if (repGs) { repGs.value = (cRep.gastos || 0).toLocaleString('es-AR'); repGs.disabled = cRep.cerrado; }
+      aplicarValorInputCaja(repEf, cRep.efectivo, cRep.cerrado);
+      aplicarValorInputCaja(repDg, cRep.digital, cRep.cerrado);
+      aplicarValorInputCaja(repGs, cRep.gastos, cRep.cerrado);
       
       if (stRep) {
         stRep.textContent = cRep.cerrado ? `🔒 Cerrado (${cRep.usuario || ''})` : '🟢 Abierta';
@@ -5301,81 +5453,237 @@ function verificarCierreAutomaticoGlobal() {
       if (repartoCerrado && alemMananaCerrado && alemTardeCerrado && espigaMananaCerrado && espigaTardeCerrado) {
         if (!c.diaConsolidadoAuto) {
           c.diaConsolidadoAuto = true;
-          guardarDB('db_cajas_diarias', dbCajasDiarias);
+          cajaPendientes[fechaActual + '/diaConsolidadoAuto'] = true;
+          localStorage.setItem('db_cajas_diarias', JSON.stringify(dbCajasDiarias));
+          if (rtdb) {
+            rtdb.ref('db_cajas_diarias/' + fechaActual + '/diaConsolidadoAuto').set(true).catch(err => console.warn('Error al consolidar el día:', err));
+          }
           guardarYReiniciarDia();
         }
       }
     }
 
+    function aplicarValorInputCaja(input, valor, cerrado) {
+      if (!input) return;
+      if (document.activeElement !== input || cerrado) {
+        const texto = (Number(valor) || 0).toLocaleString('es-AR');
+        if (input.value !== texto) input.value = texto;
+      }
+      input.disabled = !!cerrado;
+    }
+
+    function asegurarDiaCaja(fecha) {
+      if (!dbCajasDiarias[fecha]) {
+        dbCajasDiarias[fecha] = {
+          alem: { manana: { efectivo: 0, digital: 0, cerrado: false }, tarde: { efectivo: 0, digital: 0, cerrado: false } },
+          espiga: { manana: { efectivo: 0, digital: 0, cerrado: false }, tarde: { efectivo: 0, digital: 0, cerrado: false } },
+          reparto: { efectivo: 0, digital: 0, gastos: 0, cerrado: false }
+        };
+      }
+      const c = dbCajasDiarias[fecha];
+      if (!c.alem) c.alem = { manana: { efectivo: 0, digital: 0, cerrado: false }, tarde: { efectivo: 0, digital: 0, cerrado: false } };
+      if (!c.alem.manana) c.alem.manana = { efectivo: 0, digital: 0, cerrado: false };
+      if (!c.alem.tarde) c.alem.tarde = { efectivo: 0, digital: 0, cerrado: false };
+      if (!c.espiga) c.espiga = { manana: { efectivo: 0, digital: 0, cerrado: false }, tarde: { efectivo: 0, digital: 0, cerrado: false } };
+      if (!c.espiga.manana) c.espiga.manana = { efectivo: 0, digital: 0, cerrado: false };
+      if (!c.espiga.tarde) c.espiga.tarde = { efectivo: 0, digital: 0, cerrado: false };
+      if (!c.reparto) c.reparto = { efectivo: 0, digital: 0, gastos: 0, cerrado: false };
+      return c;
+    }
+
+    function metaCajaDesdeInput(input, fechaForzada) {
+      if (!input || !input.id) return null;
+      const mapa = {
+        'alem-m-efectivo': ['alem', 'manana', 'efectivo'],
+        'alem-m-digital': ['alem', 'manana', 'digital'],
+        'alem-t-efectivo': ['alem', 'tarde', 'efectivo'],
+        'alem-t-digital': ['alem', 'tarde', 'digital'],
+        'espiga-m-efectivo': ['espiga', 'manana', 'efectivo'],
+        'espiga-m-digital': ['espiga', 'manana', 'digital'],
+        'espiga-t-efectivo': ['espiga', 'tarde', 'efectivo'],
+        'espiga-t-digital': ['espiga', 'tarde', 'digital'],
+        'rep-caja-efectivo': ['reparto', null, 'efectivo'],
+        'rep-caja-digital': ['reparto', null, 'digital'],
+        'rep-caja-gastos': ['reparto', null, 'gastos']
+      };
+      const m = mapa[input.id];
+      if (!m) return null;
+      const fecha = fechaForzada || fechaActual;
+      const suc = m[0];
+      const turno = m[1];
+      const campo = m[2];
+      const ruta = turno ? (fecha + '/' + suc + '/' + turno + '/' + campo) : (fecha + '/' + suc + '/' + campo);
+      return { suc: suc, turno: turno, campo: campo, ruta: ruta, fecha: fecha };
+    }
+
+    function turnoCajaCerrado(meta) {
+      if (!meta) return false;
+      const c = dbCajasDiarias[meta.fecha];
+      if (!c) return false;
+      if (meta.suc === 'reparto') return !!(c.reparto && c.reparto.cerrado);
+      return !!(c[meta.suc] && c[meta.suc][meta.turno] && c[meta.suc][meta.turno].cerrado);
+    }
+
+    function avisoSyncCaja(estado) {
+      const el = document.getElementById('estado-sync-caja');
+      if (!el) return;
+      if (estado === 'guardando') {
+        el.textContent = 'Guardando… en un instante lo ven los otros teléfonos.';
+        el.className = 'text-[11px] font-semibold text-amber-700';
+      } else if (estado === 'ok') {
+        el.textContent = 'Sincronizado. Ya está en la nube para los otros teléfonos.';
+        el.className = 'text-[11px] font-semibold text-green-700';
+      } else if (estado === 'error') {
+        el.textContent = 'Sin conexión. El monto queda en este teléfono y se sube al reconectar.';
+        el.className = 'text-[11px] font-semibold text-red-700';
+      }
+    }
+
+    function guardarCampoCajaDesdeInput(input, fechaForzada) {
+      const meta = metaCajaDesdeInput(input, fechaForzada);
+      if (!meta || !input) return;
+      if (turnoCajaCerrado(meta)) return;
+      const valor = limpiarValorMoneda(input.value);
+      const marca = Date.now();
+      const c = asegurarDiaCaja(meta.fecha);
+      const nodo = meta.suc === 'reparto' ? c.reparto : c[meta.suc][meta.turno];
+      nodo[meta.campo] = valor;
+      nodo[meta.campo + 'Ts'] = marca;
+      const rutaNodo = meta.turno ? (meta.fecha + '/' + meta.suc + '/' + meta.turno) : (meta.fecha + '/' + meta.suc);
+      const payload = {};
+      payload[meta.campo] = valor;
+      payload[meta.campo + 'Ts'] = marca;
+      cajaPendientes[rutaNodo + '/' + meta.campo] = valor;
+      cajaPendientes[rutaNodo + '/' + meta.campo + 'Ts'] = marca;
+      localStorage.setItem('db_cajas_diarias', JSON.stringify(dbCajasDiarias));
+      avisoSyncCaja('guardando');
+      if (rtdb) {
+        rtdb.ref('db_cajas_diarias/' + rutaNodo).update(payload).then(function() {
+          avisoSyncCaja('ok');
+        }).catch(function(err) {
+          console.warn('Error al guardar caja:', err);
+          avisoSyncCaja('error');
+        });
+      } else {
+        avisoSyncCaja('error');
+      }
+      renderizarReportesMensuales();
+    }
+
+    function programarGuardadoCaja(input) {
+      const meta = metaCajaDesdeInput(input);
+      if (!meta) return;
+      const fecha = meta.fecha;
+      clearTimeout(cajaTimers[input.id]);
+      cajaTimers[input.id] = setTimeout(function() { guardarCampoCajaDesdeInput(input, fecha); }, 400);
+    }
+
+    function flushGuardadoCaja(input, fechaForzada) {
+      if (!input) return;
+      clearTimeout(cajaTimers[input.id]);
+      guardarCampoCajaDesdeInput(input, fechaForzada || fechaActual);
+    }
+
+    function flushInputsCaja(ids) {
+      ids.forEach(function(id) {
+        const input = document.getElementById(id);
+        if (input && !input.disabled) flushGuardadoCaja(input);
+      });
+    }
+
+    function flushCajasEnEdicion() {
+      Object.keys(cajaTimers).forEach(function(id) {
+        const input = document.getElementById(id);
+        if (input) flushGuardadoCaja(input);
+      });
+    }
+
+    function persistirRamaCaja(rutaNodo, valores) {
+      const marca = Date.now();
+      const payload = {};
+      Object.keys(valores).forEach(function(campo) {
+        payload[campo] = valores[campo];
+        payload[campo + 'Ts'] = marca;
+        cajaPendientes[rutaNodo + '/' + campo] = valores[campo];
+        cajaPendientes[rutaNodo + '/' + campo + 'Ts'] = marca;
+        escribirValorPorRuta(dbCajasDiarias, rutaNodo + '/' + campo + 'Ts', marca);
+      });
+      localStorage.setItem('db_cajas_diarias', JSON.stringify(dbCajasDiarias));
+      avisoSyncCaja('guardando');
+      if (rtdb) {
+        rtdb.ref('db_cajas_diarias/' + rutaNodo).update(payload).then(function() {
+          avisoSyncCaja('ok');
+        }).catch(function(err) {
+          console.warn('Error al guardar caja:', err);
+          avisoSyncCaja('error');
+        });
+      }
+      renderizarReportesMensuales();
+    }
+
+    function subirRamaCajaCompleta(rutaNodo, objeto) {
+      localStorage.setItem('db_cajas_diarias', JSON.stringify(dbCajasDiarias));
+      function marcar(prefijo, nodo) {
+        if (!nodo || typeof nodo !== 'object') return;
+        Object.keys(nodo).forEach(function(k) {
+          const v = nodo[k];
+          const ruta = prefijo + '/' + k;
+          if (v && typeof v === 'object') marcar(ruta, v);
+          else cajaPendientes[ruta] = v;
+        });
+      }
+      marcar(rutaNodo, objeto);
+      if (rtdb) {
+        rtdb.ref('db_cajas_diarias/' + rutaNodo).set(objeto).catch(function(err) {
+          console.warn('Error al guardar caja:', err);
+        });
+      }
+    }
+
     function cerrarTurnoParcial(sucursal, turno) {
-      guardarDatosCajaDiaria();
+      const pfx = sucursal + '-' + turno.charAt(0);
+      flushInputsCaja([pfx + '-efectivo', pfx + '-digital']);
       const usr = dbUsuarios[usuarioActivoId];
-      const c = dbCajasDiarias[fechaActual][sucursal][turno];
+      const c = asegurarDiaCaja(fechaActual)[sucursal][turno];
 
       if (c.cerrado) { alert("Este turno ya se encuentra cerrado."); return; }
 
       if (confirm(`¿Confirmar cierre del turno ${turno.toUpperCase()} para ${sucursal.toUpperCase()}?`)) {
         c.cerrado = true;
         c.usuario = usr?.nombre || 'Usuario';
-        guardarDB('db_cajas_diarias', dbCajasDiarias);
+        persistirRamaCaja(fechaActual + '/' + sucursal + '/' + turno, {
+          efectivo: c.efectivo || 0,
+          digital: c.digital || 0,
+          cerrado: true,
+          usuario: c.usuario
+        });
         cargarCajasHoyUI();
-        
         alert(`¡Turno ${turno} de ${sucursal.toUpperCase()} cerrado correctamente!`);
       }
     }
 
     function guardarDatosCajaDiaria() {
-      if (!dbCajasDiarias[fechaActual]) {
-        dbCajasDiarias[fechaActual] = {
-          alem: { manana: { efectivo: 0, digital: 0, cerrado: false }, tarde: { efectivo: 0, digital: 0, cerrado: false } },
-          espiga: { manana: { efectivo: 0, digital: 0, cerrado: false }, tarde: { efectivo: 0, digital: 0, cerrado: false } },
-          reparto: { efectivo: 0, digital: 0, gastos: 0, cerrado: false }
-        };
-      }
-
-      const c = dbCajasDiarias[fechaActual];
-      if (!c.alem) c.alem = { manana: { efectivo: 0, digital: 0, cerrado: false }, tarde: { efectivo: 0, digital: 0, cerrado: false } };
-      if (!c.espiga) c.espiga = { manana: { efectivo: 0, digital: 0, cerrado: false }, tarde: { efectivo: 0, digital: 0, cerrado: false } };
-      if (!c.reparto) c.reparto = { efectivo: 0, digital: 0, gastos: 0, cerrado: false };
-
-      if (!c.alem.manana.cerrado) {
-        c.alem.manana.efectivo = limpiarValorMoneda(document.getElementById('alem-m-efectivo')?.value);
-        c.alem.manana.digital = limpiarValorMoneda(document.getElementById('alem-m-digital')?.value);
-      }
-      if (!c.alem.tarde.cerrado) {
-        c.alem.tarde.efectivo = limpiarValorMoneda(document.getElementById('alem-t-efectivo')?.value);
-        c.alem.tarde.digital = limpiarValorMoneda(document.getElementById('alem-t-digital')?.value);
-      }
-      if (!c.espiga.manana.cerrado) {
-        c.espiga.manana.efectivo = limpiarValorMoneda(document.getElementById('espiga-m-efectivo')?.value);
-        c.espiga.manana.digital = limpiarValorMoneda(document.getElementById('espiga-m-digital')?.value);
-      }
-      if (!c.espiga.tarde.cerrado) {
-        c.espiga.tarde.efectivo = limpiarValorMoneda(document.getElementById('espiga-t-efectivo')?.value);
-        c.espiga.tarde.digital = limpiarValorMoneda(document.getElementById('espiga-t-digital')?.value);
-      }
-      if (!c.reparto.cerrado) {
-        c.reparto.efectivo = limpiarValorMoneda(document.getElementById('rep-caja-efectivo')?.value);
-        c.reparto.digital = limpiarValorMoneda(document.getElementById('rep-caja-digital')?.value);
-        c.reparto.gastos = limpiarValorMoneda(document.getElementById('rep-caja-gastos')?.value);
-      }
-
-      guardarDB('db_cajas_diarias', dbCajasDiarias);
-      renderizarReportesMensuales();
+      flushCajasEnEdicion();
     }
 
-        function cerrarCajaReparto() {
-      guardarDatosCajaDiaria();
+    function cerrarCajaReparto() {
+      flushInputsCaja(['rep-caja-efectivo', 'rep-caja-digital', 'rep-caja-gastos']);
       const usr = dbUsuarios[usuarioActivoId];
-      const c = dbCajasDiarias[fechaActual].reparto;
+      const c = asegurarDiaCaja(fechaActual).reparto;
       if (c.cerrado) { alert("La caja de reparto ya se encuentra cerrada."); return; }
-      
-      if (confirm(`¿Confirmar cierre de la Caja de Reparto?`)) {
+
+      if (confirm('¿Confirmar cierre de la Caja de Reparto?')) {
         c.cerrado = true;
         c.usuario = usr?.nombre || 'Usuario';
-        guardarDB('db_cajas_diarias', dbCajasDiarias);
+        persistirRamaCaja(fechaActual + '/reparto', {
+          efectivo: c.efectivo || 0,
+          digital: c.digital || 0,
+          gastos: c.gastos || 0,
+          cerrado: true,
+          usuario: c.usuario
+        });
         cargarCajasHoyUI();
-        alert(`¡Caja Reparto cerrada correctamente!`);
+        alert('¡Caja Reparto cerrada correctamente!');
       }
     }
 
@@ -5386,10 +5694,17 @@ function verificarCierreAutomaticoGlobal() {
 
       if (!concepto || isNaN(monto) || monto <= 0) { alert("Ingrese concepto y monto válidos."); return; }
 
-      if (!dbEgresosCaja[fechaActual]) dbEgresosCaja[fechaActual] = [];
-      dbEgresosCaja[fechaActual].push({ id: generarID('EGR'), origen, concepto, monto });
-
-      guardarDB('db_egresos_caja', dbEgresosCaja);
+      const item = { id: generarID('EGR'), origen: origen, concepto: concepto, monto: monto };
+      const mapa = mapaEgresosDesdeRaw(dbEgresosCaja[fechaActual]);
+      mapa[item.id] = item;
+      dbEgresosCaja[fechaActual] = mapa;
+      egresosPendientes[fechaActual + '/' + item.id] = item;
+      localStorage.setItem('db_egresos_caja', JSON.stringify(dbEgresosCaja));
+      if (rtdb) {
+        rtdb.ref('db_egresos_caja/' + fechaActual + '/' + item.id).set(item).catch(function(err) {
+          console.warn('Error al guardar egreso:', err);
+        });
+      }
       document.getElementById('egreso-concepto').value = '';
       document.getElementById('egreso-monto').value = '';
       renderizarTablaEgresosHoy();
@@ -5398,10 +5713,11 @@ function verificarCierreAutomaticoGlobal() {
 
     function renderizarTablaEgresosHoy() {
       const tbody = document.getElementById('tabla-egresos-hoy'); if (!tbody) return; tbody.innerHTML = '';
-      const egresos = dbEgresosCaja[fechaActual] || [];
+      const egresos = egresosDelDia(fechaActual);
       const usr = dbUsuarios[usuarioActivoId];
 
-      egresos.forEach((e, idx) => {
+      egresos.forEach(function(e) {
+        if (!e) return;
         if (usr && usr.sucursal === 'espiga' && usr.rol !== 'admin' && e.origen !== 'La Espiga de Oro') return;
         if (usr && usr.sucursal === 'alem' && usr.rol !== 'admin' && e.origen !== 'La Casa del Pan') return;
 
@@ -5409,20 +5725,31 @@ function verificarCierreAutomaticoGlobal() {
         tr.innerHTML = `
           <td class="p-1.5 font-bold text-gray-700">${e.origen}</td>
           <td class="p-1.5">${e.concepto}</td>
-          <td class="p-1.5 text-right font-bold text-red-600">$${e.monto.toLocaleString()}</td>
-          <td class="p-1.5 text-center"><button onclick="eliminarEgresoCaja(${idx})" class="text-xs text-red-600 font-bold">✕</button></td>
+          <td class="p-1.5 text-right font-bold text-red-600">$${(e.monto || 0).toLocaleString()}</td>
+          <td class="p-1.5 text-center"><button onclick="eliminarEgresoCaja('${e.id}')" class="text-xs text-red-600 font-bold">✕</button></td>
         `;
         tbody.appendChild(tr);
       });
     }
 
-    function eliminarEgresoCaja(idx) {
-      if (dbEgresosCaja[fechaActual]) dbEgresosCaja[fechaActual].splice(idx, 1);
-      guardarDB('db_egresos_caja', dbEgresosCaja); renderizarTablaEgresosHoy(); renderizarReportesMensuales();
+    function eliminarEgresoCaja(id) {
+      const mapa = mapaEgresosDesdeRaw(dbEgresosCaja[fechaActual]);
+      const fbKey = (mapa[id] && mapa[id]._fbKey) || id;
+      if (mapa[id]) delete mapa[id];
+      Object.keys(mapa).forEach(function(k) { if (mapa[k]) delete mapa[k]._fbKey; });
+      dbEgresosCaja[fechaActual] = mapa;
+      egresosPendientes[fechaActual + '/' + id] = null;
+      localStorage.setItem('db_egresos_caja', JSON.stringify(dbEgresosCaja));
+      if (rtdb) {
+        rtdb.ref('db_egresos_caja/' + fechaActual + '/' + fbKey).remove().catch(function(err) {
+          console.warn('Error al borrar egreso:', err);
+        });
+      }
+      renderizarTablaEgresosHoy();
+      renderizarReportesMensuales();
     }
 
     function guardarYReiniciarDia() {
-      guardarDatosCajaDiaria();
       alert(`¡Cierre Operativo Diario consolidado y registrado correctamente para la fecha ${fechaActual}!`);
     }
 
@@ -5479,7 +5806,19 @@ function verificarCierreAutomaticoGlobal() {
         tarde: { efectivo: 0, digital: 0, cerrado: true }
       };
 
-      guardarDB('db_cajas_diarias', dbCajasDiarias);
+      const marcaCorr = Date.now();
+      function sellarCaja(nodo) {
+        Object.keys(nodo).forEach(function(k) {
+          const v = nodo[k];
+          if (v && typeof v === 'object') sellarCaja(v);
+          else nodo[k + 'Ts'] = marcaCorr;
+        });
+      }
+      sellarCaja(dbCajasDiarias[fechaStr].alem);
+      sellarCaja(dbCajasDiarias[fechaStr].espiga);
+
+      subirRamaCajaCompleta(fechaStr + '/alem', dbCajasDiarias[fechaStr].alem);
+      subirRamaCajaCompleta(fechaStr + '/espiga', dbCajasDiarias[fechaStr].espiga);
       cerrarModalEditarCajaAdmin();
       renderizarReportesMensuales();
       alert("¡Montos corregidos con éxito!");
@@ -5613,9 +5952,10 @@ function verificarCierreAutomaticoGlobal() {
         tbodyVentas.appendChild(trV);
 
         let egCaja = 0;
-        (egresosSeguros[diaStr] || []).forEach(e => {
+        egresosDelDia(diaStr).forEach(e => {
+          if (!e) return;
           if (esEspiga && e.origen !== 'La Espiga de Oro') return;
-          egCaja += e.monto;
+          egCaja += (e.monto || 0);
         });
 
         if (cDia.reparto && cDia.reparto.gastos > 0) { egCaja += cDia.reparto.gastos; }
@@ -6080,7 +6420,7 @@ function generarRespaldoAutomaticoCierre() {
       if (confirm(`🔓 ¿Desea reabrir el Turno ${turno.toUpperCase()} de ${sucursal.toUpperCase()} para corregir valores?`)) {
         if (dbCajasDiarias[fechaActual] && dbCajasDiarias[fechaActual][sucursal][turno]) {
           dbCajasDiarias[fechaActual][sucursal][turno].cerrado = false;
-          guardarDB('db_cajas_diarias', dbCajasDiarias);
+          persistirRamaCaja(fechaActual + '/' + sucursal + '/' + turno, { cerrado: false });
           cargarCajasHoyUI();
           alert("¡Turno reabierto con éxito!");
         }
@@ -6262,7 +6602,7 @@ function limpiarFormularioCatering() {
       if (confirm("🔓 ¿Desea reabrir la Caja de Reparto para correcciones?")) {
         if (dbCajasDiarias[fechaActual] && dbCajasDiarias[fechaActual].reparto) {
           dbCajasDiarias[fechaActual].reparto.cerrado = false;
-          guardarDB('db_cajas_diarias', dbCajasDiarias);
+          persistirRamaCaja(fechaActual + '/reparto', { cerrado: false });
           cargarCajasHoyUI();
           alert("¡Caja de Reparto reabierta con éxito!");
         }
@@ -6276,14 +6616,25 @@ document.addEventListener("DOMContentLoaded", () => {
           let cursorPosition = this.selectionStart;
           let longitudAntigua = this.value.length;
           let valorLimpio = this.value.replace(/\D/g, "");
-          if (valorLimpio === "") { this.value = ""; return; }
-          let valorFormateado = Number(valorLimpio).toLocaleString("es-AR");
-          this.value = valorFormateado;
-          let nuevaLongitud = this.value.length;
-          cursorPosition = cursorPosition + (nuevaLongitud - longitudAntigua);
-          this.setSelectionRange(cursorPosition, cursorPosition);
+          if (valorLimpio === "") {
+            this.value = "";
+          } else {
+            let valorFormateado = Number(valorLimpio).toLocaleString("es-AR");
+            this.value = valorFormateado;
+            let nuevaLongitud = this.value.length;
+            cursorPosition = cursorPosition + (nuevaLongitud - longitudAntigua);
+            this.setSelectionRange(cursorPosition, cursorPosition);
+          }
+          if (metaCajaDesdeInput(this)) programarGuardadoCaja(this);
+        });
+        input.addEventListener("change", function() {
+          if (metaCajaDesdeInput(this)) flushGuardadoCaja(this);
         });
       });
+      document.addEventListener("visibilitychange", function() {
+        if (document.visibilityState === "hidden") flushCajasEnEdicion();
+      });
+      window.addEventListener("pagehide", flushCajasEnEdicion);
     });
   </script>
 </body>
