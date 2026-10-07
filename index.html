@@ -344,7 +344,7 @@
           <h2 class="text-base font-bold text-blue-950 flex items-center gap-1">🥐 4. Pedidos Catering / Anticipados (Clientes Mostrador)</h2>
           <span class="text-xs bg-blue-200 text-blue-900 px-2 py-1 rounded font-semibold">Validación 48 hs activa</span>
         </div>
-        <p class="text-[11px] text-blue-800">ℹ️ Ideal para clientes ocasionales. El sistema calcula automáticamente la fecha de producción en cuadra (1 día antes del retiro).</p>
+        <p class="text-[11px] text-blue-800">ℹ️ El producto se elige del listado Pedidos de 48 horas (Catálogo Despacho). La producción en cuadra queda programada para el día anterior al retiro.</p>
         
         <!-- Formulario de Carga / Edición -->
         <input type="hidden" id="catering-edit-id" value="">
@@ -359,10 +359,7 @@
           </div>
           <div>
             <label class="text-[11px] font-bold text-gray-700 block">Producto:</label>
-            <select id="cat-producto" class="border p-2 rounded w-full text-xs font-bold text-blue-950 bg-white">
-              <option value="Promo Catering">Promo Catering</option>
-              <option value="Pan para Choripanes">Pan para Choripanes</option>
-            </select>
+            <select id="cat-producto" class="border p-2 rounded w-full text-xs font-bold text-blue-950 bg-white"></select>
           </div>
           <div>
             <label class="text-[11px] font-bold text-gray-700 block">Cantidad (Unidades):</label>
@@ -721,6 +718,37 @@
               </tr>
             </thead>
             <tbody id="tabla-panificados-precios"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ⏱️ PEDIDOS DE 48 HORAS -->
+      <div class="bg-sky-50 p-4 rounded-xl shadow border border-sky-300 space-y-4">
+        <h2 class="text-base font-bold text-sky-950">⏱️ Pedidos de 48 horas</h2>
+
+        <div class="bg-white p-3 rounded-lg border border-sky-200 space-y-2 solo-admin">
+          <h3 class="text-xs font-bold text-gray-700">➕ Agregar producto de 48 horas</h3>
+          <div class="grid grid-cols-1 md:grid-cols-5 gap-2">
+            <input type="text" id="nuevo-48-nombre" placeholder="Nombre" class="border p-2 rounded text-xs md:col-span-1">
+            <input type="number" id="nuevo-48-unidades" placeholder="Mín. x Paq" class="border p-2 rounded text-xs">
+            <input type="number" id="nuevo-48-menor" placeholder="Precio Minorista ($)" class="border p-2 rounded text-xs">
+            <input type="number" id="nuevo-48-mayor" placeholder="Precio Mayorista ($)" class="border p-2 rounded text-xs">
+            <button type="button" onclick="agregarPedido48()" class="bg-sky-800 text-white font-bold px-3 py-2 rounded text-xs hover:bg-sky-900">Guardar</button>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto bg-white rounded-lg border">
+          <table class="w-full text-left text-xs md:text-sm">
+            <thead>
+              <tr class="bg-sky-100 text-sky-950 border-b">
+                <th class="p-2">Producto</th>
+                <th class="p-2">Mín. x Paquete</th>
+                <th class="p-2">Precio Minorista ($)</th>
+                <th class="p-2">Precio Mayorista ($)</th>
+                <th class="p-2 text-center">Acción</th>
+              </tr>
+            </thead>
+            <tbody id="tabla-pedidos-48"></tbody>
           </table>
         </div>
       </div>
@@ -1270,6 +1298,7 @@
 
     var dbUsuarios = {};
     var dbPanificados = {};
+    var dbPedidos48 = {};
     var dbProductos = {};
     var dbInsumos = {};
     var dbRepartos = {};
@@ -1949,6 +1978,7 @@ function agregarNotaMostrador() {
       if (key === 'db_proveedores') { dbProveedores = val || {}; renderizarTablaProveedores(); cargarBuscadorProveedores(); }
       if (key === 'db_insumos') { dbInsumos = val || {}; renderizarStockInsumos(); cargarSelectorInsumosFactura(); cargarSelectorInsumosMovimiento(); }
       if (key === 'db_panificados') { dbPanificados = val || {}; renderizarTablaPanificados(); cargarSelectorPanificadosReparto(); cargarSelectorProductosRecurrentes(); }
+      if (key === 'db_pedidos_48') { dbPedidos48 = val || {}; renderizarTablaPedidos48(); cargarSelectorCatering48(); }
       if (key === 'db_productos') { dbProductos = val || {}; renderizarTablaCatalogo(); cargarSelectorDespachoReparto(); cargarSelectorProductosRecurrentes(); }
       if (key === 'db_usuarios') { dbUsuarios = val || {}; renderizarTablaUsuarios(); renderizarUsuariosSelect(); }
       if (key === 'db_cajas_diarias') { dbCajasDiarias = val || {}; cargarCajasHoyUI(); renderizarReportesMensuales(); }
@@ -1960,6 +1990,7 @@ function agregarNotaMostrador() {
     
     dbUsuarios = cargarDB('db_usuarios', window.LISTA_USUARIOS_BASE);
     dbPanificados = cargarDB('db_panificados', window.LISTA_PANIFICADOS_REPARTO_BASE);
+    dbPedidos48 = cargarDB('db_pedidos_48', {});
     dbProductos = cargarDB('db_productos', window.LISTA_PRODUCTOS_BASE);
     dbClientes = cargarDB('db_clientes', {});
     dbProveedores = cargarDB('db_proveedores', {});
@@ -2020,6 +2051,8 @@ function inicializarAplicacion() {
       renderizarTablaProveedores();
       renderizarStockInsumos();
       renderizarTablaPanificados();
+      renderizarTablaPedidos48();
+      cargarSelectorCatering48();
       renderizarTablaCatalogo();
       renderizarTablaUsuarios();
       renderizarTablaRecurrentes();
@@ -2941,7 +2974,7 @@ function verificarEsAdmin() {
       });
 
       // Deshabilitar todos los inputs, selects y botones de eliminación dentro de las tablas de precios si no es admin
-      document.querySelectorAll('#tabla-panificados-precios input, #tabla-panificados-precios button, #tabla-catalogo-precios input, #tabla-catalogo-precios button').forEach(el => {
+      document.querySelectorAll('#tabla-panificados-precios input, #tabla-panificados-precios button, #tabla-pedidos-48 input, #tabla-pedidos-48 button, #tabla-catalogo-precios input, #tabla-catalogo-precios button').forEach(el => {
         el.disabled = !esAdmin;
         if (!esAdmin) {
           el.style.backgroundColor = '#f3f4f6';
@@ -3016,12 +3049,28 @@ function verificarEsAdmin() {
       }
 
       if (confirm("¿Estás seguro de volver a los precios anteriores al último aumento?")) {
-        dbPanificados = JSON.parse(respaldo);
-        guardarYSincronizarPrecios();
-        localStorage.removeItem('respaldo_precios_anterior'); // Limpiamos el respaldo
+        const datos = JSON.parse(respaldo);
+        if (datos && datos.tipo === 'catalogo' && datos.datos) {
+          dbProductos = datos.datos;
+          guardarDB('db_productos', dbProductos);
+          renderizarTablaCatalogo();
+          cargarSelectorDespachoReparto();
+        } else {
+          dbPanificados = datos;
+          guardarDB('db_panificados', dbPanificados);
+          renderizarTablaPanificados();
+          cargarSelectorPanificadosReparto();
+        }
+        localStorage.removeItem('respaldo_precios_anterior');
         alert("Se han restaurado los precios anteriores correctamente.");
       }
     }
+function redondearPrecioDeA50(valor) {
+  const n = Number(valor) || 0;
+  if (n <= 0) return 0;
+  return Math.ceil(n / 50) * 50;
+}
+
 function aplicarAumentoPorcentaje() {
   if (!verificarEsAdmin()) {
     alert("Acción restringida solo al Administrador General.");
@@ -3030,35 +3079,45 @@ function aplicarAumentoPorcentaje() {
 
   const porcentajeInput = document.getElementById('ajuste-porcentaje-valor');
   const porcentaje = parseFloat(porcentajeInput?.value);
+  const columna = document.getElementById('ajuste-columna-precio')?.value || 'todos';
 
   if (isNaN(porcentaje) || porcentaje === 0) {
     alert("Ingrese un porcentaje válido (ej: 10 para aumentar o -5 para descontar).");
     return;
   }
 
-  if (!confirm(`¿Confirma aplicar un ajuste del ${porcentaje}% a los precios?`)) return;
+  const campos = columna === 'todos' ? ['mostrador', 'reparto', 'unOcuarto'] : [columna];
+  const etiquetaColumna = {
+    todos: 'todos los precios',
+    mostrador: 'Precio Mostrador',
+    reparto: 'Re-Venta / Reparto',
+    unOcuarto: 'Unidad o 1/4'
+  }[columna] || 'los precios seleccionados';
 
-  // 1. Guardar respaldo de seguridad anterior
-  const respaldoPrecios = JSON.parse(JSON.stringify(dbPanificados));
-  localStorage.setItem('respaldo_precios_anterior', JSON.stringify(respaldoPrecios));
+  if (!confirm(`¿Confirma aplicar un ajuste del ${porcentaje}% a ${etiquetaColumna}?\n\nDespués del porcentaje, cada precio se redondea hacia arriba de a $50 (por ejemplo, $13.780 pasa a $13.800).`)) return;
 
-  // 2. Aplicar factor multiplicador
+  localStorage.setItem('respaldo_precios_anterior', JSON.stringify({
+    tipo: 'catalogo',
+    datos: JSON.parse(JSON.stringify(dbProductos))
+  }));
+
   const factor = 1 + (porcentaje / 100);
-  for (let id in dbPanificados) {
-    if (dbPanificados[id].menor) {
-      dbPanificados[id].menor = Math.round(dbPanificados[id].menor * factor);
-    }
-    if (dbPanificados[id].mayor) {
-      dbPanificados[id].mayor = Math.round(dbPanificados[id].mayor * factor);
-    }
-  }
+  Object.keys(dbProductos || {}).forEach(nombre => {
+    const prod = dbProductos[nombre];
+    if (!prod || typeof prod !== 'object') return;
+    campos.forEach(campo => {
+      const actual = Number(prod[campo]) || 0;
+      if (actual <= 0) return;
+      prod[campo] = redondearPrecioDeA50(actual * factor);
+    });
+  });
 
-  // 3. Guardar y refrescar tablas
-  guardarDB('db_panificados', dbPanificados);
-  renderizarTablaPanificados();
-  
+  guardarDB('db_productos', dbProductos);
+  renderizarTablaCatalogo();
+  cargarSelectorDespachoReparto();
+
   porcentajeInput.value = '';
-  alert(`¡Aumento del ${porcentaje}% aplicado con éxito a los panificados!`);
+  alert(`Ajuste del ${porcentaje}% aplicado a ${etiquetaColumna}. Los importes quedaron redondeados de a $50.`);
 }
     function obtenerSufijoSucursalActual() {
       const selectPanaderia = document.getElementById('select-panaderia-activa');
@@ -6096,6 +6155,115 @@ function verificarCierreAutomaticoGlobal() {
       }
     }
 
+    function renderizarTablaPedidos48() {
+      const tbody = document.getElementById('tabla-pedidos-48');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      if (!dbPedidos48 || Array.isArray(dbPedidos48)) dbPedidos48 = {};
+
+      const esAdmin = verificarEsAdmin();
+      const estadoDisabled = esAdmin ? '' : 'disabled style="background-color: #f3f4f6; cursor: not-allowed;"';
+      const lista = Object.entries(dbPedidos48).filter(([, p]) => p && typeof p === 'object');
+      lista.sort((a, b) => a[0].localeCompare(b[0], 'es', { sensitivity: 'base' }));
+
+      if (!lista.length) {
+        tbody.innerHTML = '<tr><td colspan="5" class="p-3 text-center text-gray-400 italic">No hay productos de 48 horas cargados.</td></tr>';
+        return;
+      }
+
+      lista.forEach(([nombre, p]) => {
+        const menorFmt = Number(p.menor || 0).toLocaleString('es-AR', { minimumFractionDigits: 0 });
+        const mayorFmt = Number(p.mayor || 0).toLocaleString('es-AR', { minimumFractionDigits: 0 });
+        const nombreJs = nombre.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        const tr = document.createElement('tr');
+        tr.className = "border-b hover:bg-gray-50";
+        tr.innerHTML = `
+          <td class="p-2 font-bold">${nombre}</td>
+          <td class="p-2">
+            <input type="number" value="${p.unidPorPaq || 0}" ${estadoDisabled}
+              onchange="actualizarPedido48('${nombreJs}', 'unidPorPaq', this)"
+              class="border p-1 rounded w-20 text-center font-bold">
+          </td>
+          <td class="p-2">
+            <div class="flex items-center gap-1">
+              <span>$</span>
+              <input type="text" value="${menorFmt}" ${estadoDisabled}
+                onchange="actualizarPedido48('${nombreJs}', 'menor', this)"
+                class="border p-1 rounded w-28 font-bold text-sm">
+            </div>
+          </td>
+          <td class="p-2">
+            <div class="flex items-center gap-1">
+              <span>$</span>
+              <input type="text" value="${mayorFmt}" ${estadoDisabled}
+                onchange="actualizarPedido48('${nombreJs}', 'mayor', this)"
+                class="border p-1 rounded w-28 font-bold text-sky-950 text-sm">
+            </div>
+          </td>
+          <td class="p-2 text-center">
+            ${esAdmin ? `<button type="button" onclick="eliminarPedido48('${nombreJs}')" class="text-xs bg-red-600 text-white px-2 py-1 rounded font-bold hover:bg-red-700 shadow">✕</button>` : '<span class="text-gray-400 text-xs">Lectura</span>'}
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function agregarPedido48() {
+      const nombre = document.getElementById('nuevo-48-nombre').value.trim();
+      const unids = parseInt(document.getElementById('nuevo-48-unidades').value);
+      const menor = parseFloat(document.getElementById('nuevo-48-menor').value);
+      const mayor = parseFloat(document.getElementById('nuevo-48-mayor').value);
+
+      if (!nombre || isNaN(unids) || isNaN(menor) || isNaN(mayor)) {
+        alert("Complete todos los campos del pedido de 48 horas.");
+        return;
+      }
+      if (!dbPedidos48 || Array.isArray(dbPedidos48)) dbPedidos48 = {};
+      if (dbPedidos48[nombre]) {
+        alert(`Ya existe un producto de 48 horas llamado "${nombre}".`);
+        return;
+      }
+
+      dbPedidos48[nombre] = { unidPorPaq: unids, menor, mayor };
+      guardarDB('db_pedidos_48', dbPedidos48);
+      renderizarTablaPedidos48();
+      cargarSelectorCatering48();
+      document.getElementById('nuevo-48-nombre').value = '';
+      document.getElementById('nuevo-48-unidades').value = '';
+      document.getElementById('nuevo-48-menor').value = '';
+      document.getElementById('nuevo-48-mayor').value = '';
+    }
+
+    function eliminarPedido48(nombre) {
+      if (!confirm(`¿Desea eliminar "${nombre}" de Pedidos de 48 horas?`)) return;
+      delete dbPedidos48[nombre];
+      guardarDB('db_pedidos_48', dbPedidos48);
+      renderizarTablaPedidos48();
+      cargarSelectorCatering48();
+    }
+
+    function actualizarPedido48(nombre, campo, inputElement) {
+      if (!dbPedidos48[nombre]) return;
+      const valorCrudo = inputElement.value;
+      const valorNumerico = campo === 'unidPorPaq' ? (parseInt(valorCrudo) || 0) : limpiarValorMoneda(valorCrudo);
+      dbPedidos48[nombre][campo] = valorNumerico;
+      guardarDB('db_pedidos_48', dbPedidos48);
+      if (campo !== 'unidPorPaq') {
+        inputElement.value = valorNumerico.toLocaleString('es-AR', { minimumFractionDigits: 0 });
+      }
+      const fila = inputElement.closest('tr');
+      if (fila) {
+        let alerta = fila.querySelector('.aviso-guardado');
+        if (!alerta) {
+          alerta = document.createElement('span');
+          alerta.className = 'aviso-guardado text-[10px] text-green-700 font-bold ml-2 bg-green-100 px-1.5 py-0.5 rounded';
+          inputElement.parentNode.appendChild(alerta);
+        }
+        alerta.textContent = 'Guardado ✓';
+        setTimeout(() => { alerta.textContent = ''; }, 1500);
+      }
+    }
+
     function renderizarTablaCatalogo() {
       const tbody = document.getElementById('tabla-catalogo-precios'); 
       if (!tbody) return; 
@@ -6305,6 +6473,7 @@ function verificarCierreAutomaticoGlobal() {
         },
         db_usuarios: dbUsuarios,
         db_panificados: dbPanificados,
+        db_pedidos_48: dbPedidos48,
         db_productos: dbProductos,
         db_clientes: dbClientes,
         db_proveedores: dbProveedores,
@@ -6350,6 +6519,7 @@ function verificarCierreAutomaticoGlobal() {
         // Restauración completa de cada clave
         if (contenido.db_usuarios) guardarDB('db_usuarios', contenido.db_usuarios);
         if (contenido.db_panificados) guardarDB('db_panificados', contenido.db_panificados);
+        if (contenido.db_pedidos_48) guardarDB('db_pedidos_48', contenido.db_pedidos_48);
         if (contenido.db_productos) guardarDB('db_productos', contenido.db_productos);
         if (contenido.db_clientes) guardarDB('db_clientes', contenido.db_clientes);
         if (contenido.db_proveedores) guardarDB('db_proveedores', contenido.db_proveedores);
@@ -6467,10 +6637,6 @@ function actualizarCalculoProduccionCatering() {
 
 // 3. Validar regla de 48 horas basada en la fecha de carga vs fecha de retiro
 function validarAnticipacionCatering(fechaCargaStr, fechaRetiroStr, nombreProducto) {
-  if (!nombreProducto.toLowerCase().includes('catering') && !nombreProducto.toLowerCase().includes('choripanes')) {
-    return { valido: true };
-  }
-
   const [aC, mC, dC] = fechaCargaStr.split('-').map(Number);
   const [aR, mR, dR] = fechaRetiroStr.split('-').map(Number);
   const fCarga = new Date(aC, mC - 1, dC);
@@ -6488,6 +6654,40 @@ function validarAnticipacionCatering(fechaCargaStr, fechaRetiroStr, nombreProduc
   return { valido: true };
 }
 
+function cargarSelectorCatering48(productoExtra) {
+  const sel = document.getElementById('cat-producto');
+  if (!sel) return;
+  const conservar = productoExtra || sel.value;
+  sel.innerHTML = '';
+
+  const nombres = Object.keys(dbPedidos48 || {})
+    .filter(nombre => dbPedidos48[nombre] && typeof dbPedidos48[nombre] === 'object')
+    .sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
+
+  if (!nombres.length && !conservar) {
+    const vacio = document.createElement('option');
+    vacio.value = '';
+    vacio.textContent = '-- Cargá productos en Pedidos de 48 horas --';
+    sel.appendChild(vacio);
+    return;
+  }
+
+  nombres.forEach(nombre => {
+    const opt = document.createElement('option');
+    opt.value = nombre;
+    opt.textContent = nombre;
+    sel.appendChild(opt);
+  });
+
+  if (conservar && !nombres.includes(conservar)) {
+    const extra = document.createElement('option');
+    extra.value = conservar;
+    extra.textContent = conservar;
+    sel.appendChild(extra);
+  }
+  if (conservar) sel.value = conservar;
+}
+
 // 4. Guardar o actualizar pedido de catering (almacenado en la fecha de producción de la cuadra)
 function guardarPedidoCateringEspecial() {
       const editId = document.getElementById('catering-edit-id').value;
@@ -6497,6 +6697,11 @@ function guardarPedidoCateringEspecial() {
       const cantidad = parseFloat(document.getElementById('cat-cantidad').value);
       const fechaCarga = document.getElementById('cat-fecha-carga').value;
       const fechaRetiro = document.getElementById('cat-fecha-retiro').value;
+
+      if (!producto) {
+        alert("No hay productos de 48 horas. Cargalos primero en Catálogo Despacho.");
+        return;
+      }
 
       if (!nombre || isNaN(cantidad) || cantidad <= 0 || !fechaCarga || !fechaRetiro) {
         alert("⚠️ Por favor complete el nombre, cantidad válida, fecha de carga y fecha de retiro.");
@@ -6566,6 +6771,7 @@ function cargarParaEditarCatering(idBuscado) {
   document.getElementById('catering-edit-id').value = pedidoEncontrado.id;
   document.getElementById('cat-nombre').value = nombreLimpio;
   document.getElementById('cat-telefono').value = telLimpio;
+  cargarSelectorCatering48(pedidoEncontrado.producto);
   document.getElementById('cat-producto').value = pedidoEncontrado.producto;
   document.getElementById('cat-cantidad').value = pedidoEncontrado.unidades;
   if (pedidoEncontrado.fechaCarga) document.getElementById('cat-fecha-carga').value = pedidoEncontrado.fechaCarga;
