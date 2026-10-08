@@ -386,7 +386,8 @@
 
         <!-- Tabla Visible de Pedidos a Futuro -->
         <div class="mt-3">
-          <h3 class="text-xs font-bold text-blue-900 mb-1">📅 Listado de Pedidos a Futuro (Catering / Anticipados):</h3>
+          <h3 class="text-xs font-bold text-blue-900 mb-1">📅 Pedidos pendientes (Catering / Anticipados)</h3>
+          <p class="text-[11px] text-blue-800 mb-1">Se listan aunque todavía no entren a producción, ordenados por el día en que salen a cuadra. Ese día queda marcado en amarillo.</p>
           <div class="overflow-x-auto bg-white rounded border shadow-sm">
             <table class="w-full text-left text-xs">
               <thead>
@@ -1973,6 +1974,10 @@ function agregarNotaMostrador() {
 
         renderizarPlanillaReparto(); 
         renderizarCuadra(); 
+      }
+      if (key === 'db_notas_mostrador') {
+        dbNotasMostrador = val || {};
+        renderizarCuadra();
       }
       if (key === 'db_clientes') { dbClientes = val || {}; renderizarTablaClientes(); cargarSelectorClientesReparto(); cargarBuscadorClientes(); cargarSelectorClientesRecurrentes(); }
       if (key === 'db_proveedores') { dbProveedores = val || {}; renderizarTablaProveedores(); cargarBuscadorProveedores(); }
@@ -3903,6 +3908,7 @@ function imprimirListadoProductos() {
       }, 300);
     }
 function renderizarCuadra() {
+      renderizarTablaCateringCuadra();
       const fechaFormateada = obtenerFechaConDia(fechaCuadraActiva);
       const lblCua = document.getElementById('label-fecha-cuadra'); 
       if (lblCua) lblCua.innerText = `Fecha de Producción: ${fechaFormateada}`;
@@ -6686,6 +6692,92 @@ function cargarSelectorCatering48(productoExtra) {
     sel.appendChild(extra);
   }
   if (conservar) sel.value = conservar;
+}
+
+function formatearFechaCorta(fechaStr) {
+  if (!fechaStr || !/^\d{4}-\d{2}-\d{2}$/.test(fechaStr)) return fechaStr || '-';
+  const [anio, mes, dia] = fechaStr.split('-');
+  return `${dia}/${mes}/${anio}`;
+}
+
+function formatearFechaProduccion(fechaStr) {
+  if (!fechaStr || !/^\d{4}-\d{2}-\d{2}$/.test(fechaStr)) return fechaStr || '-';
+  const [anio, mes, dia] = fechaStr.split('-').map(Number);
+  const fecha = new Date(anio, mes - 1, dia);
+  const dias = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+  return `${dias[fecha.getDay()]} ${String(dia).padStart(2, '0')}/${String(mes).padStart(2, '0')}`;
+}
+
+function textoHtml(valor) {
+  return String(valor ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function renderizarTablaCateringCuadra() {
+  const tbody = document.getElementById('tabla-pedidos-catering-cuadra');
+  if (!tbody) return;
+
+  const hoy = (typeof obtenerFechaHoyLocal === 'function') ? obtenerFechaHoyLocal() : '';
+  const fechaVista = fechaCuadraActiva || hoy;
+  const pendientes = [];
+
+  Object.entries(dbRepartos || {}).forEach(([fecha, nodo]) => {
+    const arr = Array.isArray(nodo) ? nodo : Object.values(nodo || {});
+    arr.forEach(p => {
+      if (!p || p.origen !== 'catering-mostrador') return;
+      const fechaProduccion = p.fechaProduccion || fecha;
+      const fechaRetiro = p.fechaRetiro || '';
+      const siguePendiente = (fechaRetiro && fechaRetiro >= hoy) || fechaProduccion >= hoy;
+      if (hoy && !siguePendiente) return;
+      pendientes.push(Object.assign({}, p, { fechaProduccion: fechaProduccion }));
+    });
+  });
+
+  pendientes.sort((a, b) => {
+    const porFecha = (a.fechaProduccion || '').localeCompare(b.fechaProduccion || '');
+    if (porFecha !== 0) return porFecha;
+    return (a.clienteNombre || '').localeCompare(b.clienteNombre || '', 'es', { sensitivity: 'base' });
+  });
+
+  if (!pendientes.length) {
+    tbody.innerHTML = '<tr><td colspan="7" class="p-2 text-center text-gray-400 italic">No hay pedidos de catering pendientes.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = pendientes.map(p => {
+    const id = textoHtml(p.id);
+    const saleEnEstaFecha = p.fechaProduccion === fechaVista;
+    const yaPaso = hoy && p.fechaProduccion < hoy;
+    const marca = saleEnEstaFecha
+      ? 'Sale a producción'
+      : (yaPaso ? 'Fecha ya pasada' : 'Aún no entra');
+    const colorMarca = saleEnEstaFecha
+      ? 'bg-amber-600 text-white'
+      : (yaPaso ? 'bg-gray-400 text-white' : 'bg-sky-700 text-white');
+    const fila = saleEnEstaFecha ? 'bg-amber-50' : 'bg-white';
+
+    return `
+      <tr class="border-b ${fila}">
+        <td class="p-2 font-medium text-gray-800">${textoHtml(p.clienteNombre || '-')}</td>
+        <td class="p-2">${textoHtml(p.producto || '-')}</td>
+        <td class="p-2 text-center font-bold">${textoHtml(p.unidades)}</td>
+        <td class="p-2 text-center text-gray-600">${textoHtml(formatearFechaCorta(p.fechaCarga))}</td>
+        <td class="p-2 text-center">${textoHtml(formatearFechaCorta(p.fechaRetiro))}</td>
+        <td class="p-2 text-center">
+          <div class="inline-block rounded px-2 py-1 bg-amber-300 text-amber-950 font-black leading-tight">
+            ${textoHtml(formatearFechaProduccion(p.fechaProduccion))}
+          </div>
+          <div class="mt-1"><span class="inline-block rounded px-1.5 py-0.5 text-[10px] font-bold ${colorMarca}">${marca}</span></div>
+        </td>
+        <td class="p-2 text-center whitespace-nowrap">
+          <button type="button" onclick="cargarParaEditarCatering('${id}')" class="text-blue-700 font-bold hover:underline mr-2">Editar</button>
+          <button type="button" onclick="eliminarPedidoCatering('${id}')" class="text-red-600 font-bold hover:underline">Eliminar</button>
+        </td>
+      </tr>`;
+  }).join('');
 }
 
 // 4. Guardar o actualizar pedido de catering (almacenado en la fecha de producción de la cuadra)
