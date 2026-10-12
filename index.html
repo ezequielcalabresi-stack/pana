@@ -2215,19 +2215,35 @@ function inicializarFechaCuadra() {
     function cargarSelectorProductosRecurrentes() {
       const sel = document.getElementById('rec-producto');
       if (!sel) return;
-      sel.innerHTML = '<option value="">-- Producto --</option>';
-      
-      const grupoPan = document.createElement('optgroup'); grupoPan.label = "Panificados / Cuadra";
-      Object.keys(dbPanificados).forEach(p => {
-        const opt = document.createElement('option'); opt.value = `panificado|${p}`; opt.textContent = p; grupoPan.appendChild(opt);
-      });
-      sel.appendChild(grupoPan);
+      const valorPrevio = sel.value;
 
-      const grupoDesp = document.createElement('optgroup'); grupoDesp.label = "Catálogo Despacho";
-      Object.keys(dbProductos).forEach(p => {
-        const opt = document.createElement('option'); opt.value = `despacho|${p}`; opt.textContent = p; grupoDesp.appendChild(opt);
+      const grupoPan = document.createElement('optgroup');
+      grupoPan.label = "Panificados / Cuadra";
+      Object.keys(dbPanificados || {}).sort((a, b) => a.localeCompare(b, 'es')).forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = `panificado|${p}`;
+        opt.textContent = p;
+        grupoPan.appendChild(opt);
       });
-      sel.appendChild(grupoDesp);
+
+      const grupoDesp = document.createElement('optgroup');
+      grupoDesp.label = "Catálogo Despacho";
+      Object.keys(dbProductos || {}).sort((a, b) => a.localeCompare(b, 'es')).forEach(p => {
+        if (!dbProductos[p] || typeof dbProductos[p] !== 'object') return;
+        const opt = document.createElement('option');
+        opt.value = `despacho|${p}`;
+        opt.textContent = p;
+        grupoDesp.appendChild(opt);
+      });
+
+      const reemplazo = sel.cloneNode(false);
+      reemplazo.innerHTML = '<option value="">-- Producto --</option>';
+      reemplazo.appendChild(grupoPan);
+      reemplazo.appendChild(grupoDesp);
+      sel.replaceWith(reemplazo);
+      if (valorPrevio && Array.from(reemplazo.options).some(o => o.value === valorPrevio)) {
+        reemplazo.value = valorPrevio;
+      }
     }
 
     function cambiarTipoFrecuenciaUI(tipo) {
@@ -2252,6 +2268,8 @@ function inicializarFechaCuadra() {
         if (cont.classList.contains('hidden')) {
           cont.classList.remove('hidden');
           btn.innerHTML = 'Ocultar ⬆️';
+          cargarSelectorClientesRecurrentes();
+          cargarSelectorProductosRecurrentes();
         } else {
           cont.classList.add('hidden');
           btn.innerHTML = 'Mostrar ⬇️';
@@ -2893,6 +2911,11 @@ function renderizarMenuNavegacion() {
         cargarCajasHoyUI();
         renderizarTablaEgresosHoy();
         renderizarReportesMensuales();
+      }
+      if (idPestaña === 'reparto') {
+        cargarSelectorPanificadosReparto();
+        cargarSelectorDespachoReparto();
+        cargarSelectorProductosRecurrentes();
       }
     }
 

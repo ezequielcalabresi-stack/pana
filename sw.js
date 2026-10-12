@@ -1,4 +1,4 @@
-const CACHE_NAME = 'panaderia-cache-v1';
+const CACHE_NAME = 'panaderia-cache-v2';
 const urlsToCache = [
   './index.html',
   './manifest.json'
@@ -31,6 +31,17 @@ self.addEventListener('activate', event => {
 
 // Interceptación de peticiones para servir offline
 self.addEventListener('fetch', event => {
+  const destino = event.request.destination;
+  if (event.request.mode === 'navigate' || destino === 'document' || destino === 'script') {
+    event.respondWith(
+      fetch(event.request).then(response => {
+        const copia = response.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(event.request, copia));
+        return response;
+      }).catch(() => caches.match(event.request))
+    );
+    return;
+  }
   event.respondWith(
     caches.match(event.request)
       .then(response => {
