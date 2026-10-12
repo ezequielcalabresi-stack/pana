@@ -423,12 +423,13 @@
 
       <div class="bg-amber-50 p-4 rounded-xl shadow border border-amber-300 space-y-3">
         <h2 class="text-base font-bold text-amber-900">📉 Registrar Movimiento / Consumo Manual</h2>
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
-          <select id="mov-stock-insumo" class="border p-2 rounded text-xs bg-white font-semibold"></select>
+        <div class="grid grid-cols-1 md:grid-cols-6 gap-2">
+          <select id="mov-stock-insumo" class="border p-2 rounded text-xs bg-white font-semibold md:col-span-2"></select>
           <select id="mov-stock-tipo" class="border p-2 rounded text-xs bg-white font-semibold">
             <option value="salida">➖ Consumo / Salida (Uso en Cuadra)</option>
             <option value="entrada">➕ Ajuste / Entrada Manual</option>
           </select>
+          <input type="date" id="mov-stock-fecha" title="Fecha del movimiento" class="border p-2 rounded text-xs bg-white font-semibold">
           <input type="number" id="mov-stock-cantidad" placeholder="Cantidad" step="0.1" class="border p-2 rounded text-xs bg-white font-bold">
           <button type="button" onclick="registrarMovimientoManualStock()" class="bg-amber-800 hover:bg-amber-900 text-white font-bold px-3 py-2 rounded text-xs shadow">Aplicar Movimiento</button>
         </div>
@@ -2018,6 +2019,9 @@ function inicializarAplicacion() {
       const inputFechaOp = document.getElementById('fecha-operativa');
       if (inputFechaOp) inputFechaOp.value = fechaActual;
 
+      const inputMovStockFecha = document.getElementById('mov-stock-fecha');
+      if (inputMovStockFecha && !inputMovStockFecha.value) inputMovStockFecha.value = fechaActual;
+
       const fechaDestinoInicial = obtenerFechaDestinoPorHora();
       const inputDestino = document.getElementById('rep-fecha-destino');
       if (inputDestino) inputDestino.value = fechaDestinoInicial;
@@ -2916,6 +2920,10 @@ function renderizarMenuNavegacion() {
         cargarSelectorPanificadosReparto();
         cargarSelectorDespachoReparto();
         cargarSelectorProductosRecurrentes();
+      }
+      if (idPestaña === 'stock') {
+        const inputMovStockFecha = document.getElementById('mov-stock-fecha');
+        if (inputMovStockFecha && !inputMovStockFecha.value) inputMovStockFecha.value = obtenerFechaHoyLocal();
       }
     }
 
@@ -5270,10 +5278,10 @@ function limpiarFiltroFechasCtaCte() {
 var dbMovimientosStock = cargarDB('db_movimientos_stock', {});
 
 // Función mejorada para registrar movimientos de stock con trazabilidad de fecha y tipo
-function registrarMovimientoStockConTrazabilidad(insumoId, cantidad, tipo, sucursalOrigen) {
+function registrarMovimientoStockConTrazabilidad(insumoId, cantidad, tipo, sucursalOrigen, fechaMovimiento) {
   if (!dbInsumos[insumoId]) return;
   const ins = dbInsumos[insumoId];
-  const fechaHoy = obtenerFechaHoyLocal();
+  const fechaHoy = fechaMovimiento || obtenerFechaHoyLocal();
 
   if (!dbMovimientosStock[insumoId]) {
     dbMovimientosStock[insumoId] = [];
@@ -5296,10 +5304,16 @@ function registrarMovimientoManualStock() {
   const insId = document.getElementById('mov-stock-insumo').value;
   const tipo = document.getElementById('mov-stock-tipo').value; // 'entrada' o 'salida'
   const cant = parseFloat(document.getElementById('mov-stock-cantidad').value);
+  const inputFecha = document.getElementById('mov-stock-fecha');
+  const fecha = (inputFecha && inputFecha.value) ? inputFecha.value : obtenerFechaHoyLocal();
 
   if (!insId || isNaN(cant) || cant <= 0) { 
     alert("Seleccione un insumo y una cantidad válida."); 
     return; 
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+    alert("Ingrese la fecha del movimiento.");
+    return;
   }
   const ins = dbInsumos[insId];
   if (!ins) return;
@@ -5311,7 +5325,7 @@ function registrarMovimientoManualStock() {
   }
 
   // Registrar con trazabilidad (Verde para entrada, Rojo para salida)
-  registrarMovimientoStockConTrazabilidad(insId, cant, tipo === 'salida' ? 'salida' : 'entrada', ins.sucursal);
+  registrarMovimientoStockConTrazabilidad(insId, cant, tipo === 'salida' ? 'salida' : 'entrada', ins.sucursal, fecha);
 
   guardarDB('db_insumos', dbInsumos);
   document.getElementById('mov-stock-cantidad').value = '';
