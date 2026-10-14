@@ -1554,6 +1554,39 @@ function guardarRepartoConSincronizacion(fechaDestino, nuevoPedido) {
   renderizarCuadra();
   renderizarReportesMensuales();
 }
+function encontrarPedidoEnDia(lista, pedidoId) {
+  if (!lista || !pedidoId) return null;
+  if (Array.isArray(lista)) {
+    const pedido = lista.find(p => p && (p.id === pedidoId || p.idUnico === pedidoId));
+    return pedido ? { pedido, key: pedido.id || pedidoId } : null;
+  }
+  if (lista[pedidoId] && typeof lista[pedidoId] === 'object') {
+    return { pedido: lista[pedidoId], key: pedidoId };
+  }
+  const key = Object.keys(lista).find(k => {
+    const p = lista[k];
+    return p && (p.id === pedidoId || p.idUnico === pedidoId || k === pedidoId);
+  });
+  return key ? { pedido: lista[key], key } : null;
+}
+
+function elegirEstadoPago(localP, remotoP) {
+  if (!localP) return remotoP;
+  if (!remotoP) return localP;
+  const lts = Number(localP.pagoTs) || 0;
+  const rts = Number(remotoP.pagoTs) || 0;
+  if (lts !== rts) return lts > rts ? localP : remotoP;
+  if (localP.pagado && !remotoP.pagado) return localP;
+  return remotoP;
+}
+
+function aplicarPagoGanador(destino, origen) {
+  destino.pagado = !!origen.pagado;
+  destino.medioPago = origen.medioPago || (destino.pagado ? 'Efectivo' : 'Pendiente');
+  if (origen.pagoTs) destino.pagoTs = origen.pagoTs;
+  else delete destino.pagoTs;
+}
+
 // 2. CARGA Y ESCUCHA SEGURA EN TIEMPO REAL (Evita que la nube pise datos locales)
 function cargarDBRepartosSegura() {
   const data = localStorage.getItem('db_repartos');
@@ -1572,6 +1605,20 @@ function cargarDBRepartosSegura() {
           } else if (nodoRemoto) {
             remotoObj = nodoRemoto;
           }
+
+          const localDia = dbRepartos[fecha] || {};
+          const locales = Array.isArray(localDia) ? localDia.filter(Boolean) : Object.values(localDia || {});
+          Object.keys(remotoObj).forEach(key => {
+            const remotoP = remotoObj[key];
+            if (!remotoP || typeof remotoP !== 'object') return;
+            const localP = locales.find(p => p && (p.id === remotoP.id || p.id === key || p.idUnico === remotoP.id));
+            const ganador = elegirEstadoPago(localP, remotoP);
+            if (ganador && ganador !== remotoP) {
+              aplicarPagoGanador(remotoP, ganador);
+              rtdb.ref(`db_repartos/${fecha}/${remotoP.id || key}`).set(remotoP).catch(err => console.warn(err));
+            }
+          });
+
           // La nube pasa a ser la fuente de verdad estructurada por ID para evitar resucitar borrados
           dbRepartos[fecha] = remotoObj;
         });
@@ -1579,6 +1626,8 @@ function cargarDBRepartosSegura() {
         localStorage.setItem('db_repartos', JSON.stringify(dbRepartos));
         renderizarPlanillaReparto();
         renderizarCuadra();
+        if (typeof renderizarTablaClientes === 'function') renderizarTablaClientes();
+        if (clienteSeleccionadoId && typeof renderizarTablaHistorialCliente === 'function') renderizarTablaHistorialCliente();
       }
     });
   }
@@ -1848,6 +1897,9 @@ function cargarDB(key, fallback) {
           } else if (key === 'db_usuarios' && typeof valRemoto === 'object') {
             // Fusión segura de usuarios para no pisar ningún ID de mostrador o reparto
             valorLocal = { ...fallback, ...valRemoto, ...valorLocal };
+          } else if (key === 'db_panificados' && typeof valRemoto === 'object') {
+            // El catálogo de panificados es único: manda la base, no la copia de cada teléfono
+            valorLocal = valRemoto;
           } else if (typeof valRemoto === 'object' && !Array.isArray(valRemoto) && typeof valorLocal === 'object' && !Array.isArray(valorLocal)) {
             let fusionados = JSON.parse(JSON.stringify(valorLocal));
             Object.keys(valRemoto).forEach(kPrincipal => {
@@ -2412,8 +2464,9 @@ function inicializarFechaCuadra() {
         return; 
       }
 
-      // Comprobación estricta en el objeto por clave ID
-      if (!dbRepartos[fechaDestinoActiva][nuevoId]) {
+      // No recrear si ya existe, aunque esté guardado con otra clave. Si se recrea, pisa el cobro.
+      const yaCargado = encontrarPedidoEnDia(dbRepartos[fechaDestinoActiva], nuevoId);
+      if (!yaCargado) {
         let precioUnit = 0;
         let unidPaq = 1;
 
@@ -2449,8 +2502,28 @@ function inicializarFechaCuadra() {
         localStorage.setItem('db_repartos', JSON.stringify(dbRepartos));
 
         if (rtdb) {
-          rtdb.ref(`db_repartos/${fechaDestinoActiva}/${nuevoId}`).set(datosPedidoAutomatico)
-            .catch(err => console.warn(err));
+          const refPedido = rtdb.ref(`db_repartos/${fechaDestinoActiva}/${nuevoId}`);
+          refPedido.transaction(actual => {
+            if (actual) return actual;
+            return datosPedidoAutomatico;
+          }, (error, committed, snapshot) => {
+            if (error || !snapshot) return;
+            const guardado = snapshot.val();
+            if (!guardado) return;
+            const local = dbRepartos[fechaDestinoActiva] && dbRepartos[fechaDestinoActiva][nuevoId];
+            if (local && local.pagado && !guardado.pagado) {
+              refPedido.set(local).catch(err => console.warn(err));
+              return;
+            }
+            if (!dbRepartos[fechaDestinoActiva]) dbRepartos[fechaDestinoActiva] = {};
+            const cambioElPago = !local || !!local.pagado !== !!guardado.pagado;
+            dbRepartos[fechaDestinoActiva][nuevoId] = guardado;
+            localStorage.setItem('db_repartos', JSON.stringify(dbRepartos));
+            if (cambioElPago) {
+              renderizarPlanillaReparto();
+              if (typeof renderizarTablaClientes === 'function') renderizarTablaClientes();
+            }
+          }, false);
         }
 
         huboCambiosNuevos = true;
@@ -3542,19 +3615,22 @@ function renderizarPlanillaReparto() {
   let lista = dbRepartos[fechaHojaRutaActiva];
   if (!lista) return;
 
-  let pedido = Array.isArray(lista) ? lista.find(p => p && p.id === pedidoId) : lista[pedidoId];
-  if (pedido) {
-    pedido.pagado = false;
-    pedido.medioPago = "Pendiente";
+  const hallado = encontrarPedidoEnDia(lista, pedidoId);
+  if (hallado) {
+    hallado.pedido.pagado = false;
+    hallado.pedido.medioPago = "Pendiente";
+    hallado.pedido.pagoTs = Date.now();
     
     localStorage.setItem('db_repartos', JSON.stringify(dbRepartos));
     if (rtdb) {
-      rtdb.ref(`db_repartos/${fechaHojaRutaActiva}/${pedido.id}`).set(pedido).catch(err => console.warn(err));
+      rtdb.ref(`db_repartos/${fechaHojaRutaActiva}/${hallado.key}`).set(hallado.pedido).catch(err => console.warn(err));
     }
   }
 
   renderizarPlanillaReparto(); 
-  renderizarReportesMensuales(); 
+  renderizarReportesMensuales();
+  if (typeof renderizarTablaClientes === 'function') renderizarTablaClientes();
+  if (clienteSeleccionadoId && typeof renderizarTablaHistorialCliente === 'function') renderizarTablaHistorialCliente();
 }
 function marcarPedidoCobrado(pedidoId, medioPago) {
   const fechaHojaRutaActiva = document.getElementById('hr-fecha-selector').value || fechaActual;
@@ -3564,19 +3640,22 @@ function marcarPedidoCobrado(pedidoId, medioPago) {
   let lista = dbRepartos[fechaHojaRutaActiva];
   if (!lista) return;
 
-  let pedido = Array.isArray(lista) ? lista.find(p => p && (p.id === pedidoId || p.idUnico === pedidoId)) : lista[pedidoId];
-  if (pedido) {
-    pedido.pagado = true;
-    pedido.medioPago = medioPago;
+  const hallado = encontrarPedidoEnDia(lista, pedidoId);
+  if (hallado) {
+    hallado.pedido.pagado = true;
+    hallado.pedido.medioPago = medioPago;
+    hallado.pedido.pagoTs = Date.now();
     
     localStorage.setItem('db_repartos', JSON.stringify(dbRepartos));
     if (rtdb) {
-      rtdb.ref(`db_repartos/${fechaHojaRutaActiva}/${pedido.id}`).set(pedido).catch(err => console.warn(err));
+      rtdb.ref(`db_repartos/${fechaHojaRutaActiva}/${hallado.key}`).set(hallado.pedido).catch(err => console.warn(err));
     }
   }
 
   renderizarPlanillaReparto(); 
-  renderizarReportesMensuales(); 
+  renderizarReportesMensuales();
+  if (typeof renderizarTablaClientes === 'function') renderizarTablaClientes();
+  if (clienteSeleccionadoId && typeof renderizarTablaHistorialCliente === 'function') renderizarTablaHistorialCliente();
 }
  function guardarDB(key, valor) {
       localStorage.setItem(key, JSON.stringify(valor));
@@ -6153,7 +6232,8 @@ function verificarCierreAutomaticoGlobal() {
       if (!nombre || isNaN(unids) || isNaN(menor) || isNaN(mayor)) { alert("Complete todos los campos del panificado."); return; }
       
       dbPanificados[nombre] = { unidPorPaq: unids, menor, mayor };
-      guardarDB('db_panificados', dbPanificados);
+      localStorage.setItem('db_panificados', JSON.stringify(dbPanificados));
+      if (rtdb) rtdb.ref('db_panificados').child(nombre).set(dbPanificados[nombre]).catch(err => console.warn(err));
       renderizarTablaPanificados(); 
       cargarSelectorPanificadosReparto(); 
       cargarSelectorProductosRecurrentes();
@@ -6166,8 +6246,9 @@ function verificarCierreAutomaticoGlobal() {
 
     function eliminarPanificado(nombre) {
       if(confirm(`¿Desea eliminar el panificado "${nombre}"?`)) { 
-        delete dbPanificados[nombre]; 
-        guardarDB('db_panificados', dbPanificados); 
+        delete dbPanificados[nombre];
+        localStorage.setItem('db_panificados', JSON.stringify(dbPanificados));
+        if (rtdb) rtdb.ref('db_panificados').child(nombre).remove().catch(err => console.warn(err)); 
         renderizarTablaPanificados(); 
         cargarSelectorPanificadosReparto(); 
         cargarSelectorProductosRecurrentes(); 
@@ -6180,7 +6261,8 @@ function verificarCierreAutomaticoGlobal() {
       
       if (dbPanificados[nombre]) {
         dbPanificados[nombre][campo] = valorNumerico;
-        guardarDB('db_panificados', dbPanificados);
+        localStorage.setItem('db_panificados', JSON.stringify(dbPanificados));
+        if (rtdb) rtdb.ref('db_panificados').child(nombre).child(campo).set(valorNumerico).catch(err => console.warn(err));
         if (campo !== 'unidPorPaq') {
           inputElement.value = valorNumerico.toLocaleString('es-AR', { minimumFractionDigits: 0 });
         }
