@@ -1900,6 +1900,18 @@ function cargarDB(key, fallback) {
           } else if (key === 'db_panificados' && typeof valRemoto === 'object') {
             // El catálogo de panificados es único: manda la base, no la copia de cada teléfono
             valorLocal = valRemoto;
+          } else if (key === 'db_clientes' && typeof valRemoto === 'object' && !Array.isArray(valRemoto)) {
+            const fusionados = {};
+            Object.keys(valRemoto).forEach(k => {
+              const remoto = valRemoto[k];
+              const local = valorLocal && valorLocal[k];
+              if (local && typeof local === 'object' && remoto && typeof remoto === 'object' && !Array.isArray(remoto)) {
+                fusionados[k] = { ...remoto, ...local };
+              } else {
+                fusionados[k] = remoto;
+              }
+            });
+            valorLocal = fusionados;
           } else if (typeof valRemoto === 'object' && !Array.isArray(valRemoto) && typeof valorLocal === 'object' && !Array.isArray(valorLocal)) {
             let fusionados = JSON.parse(JSON.stringify(valorLocal));
             Object.keys(valRemoto).forEach(kPrincipal => {
@@ -4450,24 +4462,43 @@ function renderizarTablaHistorialCliente() {
       }
     }
 
-    function eliminarClienteActual() {
-      if (!clienteSeleccionadoId) return;
-      const cli = dbClientes[clienteSeleccionadoId];
-      const nombreCli = cli ? cli.nombre : 'este cliente';
-      
-      if (confirm(`⚠️ ¿Está completamente seguro que desea borrar al cliente "${nombreCli}"?`)) {
-        const idABorrar = clienteSeleccionadoId;
-        cerrarHistorialCliente();
-        delete dbClientes[idABorrar];
-        if (dbHistorialClientes[idABorrar]) {
-          delete dbHistorialClientes[idABorrar];
-          guardarDB('db_historial_clientes', dbHistorialClientes);
-        }
-        guardarDB('db_clientes', dbClientes);
-        renderizarTablaClientes();
-        cargarSelectorClientesReparto();
-        cargarSelectorClientesRecurrentes();
+    function claveCliente(id) {
+      if (!id || !dbClientes) return null;
+      if (dbClientes[id]) return id;
+      return Object.keys(dbClientes).find(k => {
+        const c = dbClientes[k];
+        return c && (c.id === id || k === id);
+      }) || null;
+    }
+
+    function borrarCliente(id) {
+      const idABorrar = claveCliente(id || clienteSeleccionadoId);
+      if (!idABorrar) {
+        alert("No se encontró el cliente para borrar.");
+        return;
       }
+      const nombreCli = (dbClientes[idABorrar] && dbClientes[idABorrar].nombre) || 'este cliente';
+      const idHistorial = (dbClientes[idABorrar] && dbClientes[idABorrar].id) || idABorrar;
+
+      if (!confirm(`⚠️ ¿Está completamente seguro que desea borrar al cliente "${nombreCli}"?`)) return;
+
+      cerrarHistorialCliente();
+      delete dbClientes[idABorrar];
+      if (dbHistorialClientes[idABorrar]) delete dbHistorialClientes[idABorrar];
+      if (idHistorial !== idABorrar && dbHistorialClientes[idHistorial]) delete dbHistorialClientes[idHistorial];
+      guardarDB('db_historial_clientes', dbHistorialClientes);
+      guardarDB('db_clientes', dbClientes);
+      if (rtdb) {
+        rtdb.ref('db_clientes').child(idABorrar).remove().catch(err => console.warn(err));
+        rtdb.ref('db_historial_clientes').child(idHistorial).remove().catch(err => console.warn(err));
+      }
+      renderizarTablaClientes();
+      cargarSelectorClientesReparto();
+      cargarSelectorClientesRecurrentes();
+    }
+
+    function eliminarClienteActual() {
+      borrarCliente(clienteSeleccionadoId);
     }
 
     function cerrarHistorialCliente() { 
@@ -4497,14 +4528,23 @@ function renderizarTablaHistorialCliente() {
     // 1. REUBICACIÓN DEL BOTÓN DE BORRAR AL LADO DEL NOMBRE:
     // En lugar de estar abajo de todo, lo ponemos integrado al título de forma limpia y segura.
     if (nombreEl) {
-        nombreEl.innerHTML = `
-            <div class="flex items-center justify-between flex-wrap gap-2">
-                <span class="text-xl font-bold text-gray-800">${clienteActual.nombre || ''}</span>
-                <button type="button" onclick="borrarCliente('${cliId.replace(/'/g, "\\'")}')" class="bg-red-50 hover:bg-red-600 text-red-600 hover:text-white border border-red-200 text-xs px-2.5 py-1 rounded font-bold transition flex items-center gap-1 shadow-sm" title="Borrar este Cliente">
-                    🗑️ Borrar Cliente
-                </button>
-            </div>
-        `;
+        nombreEl.innerHTML = '';
+        const wrap = document.createElement('div');
+        wrap.className = 'flex items-center justify-between flex-wrap gap-2';
+        const titulo = document.createElement('span');
+        titulo.className = 'text-xl font-bold text-gray-800';
+        titulo.textContent = clienteActual.nombre || '';
+        const btnBorrar = document.createElement('button');
+        btnBorrar.type = 'button';
+        btnBorrar.className = 'bg-red-50 hover:bg-red-600 text-red-600 hover:text-white border border-red-200 text-xs px-2.5 py-1 rounded font-bold shadow-sm';
+        btnBorrar.title = 'Borrar este Cliente';
+        btnBorrar.textContent = '🗑️ Borrar Cliente';
+        btnBorrar.addEventListener('click', function () {
+          borrarCliente(clienteActual.id || cliId);
+        });
+        wrap.appendChild(titulo);
+        wrap.appendChild(btnBorrar);
+        nombreEl.appendChild(wrap);
     }
       
     let saldoActual = calcularSaldoCliente(cliId);
