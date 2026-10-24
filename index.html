@@ -3689,6 +3689,14 @@ function marcarPedidoCobrado(pedidoId, medioPago) {
         consolidados[p.producto] = (consolidados[p.producto] || 0) + p.unidades;
       });
 
+      const remanentesDia = (dbRemanentesCuadra && dbRemanentesCuadra[fechaCuadraActiva]) || [];
+      const listaRemanentes = Array.isArray(remanentesDia) ? remanentesDia : Object.values(remanentesDia);
+      listaRemanentes.forEach(r => {
+        if (r && consolidados[r.producto]) {
+          consolidados[r.producto] = Math.max(0, consolidados[r.producto] - r.cantidad);
+        }
+      });
+
       let produccionHtml = '';
       const lista = Object.entries(consolidados).sort((a, b) => a[0].localeCompare(b[0]));
       let totalUnidadesPrint = 0;
