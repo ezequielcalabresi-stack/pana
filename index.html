@@ -1304,6 +1304,12 @@
     var dbProductos = {};
     var dbInsumos = {};
     var dbRepartos = {};
+    var dbRecurrentesExcluidos = {};
+    try {
+      dbRecurrentesExcluidos = JSON.parse(localStorage.getItem('db_recurrentes_excluidos') || '{}') || {};
+    } catch (e) {
+      dbRecurrentesExcluidos = {};
+    }
     var dbRecurrentes = {};
     var dbNotasMostrador = {};
     var dbHistorialClientes = {};
@@ -1353,6 +1359,11 @@
       }
       rtdb = firebase.database();
       rtdb.goOnline();
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function () {
+          navigator.serviceWorker.register('./sw.js').catch(function () {});
+        });
+      }
 
       const statusDiv = document.getElementById("status-conexion");
       rtdb.ref(".info/connected").on("value", function(snap) {
@@ -1611,6 +1622,12 @@ function cargarDBRepartosSegura() {
           Object.keys(remotoObj).forEach(key => {
             const remotoP = remotoObj[key];
             if (!remotoP || typeof remotoP !== 'object') return;
+            const idPedido = remotoP.id || remotoP.idUnico || key;
+            if (remotoP.origenAuto && pedidoAutomaticoExcluido(fecha, idPedido)) {
+              delete remotoObj[key];
+              rtdb.ref(`db_repartos/${fecha}/${key}`).remove().catch(err => console.warn(err));
+              return;
+            }
             const localP = locales.find(p => p && (p.id === remotoP.id || p.id === key || p.idUnico === remotoP.id));
             const ganador = elegirEstadoPago(localP, remotoP);
             if (ganador && ganador !== remotoP) {
@@ -1631,6 +1648,7 @@ function cargarDBRepartosSegura() {
       }
     });
   }
+  cargarExclusionesRecurrentes();
 }
 
  function cargarSelectorRemanentesCuadra() {
@@ -2427,6 +2445,72 @@ function inicializarFechaCuadra() {
         renderizarTablaRecurrentes();
       }
    }
+function pedidoAutomaticoExcluido(fecha, id) {
+  if (!fecha || !id || !dbRecurrentesExcluidos) return false;
+  const lista = dbRecurrentesExcluidos[fecha];
+  return Array.isArray(lista) && lista.indexOf(id) !== -1;
+}
+
+function marcarPedidoAutomaticoExcluido(fecha, id) {
+  if (!fecha || !id) return;
+  if (!dbRecurrentesExcluidos[fecha] || !Array.isArray(dbRecurrentesExcluidos[fecha])) {
+    dbRecurrentesExcluidos[fecha] = [];
+  }
+  if (dbRecurrentesExcluidos[fecha].indexOf(id) === -1) {
+    dbRecurrentesExcluidos[fecha].push(id);
+  }
+  localStorage.setItem('db_recurrentes_excluidos', JSON.stringify(dbRecurrentesExcluidos));
+  if (rtdb) {
+    rtdb.ref('db_recurrentes_excluidos/' + fecha).set(dbRecurrentesExcluidos[fecha]).catch(err => console.warn(err));
+  }
+}
+
+function cargarExclusionesRecurrentes() {
+  if (!rtdb || cargarExclusionesRecurrentes.activo) return;
+  cargarExclusionesRecurrentes.activo = true;
+  rtdb.ref('db_recurrentes_excluidos').on('value', function (snap) {
+    const remoto = snap.val() || {};
+    const fusion = {};
+    const fechas = {};
+    Object.keys(dbRecurrentesExcluidos || {}).forEach(function (f) { fechas[f] = true; });
+    Object.keys(remoto).forEach(function (f) { fechas[f] = true; });
+    Object.keys(fechas).forEach(function (fecha) {
+      const localLista = Array.isArray(dbRecurrentesExcluidos[fecha]) ? dbRecurrentesExcluidos[fecha] : [];
+      const remotaLista = Array.isArray(remoto[fecha]) ? remoto[fecha] : [];
+      const unidos = Array.from(new Set(localLista.concat(remotaLista)));
+      fusion[fecha] = unidos;
+      if (unidos.length !== remotaLista.length || unidos.some(function (id) { return remotaLista.indexOf(id) < 0; })) {
+        rtdb.ref('db_recurrentes_excluidos/' + fecha).set(unidos).catch(function (err) { console.warn(err); });
+      }
+    });
+    dbRecurrentesExcluidos = fusion;
+    localStorage.setItem('db_recurrentes_excluidos', JSON.stringify(dbRecurrentesExcluidos));
+    depurarPedidosAutomaticosExcluidos();
+  });
+}
+
+function depurarPedidosAutomaticosExcluidos() {
+  if (!dbRepartos) return;
+  let cambio = false;
+  Object.keys(dbRepartos).forEach(function (fecha) {
+    const dia = dbRepartos[fecha];
+    if (!dia || Array.isArray(dia)) return;
+    Object.keys(dia).forEach(function (k) {
+      const p = dia[k];
+      const id = (p && (p.id || p.idUnico)) || k;
+      if (p && p.origenAuto && pedidoAutomaticoExcluido(fecha, id)) {
+        delete dia[k];
+        cambio = true;
+        if (rtdb) rtdb.ref('db_repartos/' + fecha + '/' + k).remove().catch(function (err) { console.warn(err); });
+      }
+    });
+  });
+  if (!cambio) return;
+  localStorage.setItem('db_repartos', JSON.stringify(dbRepartos));
+  if (typeof renderizarPlanillaReparto === 'function') renderizarPlanillaReparto();
+  if (typeof renderizarCuadra === 'function') renderizarCuadra();
+}
+
    function procesarPedidosRecurrentesAutomaticos() {
   const fechaDestinoActiva = document.getElementById('rep-fecha-destino')?.value || fechaActual;
   if (!dbRepartos[fechaDestinoActiva]) dbRepartos[fechaDestinoActiva] = {};
@@ -2437,13 +2521,6 @@ function inicializarFechaCuadra() {
     dbRepartos[fechaDestinoActiva].forEach(p => { if (p) obj[p.id || generarID('REP')] = p; });
     dbRepartos[fechaDestinoActiva] = obj;
   }
-
-  // Cargar exclusiones locales si existen
-  let excluidosDia = [];
-  try {
-    const exGlobal = JSON.parse(localStorage.getItem('db_recurrentes_excluidos') || '{}');
-    excluidosDia = exGlobal[fechaDestinoActiva] || [];
-  } catch(e) { excluidosDia = []; }
 
   const [anio, mes, dia] = fechaDestinoActiva.split('-').map(Number);
   const fechaObj = new Date(anio, mes - 1, dia);
@@ -2471,9 +2548,8 @@ function inicializarFechaCuadra() {
     if (cumpleCondicion) {
       const nuevoId = `AUTO_${r.id}_${fechaDestinoActiva}`;
 
-      // 👉 FRENO DE MANO: Si el usuario ya lo borró y está en la lista de excluidos, NO se vuelve a crear
-      if (excluidosDia.includes(nuevoId)) {
-        return; 
+      if (pedidoAutomaticoExcluido(fechaDestinoActiva, nuevoId)) {
+        return;
       }
 
       // No recrear si ya existe, aunque esté guardado con otra clave. Si se recrea, pisa el cobro.
@@ -2516,9 +2592,15 @@ function inicializarFechaCuadra() {
         if (rtdb) {
           const refPedido = rtdb.ref(`db_repartos/${fechaDestinoActiva}/${nuevoId}`);
           refPedido.transaction(actual => {
+            if (pedidoAutomaticoExcluido(fechaDestinoActiva, nuevoId)) return;
             if (actual) return actual;
             return datosPedidoAutomatico;
           }, (error, committed, snapshot) => {
+            if (pedidoAutomaticoExcluido(fechaDestinoActiva, nuevoId)) {
+              if (dbRepartos[fechaDestinoActiva]) delete dbRepartos[fechaDestinoActiva][nuevoId];
+              refPedido.remove().catch(err => console.warn(err));
+              return;
+            }
             if (error || !snapshot) return;
             const guardado = snapshot.val();
             if (!guardado) return;
@@ -2583,7 +2665,7 @@ function inicializarFechaCuadra() {
       <td class="p-2"><input type="number" step="0.01" value="${p.unidades}" ${isCerrado ? 'disabled' : ''} onchange="modificarCantidadPedido('${p.id || k}', this.value)" class="w-16 border rounded p-1 text-xs font-bold text-blue-900"></td>
       <td class="p-2"><input type="number" step="0.01" value="${p.precioUnitario}" ${isCerrado ? 'disabled' : ''} onchange="modificarPrecioPedidoDirecto('${p.id || k}', this.value)" class="w-20 border rounded p-1 text-xs font-bold"></td>
       <td class="p-2 font-bold text-amber-900">$${p.monto.toLocaleString()}</td>
-      <td class="p-2 text-center">${!isCerrado ? `<button onclick="eliminarPedidoUniversal('', '${p.id || k}', '${p.producto}'); if(typeof renderizarTablaPedidosAuto === 'function') renderizarTablaPedidosAuto();" class="bg-red-600 text-white text-xs px-2 py-1 rounded font-bold">✕ Eliminar</button>` : '<span class="text-xs text-gray-400">Cerrado</span>'}</td>
+      <td class="p-2 text-center">${!isCerrado ? `<button type="button" onclick="eliminarPedidoUniversal('', '${p.id}')" class="bg-red-600 text-white text-xs px-2 py-1 rounded font-bold">✕ Eliminar</button>` : '<span class="text-xs text-gray-400">Cerrado</span>'}</td>
     `;
     tbody.appendChild(tr);
   });
@@ -2641,69 +2723,44 @@ function inicializarFechaCuadra() {
 
 function eliminarPedidoUniversal(fecha, keyOrId) {
   const fechaReal = fecha || document.getElementById('rep-fecha-destino')?.value || fechaActual;
-  
+  if (!keyOrId) return;
+
   if (confirm("¿Desea eliminar este pedido específico?")) {
-    let idAExcluir = null;
+    let idAExcluir = keyOrId;
+    let claveNube = keyOrId;
+    let esAutomatico = String(keyOrId).indexOf('AUTO_') === 0;
 
     if (dbRepartos[fechaReal]) {
-      // Si está guardado como un Objeto / Diccionario
-      if (!Array.isArray(dbRepartos[fechaReal])) {
-        // 1. Intento directo por la clave exacta del objeto (lo más rápido y seguro)
-        if (keyOrId && dbRepartos[fechaReal][keyOrId]) {
-          let p = dbRepartos[fechaReal][keyOrId];
-          idAExcluir = p?.id || keyOrId;
-          delete dbRepartos[fechaReal][keyOrId];
+      const hallado = encontrarPedidoEnDia(dbRepartos[fechaReal], keyOrId);
+      if (hallado) {
+        idAExcluir = hallado.pedido.id || hallado.pedido.idUnico || hallado.key;
+        claveNube = hallado.key;
+        esAutomatico = esAutomatico || hallado.pedido.origenAuto === true || String(idAExcluir).indexOf('AUTO_') === 0;
+        if (Array.isArray(dbRepartos[fechaReal])) {
+          dbRepartos[fechaReal] = dbRepartos[fechaReal].filter(p => p && p.id !== idAExcluir && p.idUnico !== idAExcluir);
         } else {
-          // 2. Si no, busca por coincidencia exacta de ID interno
-          let encontradaKey = null;
-          Object.keys(dbRepartos[fechaReal]).forEach(k => {
-            let p = dbRepartos[fechaReal][k];
-            if (p && (p.id === keyOrId || p.idUnico === keyOrId || k === keyOrId)) {
-              encontradaKey = k;
-              idAExcluir = p.id || p.idUnico || k;
-            }
-          });
-          if (encontradaKey) {
-            delete dbRepartos[fechaReal][encontradaKey];
-          }
-        }
-      } 
-      // Si está guardado como Array
-      else {
-        dbRepartos[fechaReal] = dbRepartos[fechaReal].filter(p => {
-          if (!p) return false;
-          if (p.id === keyOrId || p.idUnico === keyOrId) {
-            idAExcluir = p.id || p.idUnico;
-            return false; // Borra únicamente este
-          }
-          return true;
-        });
-      }
-
-      // Registrar la exclusión exacta para que los automáticos no lo regeneren
-      if (idAExcluir && String(idAExcluir) !== 'undefined') {
-        let exGlobal = JSON.parse(localStorage.getItem('db_recurrentes_excluidos') || '{}');
-        if (!exGlobal[fechaReal]) exGlobal[fechaReal] = [];
-        if (!exGlobal[fechaReal].includes(idAExcluir)) {
-          exGlobal[fechaReal].push(idAExcluir);
-          localStorage.setItem('db_recurrentes_excluidos', JSON.stringify(exGlobal));
-          if (rtdb) {
-            rtdb.ref(`db_recurrentes_excluidos/${fechaReal}`).set(exGlobal[fechaReal]).catch(err => console.warn(err));
-          }
+          delete dbRepartos[fechaReal][hallado.key];
         }
       }
     }
 
-    // Guardar cambios limpios en LocalStorage y Firebase
+    if (esAutomatico) {
+      marcarPedidoAutomaticoExcluido(fechaReal, idAExcluir);
+      if (keyOrId !== idAExcluir) marcarPedidoAutomaticoExcluido(fechaReal, keyOrId);
+    }
+
     localStorage.setItem('db_repartos', JSON.stringify(dbRepartos));
     if (rtdb) {
-      rtdb.ref(`db_repartos/${fechaReal}`).set(dbRepartos[fechaReal]).catch(err => console.warn(err));
+      rtdb.ref(`db_repartos/${fechaReal}/${claveNube}`).remove().catch(err => console.warn(err));
+      if (idAExcluir !== claveNube) {
+        rtdb.ref(`db_repartos/${fechaReal}/${idAExcluir}`).remove().catch(err => console.warn(err));
+      }
     }
-    
-    // Refrescar vistas
+
     if (typeof renderizarPlanillaReparto === 'function') renderizarPlanillaReparto();
     if (typeof renderizarCuadra === 'function') renderizarCuadra();
     if (typeof renderizarReportesMensuales === 'function') renderizarReportesMensuales();
+    if (typeof renderizarTablaPedidosAuto === 'function') renderizarTablaPedidosAuto();
   }
 }
 function eliminarPedidoRepartoGlobal(idBuscado) {
@@ -3525,7 +3582,7 @@ function renderizarPlanillaReparto() {
             <td class="p-2 font-bold"><input type="number" step="0.01" value="${p.precioUnitario}" ${esEspigaRestringido ? 'disabled' : ''} onchange="modificarPrecioPedidoDirecto('${p.id || p.idUnico || k}', this.value)" class="w-20 border rounded p-1 text-xs font-bold"></td>
             <td class="p-2 font-bold text-amber-900">$${p.monto.toLocaleString()}</td>
             <td class="p-2 text-center">
-              <button onclick="eliminarPedidoUniversal('', '${p.id || p.idUnico || k}', '${p.producto}')" class="bg-red-600 hover:bg-red-700 text-white text-xs px-2.5 py-1 rounded font-bold shadow">✕ Borrar</button>
+              <button type="button" onclick="eliminarPedidoUniversal('', '${p.id || p.idUnico || ''}')" class="bg-red-600 hover:bg-red-700 text-white text-xs px-2.5 py-1 rounded font-bold shadow">✕ Borrar</button>
             </td>
           `;
           tbody.appendChild(trPed);
@@ -3590,7 +3647,7 @@ function renderizarPlanillaReparto() {
                 <button onclick="deshacerCobroPedido('${p.id || p.idUnico}')" class="text-[10px] text-amber-700 underline font-bold">Cambiar</button>
               </div>
             `;
-          colAccionesHr = `<button onclick="eliminarPedidoUniversal('${fechaHojaRutaActiva}', '${p.id || p.idUnico || k}', '${p.producto}')" class="bg-red-600 hover:bg-red-700 text-white text-xs px-2.5 py-1 rounded font-bold shadow">✕ Borrar</button>`;
+          colAccionesHr = `<button type="button" onclick="eliminarPedidoUniversal('${fechaHojaRutaActiva}', '${p.id || p.idUnico || ''}')" class="bg-red-600 hover:bg-red-700 text-white text-xs px-2.5 py-1 rounded font-bold shadow">✕ Borrar</button>`;
           }
 
           trHr.innerHTML = `

@@ -1,51 +1,49 @@
-const CACHE_NAME = 'panaderia-cache-v2';
+const CACHE_NAME = 'panaderia-cache-v3';
 const urlsToCache = [
   './index.html',
-  './manifest.json'
+  './manifest.json',
+  'https://cdn.tailwindcss.com',
+  'https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js',
+  'https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js'
 ];
 
-// Instalación del Service Worker
+function sePuedeCachear(url) {
+  return url.startsWith(self.location.origin) ||
+    url.startsWith('https://cdn.tailwindcss.com') ||
+    url.startsWith('https://www.gstatic.com/firebasejs/');
+}
+
 self.addEventListener('install', event => {
+  self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        return cache.addAll(urlsToCache);
-      })
+    caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache).catch(() => {}))
   );
 });
 
-// Activación y limpieza de cachés antiguas
 self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cacheName => {
-          if (cacheName !== CACHE_NAME) {
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
+    caches.keys().then(cacheNames => Promise.all(
+      cacheNames.map(cacheName => {
+        if (cacheName !== CACHE_NAME) return caches.delete(cacheName);
+      })
+    )).then(() => self.clients.claim())
   );
 });
 
-// Interceptación de peticiones para servir offline
 self.addEventListener('fetch', event => {
-  const destino = event.request.destination;
-  if (event.request.mode === 'navigate' || destino === 'document' || destino === 'script') {
-    event.respondWith(
-      fetch(event.request).then(response => {
-        const copia = response.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(event.request, copia));
-        return response;
-      }).catch(() => caches.match(event.request))
-    );
-    return;
-  }
+  if (event.request.method !== 'GET') return;
+  const url = event.request.url;
+  if (!sePuedeCachear(url)) return;
+
   event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        return response || fetch(event.request);
+    caches.open(CACHE_NAME).then(cache =>
+      cache.match(event.request).then(cached => {
+        const actualizado = fetch(event.request).then(response => {
+          if (response && response.ok) cache.put(event.request, response.clone());
+          return response;
+        }).catch(() => cached);
+        return cached || actualizado;
       })
+    )
   );
 });
